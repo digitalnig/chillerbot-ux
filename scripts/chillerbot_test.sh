@@ -175,7 +175,7 @@ ins+=('client2: where are you?');outs+=('not_client1 no idea. Where are you?')
 ins+=('client2: client1 is ur war ?');outs+=('not_client1: client1 has war because: bullied me in school')
 ins+=('client2: do you have war with clientP ?');outs+=("not_client1: 'clientP' is not on my warlist.")
 ins+=('client2: im your enemy?');outs+=('not_client1 your name is neither on my friend nor enemy list.')
-ins+=('client2: is clientX on your warlist?');outs+=("not_client1: 'is clientX' is not on my warlist.")
+ins+=('client2: is clientX on your warlist?');outs+=("not_client1: 'clientX' is not on my warlist.")
 ins+=('client2: client1 enemy?');outs+=('not_client1: client1 has war because: bullied me in school')
 
 run_tests

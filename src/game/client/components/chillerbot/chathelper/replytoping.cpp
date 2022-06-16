@@ -443,6 +443,7 @@ bool CReplyToPing::Reply()
 	int ChopEnding = 0;
 	char aStrippedMsg[256];
 	StripSpacesAndPunctuationAndOwnName(m_pMessage, aStrippedMsg, sizeof(aStrippedMsg));
+	// TODO: refactor this before an furture employer can find it!
 	if(!ChopEnding)
 		ChopEnding = GetSuffixLen(aStrippedMsg, " is ur war");
 	if(!ChopEnding)
@@ -491,21 +492,119 @@ bool CReplyToPing::Reply()
 		ChopEnding = GetSuffixLen(aStrippedMsg, " u warlist");
 	if(!ChopEnding)
 		ChopEnding = GetSuffixLen(aStrippedMsg, " warlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " on friend list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " on frint list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " on frien list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " on friendlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " on frintlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " on frienlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " in friend list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " in frint list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " in frien list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " in friendlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " in frintlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " in frienlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " friend list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " frint list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " frien list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " friendlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " frintlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " frienlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is ur friend");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is u friend");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is your friend");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is you friend");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " ur friend");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " u friend");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " your friend");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is ur frint");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is u frint");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is your frint");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is you frint");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " ur frint");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " u frint");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " your frint");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is ur frent");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is u frent");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is your frent");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " is you frent");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " ur frent");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " u frent");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " your frent");
 	bool Strict = false;
 	if(!ChopEnding)
 	{
-		ChopEnding = GetSuffixLen(aStrippedMsg, " bad");
 		Strict = true;
+		ChopEnding = GetSuffixLen(aStrippedMsg, " bad");
 	}
 	if(!ChopEnding)
 	{
-		ChopEnding = GetSuffixLen(aStrippedMsg, " good");
 		Strict = true;
+		ChopEnding = GetSuffixLen(aStrippedMsg, " good");
 	}
 	if(!ChopEnding)
 	{
 		Strict = true;
 		ChopEnding = GetSuffixLen(aStrippedMsg, " friend");
+	}
+	if(!ChopEnding)
+	{
+		Strict = true;
+		ChopEnding = GetSuffixLen(aStrippedMsg, " frien");
+	}
+	if(!ChopEnding)
+	{
+		Strict = true;
+		ChopEnding = GetSuffixLen(aStrippedMsg, " frent");
+	}
+	if(!ChopEnding)
+	{
+		Strict = true;
+		ChopEnding = GetSuffixLen(aStrippedMsg, " fren");
+	}
+	if(!ChopEnding)
+	{
+		Strict = true;
+		ChopEnding = GetSuffixLen(aStrippedMsg, " frint");
 	}
 	if(!ChopEnding)
 	{
@@ -530,14 +629,68 @@ bool CReplyToPing::Reply()
 						continue;
 					if(!str_comp(Client.m_aName, aStrippedMsg))
 					{
+						if(ChatHelper()->GameClient()->m_WarList.IsTeamlist(Client.m_aName))
+						{
+							str_format(m_pResponse, m_SizeOfResponse, "%s: '%s' is on my friend list.", m_pMessageAuthor, Client.m_aName);
+							return true;
+						}
+						if(ChatHelper()->GameClient()->m_WarList.IsTeamClanlist(Client.m_aClan))
+						{
+							str_format(m_pResponse, m_SizeOfResponse, "%s: '%s's clan %s is on my friend list.", m_pMessageAuthor, Client.m_aName, Client.m_aClan);
+							return true;
+						}
 						FoundName = true;
 						break;
 					}
 				}
 			}
+			const char *pPrefixStripped = aStrippedMsg;
+			// second search strip some prefix
+			if(!FoundName)
+			{
+				Strict = false;
+				if(str_startswith_nocase(aStrippedMsg, " is "))
+				{
+					pPrefixStripped = aStrippedMsg + str_length(" is ");
+					if(WhyWar(pPrefixStripped))
+						return true;
+				}
+				else if(str_startswith_nocase(aStrippedMsg, "is "))
+				{
+					pPrefixStripped = aStrippedMsg + str_length("is ");
+					if(WhyWar(pPrefixStripped))
+						return true;
+				}
+				else if(str_startswith_nocase(aStrippedMsg, " do you "))
+				{
+					pPrefixStripped = aStrippedMsg + str_length("is ");
+					if(WhyWar(pPrefixStripped))
+						return true;
+				}
+				else if(str_startswith_nocase(aStrippedMsg, "do you "))
+				{
+					pPrefixStripped = aStrippedMsg + str_length("is ");
+					if(WhyWar(pPrefixStripped))
+						return true;
+				}
+				else if(str_startswith_nocase(aStrippedMsg, " on "))
+				{
+					pPrefixStripped = aStrippedMsg + str_length("is ");
+					if(WhyWar(pPrefixStripped))
+						return true;
+				}
+				else if(str_startswith_nocase(aStrippedMsg, "on "))
+				{
+					pPrefixStripped = aStrippedMsg + str_length("is ");
+					if(WhyWar(pPrefixStripped))
+						return true;
+				}
+				else
+					Strict = true;
+			}
 			if(!Strict || FoundName)
 			{
-				str_format(m_pResponse, m_SizeOfResponse, "%s: '%s' is not on my warlist.", m_pMessageAuthor, aStrippedMsg);
+				str_format(m_pResponse, m_SizeOfResponse, "%s: '%s' is not on my warlist.", m_pMessageAuthor, pPrefixStripped);
 				return true;
 			}
 		}
