@@ -491,7 +491,17 @@ bool CReplyToPing::Reply()
 	if(!ChopEnding)
 		ChopEnding = GetSuffixLen(aStrippedMsg, " u warlist");
 	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " on warlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " on war list");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " in warlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " in war list");
+	if(!ChopEnding)
 		ChopEnding = GetSuffixLen(aStrippedMsg, " warlist");
+	if(!ChopEnding)
+		ChopEnding = GetSuffixLen(aStrippedMsg, " war list");
 	if(!ChopEnding)
 		ChopEnding = GetSuffixLen(aStrippedMsg, " on friend list");
 	if(!ChopEnding)
