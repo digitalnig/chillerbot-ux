@@ -641,3 +641,276 @@ void CWarList::Print(const char *pMsg)
 
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", pMsg);
 }
+
+void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
+{
+	if(!g_Config.m_ClWarList)
+		return;
+	if(ClientID != m_pClient->m_Snap.m_LocalClientID)
+		return;
+	char aBuf[512];
+	if(pMsg[0] == '.' || pMsg[0] == ':' || pMsg[0] == '!' || pMsg[0] == '#' || pMsg[0] == '$' || pMsg[0] == '/')
+	{
+		const char *pBuf = pMsg + 1;
+		if(str_startswith(pBuf, "addwar ")) // "addwar <folder> <name can contain spaces>"
+		{
+			pBuf += str_length("addwar ");
+			aBuf[0] = '\0';
+			unsigned int i = 0;
+			for(i = 0; pBuf[i] != '\0' && pBuf[i] != ' ' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aFolder[512];
+			str_copy(aFolder, aBuf, sizeof(aFolder));
+			aBuf[0] = '\0';
+			pBuf += i + 1;
+			for(i = 0; pBuf[i] != '\0' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aName[512];
+			str_copy(aName, aBuf, sizeof(aName));
+			char aFilename[1024];
+			str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/war/%s/names.txt", aFolder);
+			IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_APPEND, IStorage::TYPE_SAVE);
+			if(!File)
+			{
+				str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				return;
+			}
+
+			io_write(File, aName, str_length(aName));
+			io_write_newline(File);
+			io_close(File);
+
+			str_format(aBuf, sizeof(aBuf), "Added '%s' to the folder %s", aName, aFolder);
+			ReloadList();
+			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		}
+		if(str_startswith(pBuf, "addteam ")) // "addteam <folder> <name can contain spaces>"
+		{
+			pBuf += str_length("addteam ");
+			aBuf[0] = '\0';
+			unsigned int i = 0;
+			for(i = 0; pBuf[i] != '\0' && pBuf[i] != ' ' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aFolder[512];
+			str_copy(aFolder, aBuf, sizeof(aFolder));
+			aBuf[0] = '\0';
+			pBuf += i + 1;
+			for(i = 0; pBuf[i] != '\0' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aName[512];
+			str_copy(aName, aBuf, sizeof(aName));
+			char aFilename[1024];
+			str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/team/%s/names.txt", aFolder);
+			IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_APPEND, IStorage::TYPE_SAVE);
+			if(!File)
+			{
+				str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				return;
+			}
+
+			io_write(File, aName, str_length(aName));
+			io_write_newline(File);
+			io_close(File);
+
+			str_format(aBuf, sizeof(aBuf), "Added '%s' to the folder %s", aName, aFolder);
+			ReloadList();
+			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		}
+		else if(str_startswith(pBuf, "peace ")) // "peace <folder>"
+		{
+			pBuf += str_length("peace ");
+			aBuf[0] = '\0';
+			unsigned int i = 0;
+			for(i = 0; pBuf[i] != '\0' && pBuf[i] != ' ' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aFolder[512];
+			str_copy(aFolder, aBuf, sizeof(aFolder));
+			aBuf[0] = '\0';
+			char aPath[1024];
+			char aPeacePath[1024];
+			str_format(aPath, sizeof(aPath), "chillerbot/warlist/war/%s/names.txt", aFolder);
+			str_format(aPeacePath, sizeof(aPeacePath), "chillerbot/warlist/neutral/%s/names.txt", aFolder);
+			IOHANDLE File = Storage()->OpenFile(aPath, IOFLAG_READ, IStorage::TYPE_SAVE);
+			if(!File)
+			{
+				str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aPath);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				return;
+			}
+			io_close(File);
+			File = Storage()->OpenFile(aPeacePath, IOFLAG_READ, IStorage::TYPE_SAVE);
+			if(File)
+			{
+				str_format(aBuf, sizeof(aBuf), "Peace entry already exists '%s'", aPeacePath);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				io_close(File);
+				return;
+			}
+
+			str_format(aPath, sizeof(aPath), "chillerbot/warlist/war/%s", aFolder);
+			str_format(aPeacePath, sizeof(aPeacePath), "chillerbot/warlist/neutral/%s", aFolder);
+			Storage()->RenameFile(aPath, aPeacePath, IStorage::TYPE_SAVE);
+
+			str_format(aBuf, sizeof(aBuf), "Moved folder %s from war/ to neutral/", aFolder);
+			ReloadList();
+			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		}
+		else if(str_startswith(pBuf, "team ")) // "team <folder>"
+		{
+			pBuf += str_length("team ");
+			aBuf[0] = '\0';
+			unsigned int i = 0;
+			for(i = 0; pBuf[i] != '\0' && pBuf[i] != ' ' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aFolder[512];
+			str_copy(aFolder, aBuf, sizeof(aFolder));
+			aBuf[0] = '\0';
+			char aPath[1024];
+			char aTeamPath[1024];
+			str_format(aPath, sizeof(aPath), "chillerbot/warlist/neutral/%s/names.txt", aFolder);
+			str_format(aTeamPath, sizeof(aTeamPath), "chillerbot/warlist/team/%s/names.txt", aFolder);
+			IOHANDLE File = Storage()->OpenFile(aPath, IOFLAG_READ, IStorage::TYPE_SAVE);
+			if(!File)
+			{
+				str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aPath);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				return;
+			}
+			io_close(File);
+			File = Storage()->OpenFile(aTeamPath, IOFLAG_READ, IStorage::TYPE_SAVE);
+			if(File)
+			{
+				str_format(aBuf, sizeof(aBuf), "Peace entry already exists '%s'", aTeamPath);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				io_close(File);
+				return;
+			}
+
+			str_format(aPath, sizeof(aPath), "chillerbot/warlist/neutral/%s", aFolder);
+			str_format(aTeamPath, sizeof(aTeamPath), "chillerbot/warlist/team/%s", aFolder);
+			Storage()->RenameFile(aPath, aTeamPath, IStorage::TYPE_SAVE);
+
+			str_format(aBuf, sizeof(aBuf), "Moved folder %s from neutral/ to team/", aFolder);
+			ReloadList();
+			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		}
+		else if(str_startswith(pBuf, "war ")) // "war <folder>"
+		{
+			pBuf += str_length("war ");
+			aBuf[0] = '\0';
+			unsigned int i = 0;
+			for(i = 0; pBuf[i] != '\0' && pBuf[i] != ' ' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aFolder[512];
+			str_copy(aFolder, aBuf, sizeof(aFolder));
+			aBuf[0] = '\0';
+			char aPath[1024];
+			char aWarPath[1024];
+			str_format(aPath, sizeof(aPath), "chillerbot/warlist/neutral/%s/names.txt", aFolder);
+			str_format(aWarPath, sizeof(aWarPath), "chillerbot/warlist/war/%s/names.txt", aFolder);
+			IOHANDLE File = Storage()->OpenFile(aPath, IOFLAG_READ, IStorage::TYPE_SAVE);
+			if(!File)
+			{
+				str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aPath);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				return;
+			}
+			io_close(File);
+			File = Storage()->OpenFile(aWarPath, IOFLAG_READ, IStorage::TYPE_SAVE);
+			if(File)
+			{
+				str_format(aBuf, sizeof(aBuf), "War entry already exists '%s'", aWarPath);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				io_close(File);
+				return;
+			}
+
+			str_format(aPath, sizeof(aPath), "chillerbot/warlist/neutral/%s", aFolder);
+			str_format(aWarPath, sizeof(aWarPath), "chillerbot/warlist/war/%s", aFolder);
+			Storage()->RenameFile(aPath, aWarPath, IStorage::TYPE_SAVE);
+
+			str_format(aBuf, sizeof(aBuf), "Moved folder %s from neutral/ to war/", aFolder);
+			ReloadList();
+			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		}
+		else if(str_startswith(pBuf, "addreason ")) // "addreason <folder> <reason can contain spaces>"
+		{
+			pBuf += str_length("addreason ");
+			aBuf[0] = '\0';
+			unsigned int i = 0;
+			for(i = 0; pBuf[i] != '\0' && pBuf[i] != ' ' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aFolder[512];
+			str_copy(aFolder, aBuf, sizeof(aFolder));
+			aBuf[0] = '\0';
+			pBuf += i + 1;
+			for(i = 0; pBuf[i] != '\0' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aReason[512];
+			str_copy(aReason, aBuf, sizeof(aReason));
+			const char *pReason = aReason;
+			bool Force = true;
+			if(str_startswith(aReason, "-f "))
+				pReason += str_length("-f ");
+			else if(str_startswith(aReason, "--force "))
+				pReason += str_length("--force ");
+			else
+				Force = false;
+			char aFilename[1024];
+			str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/war/%s/reason.txt", aFolder);
+			IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_READ, IStorage::TYPE_SAVE);
+			if(File)
+			{
+				char *pLine;
+				CLineReader Reader;
+				Reader.Init(File);
+				// read one line only
+				pLine = Reader.Get();
+				if(pLine && pLine[0] != '\0' && !Force)
+				{
+					str_format(aBuf, sizeof(aBuf), "Folder %s already has a reason. Use -f to overwrite reason: %s", aFolder, pLine);
+					m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+					return;
+				}
+				io_close(File);
+			}
+			File = Storage()->OpenFile(aFilename, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+			if(!File)
+			{
+				str_format(aBuf, sizeof(aBuf), "Failed to open file for writing chillerbot/warlist/war/%s/reason.txt", aFolder);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				return;
+			}
+			str_format(aBuf, sizeof(aBuf), "Adding reason to folder='%s' reason='%s'", aFolder, pReason);
+			io_write(File, pReason, str_length(pReason));
+			char aDate[32];
+			str_timestamp(aDate, sizeof(aDate));
+			str_format(aBuf, sizeof(aBuf), " (%s)", aDate);
+			io_write(File, aBuf, str_length(aBuf));
+			io_write_newline(File);
+			io_close(File);
+			ReloadList();
+			m_pClient->m_Chat.AddLine(-1, 0, aBuf);
+		}
+	}
+}
+
+void CWarList::OnMessage(int MsgType, void *pRawMsg)
+{
+	if(MsgType == NETMSGTYPE_SV_CHAT)
+	{
+		CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
+		OnChatMessage(pMsg->m_ClientID, pMsg->m_Team, pMsg->m_pMessage);
+	}
+}

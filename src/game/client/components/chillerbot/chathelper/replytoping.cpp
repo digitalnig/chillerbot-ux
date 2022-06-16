@@ -908,7 +908,7 @@ bool CReplyToPing::Reply()
 
 			// TODO: dont get current dummy but the pinged dummy
 			CCharacter *pChar = ChatHelper()->GameClient()->m_GameWorld.GetCharacterByID(ChatHelper()->GameClient()->m_LocalIDs[g_Config.m_ClDummy]);
-			if(pChar)
+			if(!pChar)
 				continue;
 			vec2 Self = pChar->m_Pos;
 			vec2 Other = Client.m_RenderPos;

@@ -68,9 +68,12 @@ class CWarList : public CComponent
 	int LoadTeamClanNames(const char *pFilename);
 	int LoadWarClanPrefixNames(const char *pFilename);
 
+	void OnChatMessage(int ClientID, int Team, const char *pMsg);
+
 	virtual void OnRender() override;
 	virtual void OnConsoleInit() override;
 	virtual void OnInit() override;
+	virtual void OnMessage(int MsgType, void *pRawMsg) override;
 
 	static void ConWarlist(IConsole::IResult *pResult, void *pUserData);
 
