@@ -220,11 +220,63 @@ bool CReplyToPing::IsEmptyStr(const char *pStr)
 		return true;
 	for(int i = 0; pStr[i] != '\0'; i++)
 		if(pStr[i] != ' ' && pStr[i] != 0x7)
-		{
-			dbg_msg("chiller", "'%c' != ' ' (%d)", pStr[i], pStr[i]);
 			return false;
-		}
 	return true;
+}
+
+int CReplyToPing::IsWarCheckSuffix(const char *pStr)
+{
+	const char aaPrefixes[][16] = {" in", " on", " at", " is"};
+	const char aaYous[][16] = {" u", " you", " your", " ur", " deiner", " deinen", " ju", " ti", " jour", " jur", " tu"};
+	const char aaWarlists[][64] = {
+		" warlist",
+		" war list",
+		" friendlist",
+		" friend list",
+		" team list",
+		" peace list",
+		" enemy list",
+		" enemies",
+		" enemys",
+		" frint list",
+		" frintlist",
+		" frentlist",
+		" frent list",
+		" frenlist",
+		" fren list",
+		" friends",
+		" frints",
+		" frintss",
+		" frents",
+		" friend",
+		" frint",
+		" frent",
+		" fren",
+		" good",
+		" war",
+		" kill",
+		" bad"};
+	char aOnYourWarlist[128];
+	int ChopEnding = 0;
+	for(const auto &aPrefix : aaPrefixes)
+	{
+		for(const auto &aWarlist : aaWarlists)
+		{
+			str_format(aOnYourWarlist, sizeof(aOnYourWarlist), "%s%s", aPrefix, aWarlist);
+			dbg_msg("chiller", "check='%s'", aOnYourWarlist);
+			ChopEnding = GetSuffixLen(pStr, aOnYourWarlist);
+			if(ChopEnding)
+				return ChopEnding;
+			for(const auto &aYou : aaYous)
+			{
+				str_format(aOnYourWarlist, sizeof(aOnYourWarlist), "%s%s%s", aPrefix, aYou, aWarlist);
+				dbg_msg("chiller", "check='%s'", aOnYourWarlist);
+				if((ChopEnding = GetSuffixLen(pStr, aOnYourWarlist)))
+					return ChopEnding;
+			}
+		}
+	}
+	return ChopEnding;
 }
 
 bool CReplyToPing::Reply()
@@ -440,146 +492,9 @@ bool CReplyToPing::Reply()
 	}
 	// still check war for others but now different order
 	// also cover "name is war?" in addition to "is war name?"
-	int ChopEnding = 0;
 	char aStrippedMsg[256];
 	StripSpacesAndPunctuationAndOwnName(m_pMessage, aStrippedMsg, sizeof(aStrippedMsg));
-	// TODO: refactor this before an furture employer can find it!
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is ur war");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is u war");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is your war");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is you war");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " ur war");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " u war");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " your war");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on your warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on you warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on ur warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on u warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on your war list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on you war list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on ur war list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on u war list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in your warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in you warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in ur warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in u warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " your warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " you warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " ur warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " u warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on war list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in war list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " warlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " war list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on friend list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on frint list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on frien list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on friendlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on frintlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " on frienlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in friend list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in frint list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in frien list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in friendlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in frintlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " in frienlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " friend list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " frint list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " frien list");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " friendlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " frintlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " frienlist");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is ur friend");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is u friend");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is your friend");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is you friend");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " ur friend");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " u friend");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " your friend");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is ur frint");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is u frint");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is your frint");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is you frint");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " ur frint");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " u frint");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " your frint");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is ur frent");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is u frent");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is your frent");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " is you frent");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " ur frent");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " u frent");
-	if(!ChopEnding)
-		ChopEnding = GetSuffixLen(aStrippedMsg, " your frent");
+	int ChopEnding = IsWarCheckSuffix(aStrippedMsg);
 	bool Strict = false;
 	if(!ChopEnding)
 	{
