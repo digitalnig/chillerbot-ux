@@ -2013,8 +2013,15 @@ if(CLIENT)
     components/chillerbot/chatcommands.h
     components/chillerbot/chathelper.cpp
     components/chillerbot/chathelper.h
+    components/chillerbot/chathelper/check_team.cpp
+    components/chillerbot/chathelper/check_war_others.cpp
+    components/chillerbot/chathelper/check_war_self.cpp
+    components/chillerbot/chathelper/list_wars.cpp
     components/chillerbot/chathelper/replytoping.cpp
     components/chillerbot/chathelper/replytoping.h
+    components/chillerbot/chathelper/smalltalk.cpp
+    components/chillerbot/chathelper/text_helpers.cpp
+    components/chillerbot/chathelper/where.cpp
     components/chillerbot/chillconsole.cpp
     components/chillerbot/chillconsole.h
     components/chillerbot/chillerbotux.cpp

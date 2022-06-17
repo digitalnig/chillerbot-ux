@@ -29,7 +29,28 @@ class CReplyToPing
 	char *m_pResponse;
 	long unsigned int m_SizeOfResponse;
 
+	// where are you
+	bool Where();
+	// check all wars "who is on your warlist?"
+	bool ListWars();
+	bool SmallTalk(int NameLen, int MsgLen);
 	bool WhyWar(const char *pVictim, bool IsCheck = false);
+	bool IsWarName();
+	bool NameIsWar();
+	/*
+		WhyDoYouKillMe
+
+		Covering all kinds of questions like only "?"
+		But only triggering an response if its coming from an enemy.
+	*/
+	bool WhyDoYouKillMe(int NameLen, int MsgLen);
+	/*
+		DoYouWarMe
+
+		intentionally check for being on warlist
+		also expecting an no if not
+	*/
+	bool DoYouWarMe(int NameLen, int MsgLen);
 	/*
 		GetSuffixLen
 
