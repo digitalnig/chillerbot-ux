@@ -29,7 +29,9 @@
 
 bool CReplyToPing::Where()
 {
-	if(str_find_nocase(m_pMessage, "where are you") || str_find_nocase(m_pMessage, "where r u") || (str_find_nocase(m_pMessage, "where r yo") && !str_find_nocase(m_pMessage, "wo bist")))
+	if(str_find_nocase(m_pMessage, "where are you") || str_find_nocase(m_pMessage, "where r u") || str_find_nocase(m_pMessage, "where r yo") ||
+		str_find_nocase(m_pMessage, "where u") ||
+		str_find_nocase(m_pMessage, "wo bist"))
 	{
 		for(auto &Client : ChatHelper()->GameClient()->m_aClients)
 		{
