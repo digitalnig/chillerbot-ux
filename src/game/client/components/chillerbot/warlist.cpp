@@ -755,6 +755,43 @@ void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
 			m_pClient->m_Chat.AddLine(-2, 0, "!unfriend <folder>");
 			m_pClient->m_Chat.AddLine(-2, 0, "!addreason <folder> [--force] <reason>");
 			m_pClient->m_Chat.AddLine(-2, 0, "!search <name>");
+			m_pClient->m_Chat.AddLine(-2, 0, "!create <war|team|neutral|traitor> <folder>");
+		}
+		else if(str_startswith(pBuf, "create ")) // "create <war|team|neutral|traitor> <folder>"
+		{
+			pBuf += str_length("create ");
+			aBuf[0] = '\0';
+			unsigned int i = 0;
+			for(i = 0; pBuf[i] != '\0' && pBuf[i] != ' ' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aType[512];
+			str_copy(aType, aBuf, sizeof(aType));
+			aBuf[0] = '\0';
+			pBuf += i + 1;
+			for(i = 0; pBuf[i] != '\0' && pBuf[i] != ' ' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aFolder[512];
+			str_copy(aFolder, aBuf, sizeof(aFolder));
+			aBuf[0] = '\0';
+			pBuf += i + 1;
+			if(str_comp(aType, "war") &&
+				str_comp(aType, "team") &&
+				str_comp(aType, "neutral") &&
+				str_comp(aType, "traitor"))
+			{
+				m_pClient->m_Chat.AddLine(-2, 0, "Error type has to be one of those: <war|team|neutral|traitor>");
+				return;
+			}
+			char aPath[IO_MAX_PATH_LENGTH];
+			str_format(aBuf, sizeof(aBuf), "chillerbot/warlist/%s", aType);
+			fs_makedir(Storage()->GetPath(IStorage::TYPE_SAVE, aBuf, aPath, sizeof(aPath)));
+			str_format(aBuf, sizeof(aBuf), "chillerbot/warlist/%s/%s", aType, aFolder);
+			fs_makedir(Storage()->GetPath(IStorage::TYPE_SAVE, aBuf, aPath, sizeof(aPath)));
+
+			str_format(aBuf, sizeof(aBuf), "Created folder %s/%s", aType, aFolder);
+			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 		}
 		else if(str_startswith(pBuf, "search ")) // "search <name can contain spaces>"
 		{
