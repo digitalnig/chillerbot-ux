@@ -6,6 +6,37 @@ then
 	exit 1
 fi
 
+gdb=''
+arg_build_dir=''
+arg_end_args=0
+arg_asan=0
+
+for arg in "$@"
+do
+	if [[ "${arg::1}" == "-" ]] && [[ "$arg_end_args" == "0" ]] 
+	then
+		if [ "$arg" == "-h" ] || [ "$arg" == "--help" ]
+		then
+			echo "usage: $(basename "$0") [OPTION..] [build dir]"
+			exit 0
+		elif [ "$arg" == "--gdb" ]
+		then
+			gdb='gdb -ex=run -ex=bt -ex=quit --args'
+		elif [ "$arg" == "--asan" ]
+		then
+			arg_asan=1
+		elif [ "$arg" == "--" ]
+		then
+			arg_end_args=1
+		else
+			echo "Error: unknown arg '$arg'"
+			exit 1
+		fi
+	else
+		arg_build_dir="$arg"
+	fi
+done
+
 function is_cmd() {
     [ -x "$(command -v "$1")" ] && return 0
 }
@@ -26,13 +57,43 @@ function get_cores() {
     echo "$cores"
 }
 
-mkdir -p test-chillerbot
+if [ "$arg_build_dir" != "" ]
+then
+	if [ ! -d "$arg_build_dir" ]
+	then
+		echo "Error: directory not found '$arg_build_dir'"
+		exit 1
+	fi
+else
+	arg_build_dir=test-chillerbot
+	mkdir -p test-chillerbot
+fi
 
-cd test-chillerbot || exit 1
-cmake .. -DHEADLESS_CLIENT=ON || exit 1
+cd "$arg_build_dir" || exit 1
+if [ "$arg_asan" == "1" ]
+then
+	cp ../valgrind.supp .
+	cp ../ubsan.supp .
+	cp ../valgrind.supp .
+	export UBSAN_OPTIONS=suppressions=./ubsan.supp:log_path=./SAN:print_stacktrace=1:halt_on_errors=0
+	export ASAN_OPTIONS=log_path=./SAN:print_stacktrace=1:check_initialization_order=1:detect_leaks=1:halt_on_errors=0
+	export CC=clang
+	export CXX=clang++
+	export CXXFLAGS="-fsanitize=address,undefined -fsanitize-recover=address,undefined -fno-omit-frame-pointer"
+	export CFLAGS="-fsanitize=address,undefined -fsanitize-recover=address,undefined -fno-omit-frame-pointer"
+	rm SAN.* &> /dev/null
+fi
+if [ ! -f Makefile ]
+then
+	cmake .. -DHEADLESS_CLIENT=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo || exit 1
+fi
 make -j"$(get_cores)" || exit 1
 
 function cleanup() {
+	if test -n "$(find . -maxdepth 1 -name 'SAN.*' -print -quit)"
+	then
+			cat SAN.*
+	fi
 	echo "shutting down test clients and server ..."
 	sleep 1
 	echo "shutdown" > server.fifo
@@ -47,11 +108,16 @@ trap cleanup EXIT
 	echo $'add_path $DATADIR'
 } > storage.cfg
 
-mkdir -p chillerbot/warlist/war/foo
-echo foo > chillerbot/warlist/war/foo/names.txt
-echo fooslongalt >> chillerbot/warlist/war/foo/names.txt
-echo client1 >> chillerbot/warlist/war/foo/names.txt
-echo "bullied me in school" > chillerbot/warlist/war/foo/reason.txt
+# war foo
+mkdir -p 			chillerbot/warlist/war/foo
+echo foo > 			chillerbot/warlist/war/foo/names.txt
+echo fooslongalt >> 		chillerbot/warlist/war/foo/names.txt
+echo client1 >> 		chillerbot/warlist/war/foo/names.txt
+echo "bullied me in school" > 	chillerbot/warlist/war/foo/reason.txt
+# team bar
+mkdir -p 		chillerbot/warlist/team/bar
+echo bar > 		chillerbot/warlist/team/bar/names.txt
+echo clientbar >> 	chillerbot/warlist/team/bar/names.txt
 
 ./DDNet-Server "sv_input_fifo server.fifo;sv_port 17822;sv_spamprotection 0;sv_spam_mute_duration 0" > server.log &
 
@@ -69,7 +135,7 @@ echo "bullied me in school" > chillerbot/warlist/war/foo/reason.txt
 sleep 1
 
 # shellcheck disable=SC2211
-./chillerbot-* \
+$gdb ./chillerbot-* \
 	'cl_input_fifo client2.fifo;
 	cl_shownotifications 0;
 	snd_volume 0;
@@ -85,18 +151,21 @@ do
 	sleep 1
 done
 
+sleep 1
+
 ins=()
 outs=()
 ins+=('client2: ?');outs+=('client1 has war because: bullied me in school')
+# ins+=('client2: is bar your friend?');outs+=('client1 yes')
 ins+=('client2: is neutralPlyr on war list?');outs+=("client1: 'neutralPlyr' is not on my warlist.")
 ins+=('client2: who is against you?');outs+=('client1 1 of my 1 enemies are online: client1')
-ins+=('client2: who is with you?');outs+=('client1 currently 0 of my 0 friends are connected')
+ins+=('client2: who is with you?');outs+=('client1 currently 0 of my 1 friends are connected')
 ins+=('client2: u war me?');outs+=('client1 you have war because: bullied me in school')
-ins+=('client2 who is with you?');outs+=('client1 currently 0 of my 0 friends are connected')
+ins+=('client2 who is with you?');outs+=('client1 currently 0 of my 1 friends are connected')
 ins+=('kan i di was frage client2?');outs+=('client1 frag! Aber es kann sein, dass ich nicht antworte.')
 ins+=('client2: you war me?');outs+=('client1 you have war because: bullied me in school')
 ins+=('client2: who do you war?');outs+=('client1 1 of my 1 enemies are online: client1')
-ins+=('client2: do you even have any friends?');outs+=('client1 currently 0 of my 0 friends are connected')
+ins+=('client2: do you even have any friends?');outs+=('client1 currently 0 of my 1 friends are connected')
 ins+=('client2: why foo war?');outs+=('client1: foo has war because: bullied me in school')
 ins+=('client2: warum hat       foo war?');outs+=('client1: foo has war because: bullied me in school')
 ins+=('client2 hast du eig war mit samplename300 ?');outs+=("client1: 'samplename300' is not on my warlist.")
@@ -174,6 +243,7 @@ echo "player_name not_client1" > client1.fifo
 ins=()
 outs=()
 ins+=('client2: are we peace');outs+=('not_client1 your name is neither on my friend nor enemy list.')
+ins+=('client2: is war foo?');outs+=('not_client1: foo has war because: bullied me in school')
 ins+=('client2 do you have war with client9 ?');outs+=("not_client1: 'client9' is not on my warlist.")
 ins+=('client2: where are you?');outs+=('not_client1 i am literally next to you (on your right)')
 ins+=('client2: client1 is ur war ?');outs+=('not_client1: client1 has war because: bullied me in school')
