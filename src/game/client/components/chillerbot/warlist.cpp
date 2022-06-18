@@ -27,11 +27,13 @@ void CWarList::ReloadList()
 	m_vWarlist.clear();
 	m_vTeamlist.clear();
 	m_vTraitorlist.clear();
+	m_vNeutrallist.clear();
 	m_vWarClanlist.clear();
 	m_vTeamClanlist.clear();
 	LoadWarList();
 	LoadTeamList();
 	LoadTraitorList();
+	LoadNeutralList();
 	LoadWarClanList();
 	LoadTeamClanList();
 	LoadWarClanPrefixList();
@@ -52,6 +54,14 @@ void CWarList::GetWarlistPathByName(const char *pName, int Size, char *pPath)
 			str_copy(pPath, Entry.second.c_str(), Size);
 }
 
+void CWarList::GetTeamlistPathByName(const char *pName, int Size, char *pPath)
+{
+	pPath[0] = '\0';
+	for(auto &Entry : m_vTeamlist)
+		if(std::string(pName) == Entry.first)
+			str_copy(pPath, Entry.second.c_str(), Size);
+}
+
 void CWarList::GetTraitorlistPathByName(const char *pName, int Size, char *pPath)
 {
 	pPath[0] = '\0';
@@ -60,10 +70,18 @@ void CWarList::GetTraitorlistPathByName(const char *pName, int Size, char *pPath
 			str_copy(pPath, Entry.second.c_str(), Size);
 }
 
+void CWarList::GetNeutrallistPathByName(const char *pName, int Size, char *pPath)
+{
+	pPath[0] = '\0';
+	for(auto &Entry : m_vNeutrallist)
+		if(std::string(pName) == Entry.first)
+			str_copy(pPath, Entry.second.c_str(), Size);
+}
+
 int CWarList::LoadWarDir(const char *pDirname, int IsDir, int DirType, void *pUser)
 {
 	CWarList *pSelf = (CWarList *)pUser;
-	if(!IsDir || !str_comp(".", pDirname))
+	if(!IsDir || !str_comp(".", pDirname) || !str_comp("..", pDirname))
 		return 0;
 	char aFilename[1024];
 	str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/war/%s", pDirname);
@@ -73,21 +91,31 @@ int CWarList::LoadWarDir(const char *pDirname, int IsDir, int DirType, void *pUs
 int CWarList::LoadTeamDir(const char *pDirname, int IsDir, int DirType, void *pUser)
 {
 	CWarList *pSelf = (CWarList *)pUser;
-	if(!IsDir || !str_comp(".", pDirname))
+	if(!IsDir || !str_comp(".", pDirname) || !str_comp("..", pDirname))
 		return 0;
 	char aFilename[1024];
-	str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/team/%s/names.txt", pDirname);
+	str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/team/%s", pDirname);
 	return pSelf->LoadTeamNames(aFilename);
 }
 
 int CWarList::LoadTraitorDir(const char *pDirname, int IsDir, int DirType, void *pUser)
 {
 	CWarList *pSelf = (CWarList *)pUser;
-	if(!IsDir || !str_comp(".", pDirname))
+	if(!IsDir || !str_comp(".", pDirname) || !str_comp("..", pDirname))
 		return 0;
 	char aFilename[1024];
 	str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/traitor/%s", pDirname);
 	return pSelf->LoadTraitorNames(aFilename);
+}
+
+int CWarList::LoadNeutralDir(const char *pDirname, int IsDir, int DirType, void *pUser)
+{
+	CWarList *pSelf = (CWarList *)pUser;
+	if(!IsDir || !str_comp(".", pDirname) || !str_comp("..", pDirname))
+		return 0;
+	char aFilename[1024];
+	str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/neutral/%s", pDirname);
+	return pSelf->LoadNeutralNames(aFilename);
 }
 
 void CWarList::LoadWarList()
@@ -103,6 +131,11 @@ void CWarList::LoadTeamList()
 void CWarList::LoadTraitorList()
 {
 	Storage()->ListDirectory(IStorage::TYPE_ALL, "chillerbot/warlist/traitor", LoadTraitorDir, this);
+}
+
+void CWarList::LoadNeutralList()
+{
+	Storage()->ListDirectory(IStorage::TYPE_ALL, "chillerbot/warlist/neutral", LoadNeutralDir, this);
 }
 
 void CWarList::LoadWarClanList()
@@ -130,7 +163,7 @@ bool CWarList::IsWarlist(const char *pName)
 
 bool CWarList::IsTeamlist(const char *pName)
 {
-	return (std::find(m_vTeamlist.begin(), m_vTeamlist.end(), std::string(pName)) != m_vTeamlist.end());
+	return std::any_of(std::begin(m_vTeamlist), std::end(m_vTeamlist), [&pName](const std::pair<std::string, std::string> &Entry) { return std::string(pName) == Entry.first; });
 }
 
 bool CWarList::IsTraitorlist(const char *pName)
@@ -427,18 +460,19 @@ int CWarList::LoadWarNames(const char *pDir)
 	return 0;
 }
 
-int CWarList::LoadTeamNames(const char *pFilename)
+int CWarList::LoadTeamNames(const char *pDir)
 {
 	if(!Storage())
 		return 1;
 
-	// exec the file
-	IOHANDLE File = Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
+	char aFilename[IO_MAX_PATH_LENGTH];
+	str_format(aFilename, sizeof(aFilename), "%s/names.txt", pDir);
+	IOHANDLE File = Storage()->OpenFile(pDir, IOFLAG_READ, IStorage::TYPE_ALL);
 
 	char aBuf[128];
 	if(!File)
 	{
-		// str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", pFilename);
+		// str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
 		// Print(aBuf);
 		return 0;
 	}
@@ -446,7 +480,7 @@ int CWarList::LoadTeamNames(const char *pFilename)
 	char *pLine;
 	CLineReader Reader;
 
-	str_format(aBuf, sizeof(aBuf), "loading team list file '%s'", pFilename);
+	str_format(aBuf, sizeof(aBuf), "loading team list file '%s'", aFilename);
 	Print(aBuf);
 	Reader.Init(File);
 
@@ -454,7 +488,10 @@ int CWarList::LoadTeamNames(const char *pFilename)
 	{
 		if(!str_skip_whitespaces(pLine)[0])
 			continue;
-		m_vTeamlist.emplace_back(std::string(pLine));
+		std::pair<std::string, std::string> Entry;
+		Entry.first = std::string(pLine);
+		Entry.second = std::string(pDir);
+		m_vTeamlist.emplace_back(Entry);
 	}
 
 	io_close(File);
@@ -493,6 +530,43 @@ int CWarList::LoadTraitorNames(const char *pDir)
 		Entry.first = std::string(pLine);
 		Entry.second = std::string(pDir);
 		m_vTraitorlist.emplace_back(Entry);
+	}
+
+	io_close(File);
+	return 0;
+}
+
+int CWarList::LoadNeutralNames(const char *pDir)
+{
+	if(!Storage())
+		return 1;
+
+	char aFilename[IO_MAX_PATH_LENGTH];
+	str_format(aFilename, sizeof(aFilename), "%s/names.txt", pDir);
+	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_READ, IStorage::TYPE_ALL);
+
+	char aBuf[128];
+	if(!File)
+	{
+		// str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
+		// Print(aBuf);
+		return 0;
+	}
+	char *pLine;
+	CLineReader Reader;
+
+	str_format(aBuf, sizeof(aBuf), "loading neutral list file '%s'", aFilename);
+	Print(aBuf);
+	Reader.Init(File);
+
+	while((pLine = Reader.Get()))
+	{
+		if(!str_skip_whitespaces(pLine)[0])
+			continue;
+		std::pair<std::string, std::string> Entry;
+		Entry.first = std::string(pLine);
+		Entry.second = std::string(pDir);
+		m_vNeutrallist.emplace_back(Entry);
 	}
 
 	io_close(File);
@@ -670,7 +744,70 @@ void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
 	if(pMsg[0] == '.' || pMsg[0] == ':' || pMsg[0] == '!' || pMsg[0] == '#' || pMsg[0] == '$' || pMsg[0] == '/')
 	{
 		const char *pBuf = pMsg + 1;
-		if(str_startswith(pBuf, "addwar ")) // "addwar <folder> <name can contain spaces>"
+		if(str_startswith(pBuf, "help"))
+		{
+			m_pClient->m_Chat.AddLine(-2, 0, "=== chillerbot-ux warlist ===");
+			m_pClient->m_Chat.AddLine(-2, 0, "!addwar <folder> <name>");
+			m_pClient->m_Chat.AddLine(-2, 0, "!addteam <folder> <name>");
+			m_pClient->m_Chat.AddLine(-2, 0, "!peace <folder>");
+			m_pClient->m_Chat.AddLine(-2, 0, "!war <folder>");
+			m_pClient->m_Chat.AddLine(-2, 0, "!team <folder>");
+			m_pClient->m_Chat.AddLine(-2, 0, "!unfriend <folder>");
+			m_pClient->m_Chat.AddLine(-2, 0, "!addreason <folder> [--force] <reason>");
+			m_pClient->m_Chat.AddLine(-2, 0, "!search <name>");
+		}
+		else if(str_startswith(pBuf, "search ")) // "search <name can contain spaces>"
+		{
+			pBuf += str_length("search ");
+			char aFilenames[3][128];
+			GetWarlistPathByName(pBuf, sizeof(aBuf), aBuf);
+			if(aBuf[0])
+				str_format(aFilenames[0], sizeof(aFilenames[0]), "%s/names.txt", aBuf);
+			else
+				aFilenames[0][0] = '\0';
+			GetTraitorlistPathByName(pBuf, sizeof(aBuf), aBuf);
+			if(aBuf[0])
+				str_format(aFilenames[1], sizeof(aFilenames[1]), "%s/names.txt", aBuf);
+			else
+				aFilenames[1][0] = '\0';
+			GetNeutrallistPathByName(pBuf, sizeof(aBuf), aBuf);
+			if(aBuf[0])
+				str_format(aFilenames[2], sizeof(aFilenames[2]), "%s/names.txt", aBuf);
+			else
+				aFilenames[2][0] = '\0';
+
+			bool Found = false;
+			for(auto &pFilename : aFilenames)
+			{
+				if(!pFilename[0])
+					continue;
+
+				IOHANDLE File = Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
+
+				if(!File)
+					continue;
+
+				char *pLine;
+				CLineReader Reader;
+				Reader.Init(File);
+				// read one line only
+				pLine = Reader.Get();
+				if(pLine)
+				{
+					str_format(aBuf, sizeof(aBuf), "[%s] names: %s", pFilename, pLine);
+					m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				}
+
+				io_close(File);
+				Found = true;
+			}
+			if(!Found)
+			{
+				m_pClient->m_Chat.AddLine(-2, 0, "Name not found.");
+				return;
+			}
+		}
+		else if(str_startswith(pBuf, "addwar ")) // "addwar <folder> <name can contain spaces>"
 		{
 			pBuf += str_length("addwar ");
 			aBuf[0] = '\0';
@@ -777,6 +914,46 @@ void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
 			Storage()->RenameFile(aPath, aPeacePath, IStorage::TYPE_SAVE);
 
 			str_format(aBuf, sizeof(aBuf), "Moved folder %s from war/ to neutral/", aFolder);
+			ReloadList();
+			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		}
+		else if(str_startswith(pBuf, "unfriend ")) // "unfriend <folder>"
+		{
+			pBuf += str_length("unfriend ");
+			aBuf[0] = '\0';
+			unsigned int i = 0;
+			for(i = 0; pBuf[i] != '\0' && pBuf[i] != ' ' && i < sizeof(aBuf); i++)
+				aBuf[i] = pBuf[i];
+			aBuf[i] = '\0';
+			char aFolder[512];
+			str_copy(aFolder, aBuf, sizeof(aFolder));
+			aBuf[0] = '\0';
+			char aPath[1024];
+			char aNeutralPath[1024];
+			str_format(aPath, sizeof(aPath), "chillerbot/warlist/team/%s/names.txt", aFolder);
+			str_format(aNeutralPath, sizeof(aNeutralPath), "chillerbot/warlist/neutral/%s/names.txt", aFolder);
+			IOHANDLE File = Storage()->OpenFile(aPath, IOFLAG_READ, IStorage::TYPE_SAVE);
+			if(!File)
+			{
+				str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aPath);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				return;
+			}
+			io_close(File);
+			File = Storage()->OpenFile(aNeutralPath, IOFLAG_READ, IStorage::TYPE_SAVE);
+			if(File)
+			{
+				str_format(aBuf, sizeof(aBuf), "Neutral entry already exists '%s'", aNeutralPath);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				io_close(File);
+				return;
+			}
+
+			str_format(aPath, sizeof(aPath), "chillerbot/warlist/team/%s", aFolder);
+			str_format(aNeutralPath, sizeof(aNeutralPath), "chillerbot/warlist/neutral/%s", aFolder);
+			Storage()->RenameFile(aPath, aNeutralPath, IStorage::TYPE_SAVE);
+
+			str_format(aBuf, sizeof(aBuf), "Moved folder %s from team/ to neutral/", aFolder);
 			ReloadList();
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 		}

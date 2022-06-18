@@ -36,18 +36,31 @@ class CWarList : public CComponent
 		pair<PlayerName, FilePath>
 	*/
 	std::vector<std::pair<std::string, std::string>> m_vWarlist;
-	std::vector<std::string> m_vTeamlist;
+	/*
+		m_vZea,list
+
+		pair<PlayerName, FilePath>
+	*/
+	std::vector<std::pair<std::string, std::string>> m_vTeamlist;
 	/*
 		m_vTraitorlist
 
 		pair<PlayerName, FilePath>
 	*/
 	std::vector<std::pair<std::string, std::string>> m_vTraitorlist;
+	/*
+		m_vNeutrallist
+
+		pair<PlayerName, FilePath>
+	*/
+	std::vector<std::pair<std::string, std::string>> m_vNeutrallist;
 	std::vector<std::string> m_vWarClanlist;
 	std::vector<std::string> m_vTeamClanlist;
 	std::vector<std::string> m_vWarClanPrefixlist;
 	void GetWarlistPathByName(const char *pName, int Size, char *pPath);
+	void GetTeamlistPathByName(const char *pName, int Size, char *pPath);
 	void GetTraitorlistPathByName(const char *pName, int Size, char *pPath);
+	void GetNeutrallistPathByName(const char *pName, int Size, char *pPath);
 	int m_WarDirs;
 	int m_TeamDirs;
 	int m_TraitorDirs;
@@ -55,15 +68,18 @@ class CWarList : public CComponent
 	static int LoadWarDir(const char *pDirname, int IsDir, int DirType, void *pUser);
 	static int LoadTeamDir(const char *pDirname, int IsDir, int DirType, void *pUser);
 	static int LoadTraitorDir(const char *pDirname, int IsDir, int DirType, void *pUser);
+	static int LoadNeutralDir(const char *pDirname, int IsDir, int DirType, void *pUser);
 	void LoadWarList();
 	void LoadTeamList();
 	void LoadTraitorList();
+	void LoadNeutralList();
 	void LoadWarClanList();
 	void LoadTeamClanList();
 	void LoadWarClanPrefixList();
 	int LoadWarNames(const char *pDir);
-	int LoadTeamNames(const char *pFilename);
+	int LoadTeamNames(const char *pDir);
 	int LoadTraitorNames(const char *pDir);
+	int LoadNeutralNames(const char *pDir);
 	int LoadWarClanNames(const char *pFilename);
 	int LoadTeamClanNames(const char *pFilename);
 	int LoadWarClanPrefixNames(const char *pFilename);
