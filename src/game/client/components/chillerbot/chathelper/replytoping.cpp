@@ -97,6 +97,8 @@ bool CReplyToPing::Reply()
 			return true;
 		}
 	}
+	if(ListClanWars())
+		return true;
 	// check war for others "is war name?"
 	if(IsWarName())
 		return true;

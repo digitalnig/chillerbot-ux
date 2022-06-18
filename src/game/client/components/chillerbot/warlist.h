@@ -84,8 +84,10 @@ class CWarList : public CComponent
 	int64_t m_NextReload;
 
 public:
-	void GetWarReason(const char *pName, char *pReason, int ReasonSize);
 	virtual int Sizeof() const override { return sizeof(*this); }
+
+	void GetWarReason(const char *pName, char *pReason, int ReasonSize);
+	void GetWarClansStr(char *pBuf, int Size);
 
 	// non cached used when its about the name and there is no up to date id
 	bool IsWar(const char *pName, const char *pClan);

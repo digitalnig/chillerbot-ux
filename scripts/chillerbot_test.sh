@@ -114,10 +114,13 @@ echo foo > 			chillerbot/warlist/war/foo/names.txt
 echo fooslongalt >> 		chillerbot/warlist/war/foo/names.txt
 echo client1 >> 		chillerbot/warlist/war/foo/names.txt
 echo "bullied me in school" > 	chillerbot/warlist/war/foo/reason.txt
+echo "teamfoo" > 		chillerbot/warlist/warlist_clans.txt
 # team bar
-mkdir -p 		chillerbot/warlist/team/bar
-echo bar > 		chillerbot/warlist/team/bar/names.txt
-echo clientbar >> 	chillerbot/warlist/team/bar/names.txt
+mkdir -p 			chillerbot/warlist/team/bar
+echo bar > 			chillerbot/warlist/team/bar/names.txt
+echo clientbar >> 		chillerbot/warlist/team/bar/names.txt
+echo "# i joined foo" >>	chillerbot/warlist/warlist_clans.txt
+echo "# teamfoo" >> 		chillerbot/warlist/warlist_clans.txt
 
 ./DDNet-Server "sv_input_fifo server.fifo;sv_port 17822;sv_spamprotection 0;sv_spam_mute_duration 0" > server.log &
 
@@ -155,6 +158,8 @@ sleep 1
 
 ins=()
 outs=()
+ins+=('client2: what??!?!?¿??');outs+=('client1 has war because: bullied me in school')
+ins+=('client2: who is clan war?');outs+=('client1 I war those clans: teamfoo')
 ins+=('client2: ?');outs+=('client1 has war because: bullied me in school')
 # ins+=('client2: is bar your friend?');outs+=('client1 yes')
 ins+=('client2: is neutralPlyr on war list?');outs+=("client1: 'neutralPlyr' is not on my warlist.")
@@ -163,7 +168,7 @@ ins+=('client2: who is with you?');outs+=('client1 currently 0 of my 1 friends a
 ins+=('client2: u war me?');outs+=('client1 you have war because: bullied me in school')
 ins+=('client2 who is with you?');outs+=('client1 currently 0 of my 1 friends are connected')
 ins+=('kan i di was frage client2?');outs+=('client1 frag! Aber es kann sein, dass ich nicht antworte.')
-ins+=('client2: you war me?');outs+=('client1 you have war because: bullied me in school')
+ins+=('client2: you war me?');outs+=('client1: client1 has war because: bullied me in school')
 ins+=('client2: who do you war?');outs+=('client1 1 of my 1 enemies are online: client1')
 ins+=('client2: do you even have any friends?');outs+=('client1 currently 0 of my 1 friends are connected')
 ins+=('client2: why foo war?');outs+=('client1: foo has war because: bullied me in school')
@@ -244,6 +249,8 @@ ins=()
 outs=()
 ins+=('client2: are we peace');outs+=('not_client1 your name is neither on my friend nor enemy list.')
 ins+=('client2: is war foo?');outs+=('not_client1: foo has war because: bullied me in school')
+ins+=('client2: do you war me?');outs+=("not_client1: 'not_client1' is not on my warlist.")
+ins+=('client2: am i on warlist?');outs+=("not_client1: 'not_client1' is not on my warlist.")
 ins+=('client2 do you have war with client9 ?');outs+=("not_client1: 'client9' is not on my warlist.")
 ins+=('client2: where are you?');outs+=('not_client1 i am literally next to you (on your right)')
 ins+=('client2: client1 is ur war ?');outs+=('not_client1: client1 has war because: bullied me in school')

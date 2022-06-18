@@ -35,6 +35,7 @@ class CReplyToPing
 	bool ListWars();
 	bool SmallTalk(int NameLen, int MsgLen);
 	bool WhyWar(const char *pVictim, bool IsCheck = false);
+	bool ListClanWars();
 	bool IsWarName();
 	bool NameIsWar();
 	/*
@@ -60,8 +61,8 @@ class CReplyToPing
 	/*
 		StripSpacesAndPunctuationAndOwnName
 
-		If the input pStr "yourname: hello world  ???"
-		is given the pStripped will point to "hello world"
+		If the input pStr "yourname: hello, world  ??! ? !?"
+		is given the pStripped will point to "hello, world"
 	*/
 	void StripSpacesAndPunctuationAndOwnName(const char *pStr, char *pStripped, int SizeOfStripped);
 	/*

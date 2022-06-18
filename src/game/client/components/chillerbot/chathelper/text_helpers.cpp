@@ -59,10 +59,11 @@ void CReplyToPing::StripSpacesAndPunctuationAndOwnName(const char *pStr, char *p
 	}
 	char aBuf[512];
 	str_copy(aBuf, pStr, sizeof(aBuf));
-	while(str_endswith(aBuf, "?")) // cut off the question marks
-		aBuf[str_length(aBuf) - 1] = '\0';
-	while(str_endswith(aBuf, " ")) // cut off spaces
-		aBuf[str_length(aBuf) - 1] = '\0';
+	char aPuncts[][4] = {"?", "!", ".", ",", "¿", " "};
+	for(int i = 0; i < 10; i++) // strip up to 10 alternating punctuations
+		for(auto const &Punc : aPuncts)
+			while(str_endswith(aBuf, Punc)) // cut off punctuation and spaces
+				aBuf[str_length(aBuf) - str_length(Punc)] = '\0';
 	int Offset = 0;
 	const char *pName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[0]].m_aName;
 	const char *pDummyName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[1]].m_aName;

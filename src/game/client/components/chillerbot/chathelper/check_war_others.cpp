@@ -30,6 +30,8 @@ bool CReplyToPing::WhyWar(const char *pVictim, bool IsCheck)
 	if(!pVictim)
 		return false;
 
+	if(!str_comp(pVictim, "me"))
+		pVictim = m_pMessageAuthor;
 	bool HasWar = true;
 	// aVictim also has to hold the full own name to match the chop off
 	char aVictim[MAX_NAME_LENGTH + 3 + MAX_NAME_LENGTH];
@@ -96,6 +98,9 @@ bool CReplyToPing::WhyWar(const char *pVictim, bool IsCheck)
 		if(pFriend)
 			str_copy(aVictim, pFriend, sizeof(aVictim));
 	}
+
+	if(!str_comp(aVictim, "me"))
+		str_copy(aVictim, m_pMessageAuthor, sizeof(aVictim));
 
 	char aWarReason[128];
 	if(HasWar || ChatHelper()->GameClient()->m_WarList.IsWarlist(aVictim) || ChatHelper()->GameClient()->m_WarList.IsTraitorlist(aVictim))

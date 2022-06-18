@@ -33,6 +33,7 @@ public:
 	bool IsInsult(const char *pMsg);
 	bool IsQuestionWhy(const char *pMsg);
 	bool IsQuestionHow(const char *pMsg);
+	bool IsQuestionWhoWhichWhat(const char *pMsg);
 };
 
 #endif

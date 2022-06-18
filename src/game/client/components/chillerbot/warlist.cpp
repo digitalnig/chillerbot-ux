@@ -207,6 +207,24 @@ void CWarList::GetWarReason(const char *pName, char *pReason, int ReasonSize)
 	}
 }
 
+void CWarList::GetWarClansStr(char *pBuf, int Size)
+{
+	if(!pBuf)
+		return;
+	char aBuf[256];
+	aBuf[0] = '\0';
+	for(auto &War : m_vWarClanlist)
+	{
+		const char *pWar = War.c_str();
+		if(str_startswith(pWar, "# "))
+			continue;
+		if(aBuf[0])
+			str_append(aBuf, ", ", sizeof(aBuf));
+		str_append(aBuf, pWar, sizeof(aBuf));
+	}
+	str_copy(pBuf, aBuf, Size);
+}
+
 bool CWarList::IsWar(const char *pName, const char *pClan)
 {
 	return IsWarlist(pName) || IsTraitorlist(pName) || IsWarClanlist(pClan);

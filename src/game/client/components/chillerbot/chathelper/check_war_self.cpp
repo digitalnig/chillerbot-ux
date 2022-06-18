@@ -31,7 +31,10 @@
 */
 bool CReplyToPing::WhyDoYouKillMe(int NameLen, int MsgLen)
 {
+	char aStripped[128];
+	StripSpacesAndPunctuationAndOwnName(m_pMessage, aStripped, sizeof(aStripped));
 	if(LangParser().IsQuestionWhy(m_pMessage) || (str_find(m_pMessage, "?") && MsgLen < NameLen + 4) ||
+		((str_find(aStripped, "what") || str_find(aStripped, "wat") || str_find(aStripped, "warum") || str_find(aStripped, "why") || str_find(aStripped, "waht")) && str_length(aStripped) < 8) ||
 		((str_find(m_pMessage, "stop") || str_find_nocase(m_pMessage, "help")) && (ChatHelper()->GameClient()->m_WarList.IsWarlist(m_pMessageAuthor) || ChatHelper()->GameClient()->m_WarList.IsTraitorlist(m_pMessageAuthor))))
 	{
 		char aWarReason[128];
