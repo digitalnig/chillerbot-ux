@@ -262,6 +262,8 @@ bool CReplyToPing::Reply()
 			return true;
 		}
 	}
+	if(WhatOs())
+		return true;
 	// weeb
 	if(str_find_nocase(m_pMessage, "uwu"))
 	{

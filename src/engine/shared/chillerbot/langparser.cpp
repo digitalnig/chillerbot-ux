@@ -262,6 +262,30 @@ bool CLangParser::IsQuestionHow(const char *pMsg)
 	return false;
 }
 
+bool CLangParser::IsQuestionWhichWhat(const char *pMsg)
+{
+	const char aHows[][128] = {
+		"which",
+		"wich",
+		"wihc",
+		"wihch",
+		"wat",
+		"what"};
+	for(const auto &pHow : aHows)
+	{
+		const char *pHL = str_find_nocase(pMsg, pHow);
+		while(pHL)
+		{
+			int Length = str_length(pHow);
+
+			if((pMsg == pHL || pHL[-1] == ' ') && (pHL[Length] == 0 || pHL[Length] == ' ' || pHL[Length] == '.' || pHL[Length] == '!' || pHL[Length] == ',' || pHL[Length] == '?' || pHL[Length] == pHL[Length - 1]))
+				return true;
+			pHL = str_find_nocase(pHL + 1, pHow);
+		}
+	}
+	return false;
+}
+
 bool CLangParser::IsQuestionWhoWhichWhat(const char *pMsg)
 {
 	const char aHows[][128] = {

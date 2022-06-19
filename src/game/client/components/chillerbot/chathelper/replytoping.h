@@ -29,6 +29,7 @@ class CReplyToPing
 	char *m_pResponse;
 	long unsigned int m_SizeOfResponse;
 
+	bool WhatOs();
 	// where are you
 	bool Where();
 	// check all wars "who is on your warlist?"

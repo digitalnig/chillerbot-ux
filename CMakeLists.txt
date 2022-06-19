@@ -2018,6 +2018,7 @@ if(CLIENT)
     components/chillerbot/chathelper/check_war_self.cpp
     components/chillerbot/chathelper/list_clan_wars.cpp
     components/chillerbot/chathelper/list_wars.cpp
+    components/chillerbot/chathelper/operating_system.cpp
     components/chillerbot/chathelper/replytoping.cpp
     components/chillerbot/chathelper/replytoping.h
     components/chillerbot/chathelper/smalltalk.cpp
