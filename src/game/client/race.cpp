@@ -118,10 +118,41 @@ bool CRaceHelper::IsFinish(CGameClient *pClient, vec2 Pos1, vec2 Pos2)
 	return false;
 }
 
-bool CRaceHelper::IsNearFinish(CGameClient *pClient, vec2 Pos)
+bool CRaceHelper::IsNearStart(CGameClient *pClient, vec2 Pos, int RadiusInTiles)
 {
 	CCollision *pCollision = pClient->Collision();
-	float d = 4 * 32.0f;
+	float d = RadiusInTiles * 32.0f;
+	vec2 TL = Pos;
+	vec2 TR = Pos;
+	vec2 BL = Pos;
+	vec2 BR = Pos;
+	// top left
+	TL.x = clamp(TL.x - d, 0.0f, (float)(pCollision->GetWidth() * 32));
+	TL.y = clamp(TL.y - d, 0.0f, (float)(pCollision->GetHeight() * 32));
+	// top right
+	TR.x = clamp(TR.x + d, 0.0f, (float)(pCollision->GetWidth() * 32));
+	TR.y = clamp(TR.y - d, 0.0f, (float)(pCollision->GetHeight() * 32));
+	// bottom left
+	BL.x = clamp(BL.x - d, 0.0f, (float)(pCollision->GetWidth() * 32));
+	BL.y = clamp(BL.y + d, 0.0f, (float)(pCollision->GetHeight() * 32));
+	// bottom right
+	BR.x = clamp(BR.x + d, 0.0f, (float)(pCollision->GetWidth() * 32));
+	BR.y = clamp(BR.y + d, 0.0f, (float)(pCollision->GetHeight() * 32));
+	if(IsStart(pClient, TL, TR))
+		return true;
+	if(IsStart(pClient, BL, BR))
+		return true;
+	if(IsStart(pClient, TL, BL))
+		return true;
+	if(IsStart(pClient, TR, BR))
+		return true;
+	return false;
+}
+
+bool CRaceHelper::IsNearFinish(CGameClient *pClient, vec2 Pos, int RadiusInTiles)
+{
+	CCollision *pCollision = pClient->Collision();
+	float d = RadiusInTiles * 32.0f;
 	vec2 TL = Pos;
 	vec2 TR = Pos;
 	vec2 BL = Pos;
@@ -146,5 +177,23 @@ bool CRaceHelper::IsNearFinish(CGameClient *pClient, vec2 Pos)
 		return true;
 	if(IsFinish(pClient, TR, BR))
 		return true;
+	return false;
+}
+
+bool CRaceHelper::IsClusterRangeFinish(class CGameClient *pClient, vec2 Pos, int RadiusInTiles)
+{
+	for(int x = -RadiusInTiles * 32; x < RadiusInTiles * 32; x += 4 * 32)
+		for(int y = -RadiusInTiles * 32; y < RadiusInTiles * 32; y += 4 * 32)
+			if(IsNearFinish(pClient, vec2(Pos.x + x, Pos.y + y)))
+				return true;
+	return false;
+}
+
+bool CRaceHelper::IsClusterRangeStart(class CGameClient *pClient, vec2 Pos, int RadiusInTiles)
+{
+	for(int x = -RadiusInTiles * 32; x < RadiusInTiles * 32; x += 4 * 32)
+		for(int y = -RadiusInTiles * 32; y < RadiusInTiles * 32; y += 4 * 32)
+			if(IsNearStart(pClient, vec2(Pos.x + x, Pos.y + y)))
+				return true;
 	return false;
 }

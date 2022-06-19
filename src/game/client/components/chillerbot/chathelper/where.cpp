@@ -48,6 +48,22 @@ bool CReplyToPing::Where()
 			vec2 Other = Client.m_RenderPos;
 			float distY = abs(Self.y - Other.y);
 			float distX = abs(Self.x - Other.x);
+			// instead of some unimaginable long distance number in tiles
+			// prefer saying "finish" or "end" without any relation to the other player
+			// since it does not matter in this case
+			if(distX > 50 * 32 && distY > 50 * 32)
+			{
+				if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && CRaceHelper::IsClusterRangeFinish(ChatHelper()->GameClient(), ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
+				{
+					str_format(m_pResponse, m_SizeOfResponse, "%s I am at the finish line", m_pMessageAuthor);
+					return true;
+				}
+				else if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && CRaceHelper::IsClusterRangeStart(ChatHelper()->GameClient(), ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
+				{
+					str_format(m_pResponse, m_SizeOfResponse, "%s I am at start", m_pMessageAuthor);
+					return true;
+				}
+			}
 			if(distX < 5 * 32 && distY < 5 * 32)
 			{
 				if(distX > distY)
@@ -127,7 +143,12 @@ bool CReplyToPing::Where()
 				}
 			}
 		}
-		str_format(m_pResponse, m_SizeOfResponse, "%s no idea. Where are you?", m_pMessageAuthor);
+		if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && CRaceHelper::IsNearFinish(ChatHelper()->GameClient(), ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
+			str_format(m_pResponse, m_SizeOfResponse, "%s I am at the finish line", m_pMessageAuthor);
+		else if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && CRaceHelper::IsNearStart(ChatHelper()->GameClient(), ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
+			str_format(m_pResponse, m_SizeOfResponse, "%s I am at start", m_pMessageAuthor);
+		else
+			str_format(m_pResponse, m_SizeOfResponse, "%s no idea. Where are you?", m_pMessageAuthor);
 		return true;
 	}
 	return false;

@@ -15,7 +15,100 @@ public:
 
 	static bool IsStart(class CGameClient *pClient, vec2 Prev, vec2 Pos);
 	static bool IsFinish(class CGameClient *pClient, vec2 Pos1, vec2 Pos2);
-	static bool IsNearFinish(class CGameClient *pClient, vec2 Pos);
+	/*
+		IsNearFinish
+
+		Checks every tiles on the border of the square
+		The square is located at Pos and has the size RadiusInTiles
+
+		It does not cover tiles inside of the square. So making the radius too big
+		might miss the target.
+
+		<----- radius ---->
+
+		+-----------------+
+		|                 |
+		|                 |
+		|                 |
+		|                 |
+		|       pos       |
+		|                 |
+		|                 |
+		|                 |
+		+-----------------+
+	*/
+	static bool IsNearFinish(class CGameClient *pClient, vec2 Pos, int RadiusInTiles = 4);
+	/*
+		IsNearStart
+
+		Checks every tiles on the border of the square
+		The square is located at Pos and has the size RadiusInTiles
+
+		It does not cover tiles inside of the square. So making the radius too big
+		might miss the target.
+
+		<----- radius ---->
+
+		+-----------------+
+		|                 |
+		|                 |
+		|                 |
+		|                 |
+		|       pos       |
+		|                 |
+		|                 |
+		|                 |
+		+-----------------+
+	*/
+	static bool IsNearStart(class CGameClient *pClient, vec2 Pos, int RadiusInTiles = 4);
+	/*
+		IsClusterRangeFinish
+
+		Recommended for bigger areas.
+		For areas smaller than 10 tiles use IsNearFinish instead.
+
+		Calls IsNearFinish internally.
+		It creates multiple 4x4 check boxes to cover the full given are.
+		Around position Pos with the size of RadiusInTiles.
+		Only indecies on the border are looked at.
+
+		<----- radius ---->
+
+		+--+ +--+ +--+ +--+
+		|  | |  | |  | |  |
+		+--+ +--+ +--+ +--+
+		+--+ +--+ +--+ +--+
+		|  | |  | |  | |  |
+		+--+ +--+ +--+ +--+
+		+--+ +--+ +--+ +--+
+		|  | |  | |  | |  |
+		+--+ +--+ +--+ +--+
+	*/
+	static bool IsClusterRangeFinish(class CGameClient *pClient, vec2 Pos, int RadiusInTiles = 10);
+	/*
+		IsClusterRangeStart
+
+		Recommended for bigger areas.
+		For areas smaller than 10 tiles use IsNearStart instead.
+
+		Calls IsNearStart internally.
+		It creates multiple 4x4 check boxes to cover the full given are.
+		Around position Pos with the size of RadiusInTiles.
+		Only indecies on the border are looked at.
+
+		<----- radius ---->
+
+		+--+ +--+ +--+ +--+
+		|  | |  | |  | |  |
+		+--+ +--+ +--+ +--+
+		+--+ +--+ +--+ +--+
+		|  | |  | |  | |  |
+		+--+ +--+ +--+ +--+
+		+--+ +--+ +--+ +--+
+		|  | |  | |  | |  |
+		+--+ +--+ +--+ +--+
+	*/
+	static bool IsClusterRangeStart(class CGameClient *pClient, vec2 Pos, int RadiusInTiles = 10);
 };
 
 #endif // GAME_CLIENT_RACE_H
