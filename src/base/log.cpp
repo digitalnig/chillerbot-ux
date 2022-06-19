@@ -404,9 +404,14 @@ public:
 };
 #endif
 
+#include "chillerbot/terminalui_logger.h"
+
 std::unique_ptr<ILogger> log_logger_stdout()
 {
-#if !defined(CONF_FAMILY_WINDOWS)
+#if defined(CONF_CURSES_CLIENT)
+	const bool colors = getenv("NO_COLOR") == nullptr && isatty(STDOUT_FILENO);
+	return std::make_unique<CTerminalUILogger>(io_stdout(), colors, false);
+#elif !defined(CONF_FAMILY_WINDOWS)
 	// TODO: Only enable true color when COLORTERM contains "truecolor".
 	// https://github.com/termstandard/colors/tree/65bf0cd1ece7c15fa33a17c17528b02c99f1ae0b#checking-for-colorterm
 	const bool colors = getenv("NO_COLOR") == nullptr && isatty(STDOUT_FILENO);
