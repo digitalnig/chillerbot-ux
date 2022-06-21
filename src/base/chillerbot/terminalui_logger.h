@@ -1,3 +1,6 @@
+#ifndef BASE_CHILLERBOT_TERMINALUI_LOGGER_H
+#define BASE_CHILLERBOT_TERMINALUI_LOGGER_H
+
 #include "../logger.h"
 
 #include "../color.h"
@@ -84,3 +87,5 @@ public:
 		aio_wait(m_pAio);
 	}
 };
+
+#endif
