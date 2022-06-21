@@ -31,7 +31,7 @@ void CursesLogPush(const char *pStr)
 class CTerminalUILogger : public ILogger
 {
 	ASYNCIO *m_pAio;
-	bool m_AnsiTruecolor;
+	// bool m_AnsiTruecolor;
 	bool m_Close;
 
 public:
