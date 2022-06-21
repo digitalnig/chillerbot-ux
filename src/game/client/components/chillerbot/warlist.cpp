@@ -784,11 +784,20 @@ void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
 				m_pClient->m_Chat.AddLine(-2, 0, "Error type has to be one of those: <war|team|neutral|traitor>");
 				return;
 			}
-			char aPath[IO_MAX_PATH_LENGTH];
 			str_format(aBuf, sizeof(aBuf), "chillerbot/warlist/%s", aType);
-			fs_makedir(Storage()->GetPath(IStorage::TYPE_SAVE, aBuf, aPath, sizeof(aPath)));
+			if(!Storage()->CreateFolder(aBuf, IStorage::TYPE_SAVE))
+			{
+				str_format(aBuf, sizeof(aBuf), "Failed to create folder %s/%s", aType, aFolder);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				return;
+			}
 			str_format(aBuf, sizeof(aBuf), "chillerbot/warlist/%s/%s", aType, aFolder);
-			fs_makedir(Storage()->GetPath(IStorage::TYPE_SAVE, aBuf, aPath, sizeof(aPath)));
+			if(!Storage()->CreateFolder(aBuf, IStorage::TYPE_SAVE))
+			{
+				str_format(aBuf, sizeof(aBuf), "Failed to create folder %s/%s", aType, aFolder);
+				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+				return;
+			}
 
 			str_format(aBuf, sizeof(aBuf), "Created folder %s/%s", aType, aFolder);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
