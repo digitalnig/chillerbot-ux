@@ -13,12 +13,16 @@
 #include <base/system.h>
 
 #include <game/client/components/chillerbot/version.h>
+
+#include <engine/external/json-parser/json.h>
+
 #include <game/client/components/menus.h>
 #include <game/generated/protocol.h>
 
 #include <engine/client.h>
 #include <engine/config.h>
 #include <engine/console.h>
+#include <engine/discord.h>
 #include <engine/editor.h>
 #include <engine/engine.h>
 #include <engine/graphics.h>
@@ -3396,6 +3400,7 @@ void CClient::Run()
 		m_NetClient[i].Close();
 
 	delete m_pEditor;
+	m_pInput->Shutdown();
 	m_pGraphics->Shutdown();
 
 	// shutdown SDL
@@ -3562,7 +3567,7 @@ void CClient::Con_StartVideo(IConsole::IResult *pResult, void *pUserData)
 		pSelf->Graphics()->WaitForIdle();
 		// pause the sound device while creating the video instance
 		pSelf->Sound()->PauseAudioDevice();
-		new CVideo((CGraphics_Threaded *)pSelf->m_pGraphics, pSelf->Sound(), pSelf->Storage(), pSelf->m_pConsole, pSelf->Graphics()->ScreenWidth(), pSelf->Graphics()->ScreenHeight(), "");
+		new CVideo((CGraphics_Threaded *)pSelf->m_pGraphics, pSelf->Sound(), pSelf->Storage(), pSelf->Graphics()->ScreenWidth(), pSelf->Graphics()->ScreenHeight(), "");
 		pSelf->Sound()->UnpauseAudioDevice();
 		IVideo::Current()->Start();
 		bool paused = pSelf->m_DemoPlayer.Info()->m_Info.m_Paused;
@@ -3587,7 +3592,7 @@ void CClient::StartVideo(IConsole::IResult *pResult, void *pUserData, const char
 		pSelf->Graphics()->WaitForIdle();
 		// pause the sound device while creating the video instance
 		pSelf->Sound()->PauseAudioDevice();
-		new CVideo((CGraphics_Threaded *)pSelf->m_pGraphics, pSelf->Sound(), pSelf->Storage(), pSelf->m_pConsole, pSelf->Graphics()->ScreenWidth(), pSelf->Graphics()->ScreenHeight(), pVideoName);
+		new CVideo((CGraphics_Threaded *)pSelf->m_pGraphics, pSelf->Sound(), pSelf->Storage(), pSelf->Graphics()->ScreenWidth(), pSelf->Graphics()->ScreenHeight(), pVideoName);
 		pSelf->Sound()->UnpauseAudioDevice();
 		IVideo::Current()->Start();
 	}

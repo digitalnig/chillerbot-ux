@@ -5,9 +5,9 @@
 #include <engine/client/backend/backend_base.h>
 #include <engine/client/backend_sdl.h>
 #include <engine/client/graphics_threaded.h>
+#include <engine/gfx/image_manipulation.h>
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
-#include <engine/shared/image_manipulation.h>
 #include <engine/storage.h>
 
 #include <base/log.h>
@@ -38,7 +38,8 @@
 #include <SDL_video.h>
 #include <SDL_vulkan.h>
 
-#include <vulkan/vulkan.h>
+#include <vulkan/vk_platform.h>
+#include <vulkan/vulkan_core.h>
 
 #ifndef VK_API_VERSION_MAJOR
 #define VK_API_VERSION_MAJOR VK_VERSION_MAJOR

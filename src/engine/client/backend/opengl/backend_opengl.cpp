@@ -1,5 +1,8 @@
 #include "backend_opengl.h"
-#include "engine/graphics.h"
+
+#include <engine/graphics.h>
+
+#include <engine/client/backend_sdl.h>
 
 #include <base/detect.h>
 
@@ -11,7 +14,7 @@
 
 #include <engine/client/backend/glsl_shader_compiler.h>
 
-#include <engine/shared/image_manipulation.h>
+#include <engine/gfx/image_manipulation.h>
 
 #ifndef BACKEND_AS_OPENGL_ES
 #include <GL/glew.h>
