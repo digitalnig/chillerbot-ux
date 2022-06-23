@@ -4,6 +4,7 @@
 #include <game/client/components/controls.h>
 #include <game/client/gameclient.h>
 
+#include <base/chillerbot/curses_colors.h>
 #include <base/terminalui.h>
 
 #include <csignal>
@@ -91,12 +92,12 @@ void CTerminalUI::InputDraw()
 	int x = getmaxx(g_pInfoWin);
 	if(x < (int)sizeof(aBuf))
 		aBuf[x - 2] = '\0'; // prevent line wrapping and cut on screen border
-	wattron(g_pInputWin, COLOR_PAIR(1));
+	wattron(g_pInputWin, COLOR_PAIR(WHITE_ON_BLACK));
 	wattron(g_pInputWin, A_BOLD);
 	mvwprintw(g_pInputWin, 1, 1, "%s", aBuf);
 	refresh();
 	wattroff(g_pInputWin, A_BOLD);
-	wattroff(g_pInputWin, COLOR_PAIR(2));
+	wattroff(g_pInputWin, COLOR_PAIR(CYAN_ON_BLACK));
 	if(m_aCompletionPreview[0])
 	{
 		int Offset = str_length(aBuf) + 1;
@@ -279,8 +280,7 @@ void CTerminalUI::OnInit()
 	noecho();
 	curs_set(TRUE);
 	start_color();
-	init_pair(1, COLOR_WHITE, COLOR_BLACK);
-	init_pair(2, COLOR_CYAN, COLOR_BLACK);
+	init_curses_colors();
 
 	// set up initial windows
 	getmaxyx(stdscr, g_ParentY, g_ParentX);

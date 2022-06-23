@@ -6,7 +6,9 @@
 
 #include "terminalui.h"
 
-static char gs_aaChillerLogger[CHILLER_LOGGER_HEIGHT][CHILLER_LOGGER_WIDTH];
+#include "chillerbot/curses_colors.h"
+
+static CCursesLogMsg gs_aChillerLogger[CHILLER_LOGGER_HEIGHT];
 
 WINDOW *g_pLogWindow = NULL;
 WINDOW *g_pGameWindow = NULL;
@@ -26,8 +28,8 @@ IOHANDLE gs_Logfile = 0;
 
 void curses_init()
 {
-	for(int i = 0; i < CHILLER_LOGGER_HEIGHT; i++)
-		gs_aaChillerLogger[i][0] = '\0';
+	for(auto &Msg : gs_aChillerLogger)
+		Msg.m_aMessage[0] = '\0';
 }
 
 void curses_refresh_windows()
@@ -55,13 +57,27 @@ void log_draw()
 	// int line = 0;
 	for(int k = Max, i = Max; i >= 0; i--)
 	{
-		if(gs_aaChillerLogger[i][0] == '\0')
+		if(gs_aChillerLogger[i].m_aMessage[0] == '\0')
 			continue;
 		char aBuf[1024 * 4 + 16];
-		// str_format(aBuf, sizeof(aBuf), "%2d|%2d|%s", line++, k, gs_aaChillerLogger[i]);
+		// str_format(aBuf, sizeof(aBuf), "%2d|%2d|%s", line++, k, gs_aChillerLogger[i].m_aMessage);
 		// aBuf[x - 2] = '\0'; // prevent line wrapping and cut on screen border
-		str_copy(aBuf, gs_aaChillerLogger[i], x - 2);
+		str_copy(aBuf, gs_aChillerLogger[i].m_aMessage, x - 2);
+
+		if(gs_aChillerLogger[i].m_HaveColor)
+		{
+			int ColorPair = rgb_to_text_color_pair(gs_aChillerLogger[i].m_Color.r, gs_aChillerLogger[i].m_Color.g, gs_aChillerLogger[i].m_Color.b);
+			wattron(g_pLogWindow, COLOR_PAIR(ColorPair));
+			// refresh();
+		}
+
 		mvwprintw(g_pLogWindow, Max - k-- + 1, 1, "%s", aBuf);
+
+		if(gs_aChillerLogger[i].m_HaveColor)
+		{
+			wattron(g_pLogWindow, COLOR_PAIR(WHITE_ON_BLACK));
+			// refresh();
+		}
 	}
 }
 
@@ -99,7 +115,7 @@ void draw_borders(WINDOW *screen)
 	// }
 }
 
-void curses_log_push(const char *pStr)
+void curses_log_push(const char *pStr, const SLOG_COLOR *pColor)
 {
 	// if ncurses is not intialized yet (terminalui.OnInit()) just print to stdout
 	if(!g_pLogWindow)
@@ -111,9 +127,16 @@ void curses_log_push(const char *pStr)
 	gs_NeedLogDraw = true;
 	// shift all
 	for(int i = CHILLER_LOGGER_HEIGHT - 1; i > 0; i--)
-		str_copy(gs_aaChillerLogger[i], gs_aaChillerLogger[i - 1], sizeof(gs_aaChillerLogger[i]));
+		str_copy(gs_aChillerLogger[i].m_aMessage, gs_aChillerLogger[i - 1].m_aMessage, sizeof(gs_aChillerLogger[i].m_aMessage));
 	// insert newest on the bottom
-	str_copy(gs_aaChillerLogger[0], pStr, sizeof(gs_aaChillerLogger[0]));
+	str_copy(gs_aChillerLogger[0].m_aMessage, pStr, sizeof(gs_aChillerLogger[0].m_aMessage));
+	gs_aChillerLogger[0].m_HaveColor = pColor != nullptr;
+	if(gs_aChillerLogger[0].m_HaveColor)
+	{
+		gs_aChillerLogger[0].m_Color.r = pColor->r;
+		gs_aChillerLogger[0].m_Color.g = pColor->g;
+		gs_aChillerLogger[0].m_Color.b = pColor->b;
+	}
 	gs_LogsPushed++;
 	// scared of integer overflows xd
 	if(gs_LogsPushed > 1000)

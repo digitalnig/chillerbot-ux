@@ -1706,6 +1706,8 @@ add_custom_command(OUTPUT "src/game/generated/wordlist.h"
 
 # Sources
 set_src(BASE GLOB_RECURSE src/base
+  chillerbot/curses_colors.cpp
+  chillerbot/curses_colors.h
   chillerbot/terminalui_logger.h
   color.h
   curses.h

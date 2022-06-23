@@ -26,11 +26,34 @@ extern bool gs_NeedLogDraw;
 extern int gs_LogsPushed;
 extern IOHANDLE gs_Logfile;
 
+struct SLOG_COLOR
+{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+};
+
+class CCursesLogMsg
+{
+public:
+	CCursesLogMsg()
+	{
+		m_aMessage[0] = '\0';
+		m_HaveColor = false;
+		m_Color.r = 0;
+		m_Color.g = 0;
+		m_Color.b = 0;
+	}
+	char m_aMessage[CHILLER_LOGGER_WIDTH];
+	bool m_HaveColor;
+	SLOG_COLOR m_Color;
+};
+
 void curses_init();
 void log_draw();
 void curses_refresh_windows();
 void draw_borders(WINDOW *screen);
-void curses_log_push(const char *pStr);
+void curses_log_push(const char *pStr, const SLOG_COLOR *pColor = nullptr);
 // void curses_logf(const char *sys, const char *fmt, ...);
 
 #endif
