@@ -37,7 +37,7 @@ class CWarList : public CComponent
 	*/
 	std::vector<std::pair<std::string, std::string>> m_vWarlist;
 	/*
-		m_vZea,list
+		m_vTeamlist
 
 		pair<PlayerName, FilePath>
 	*/

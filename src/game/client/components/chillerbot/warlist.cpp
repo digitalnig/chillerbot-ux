@@ -467,7 +467,7 @@ int CWarList::LoadTeamNames(const char *pDir)
 
 	char aFilename[IO_MAX_PATH_LENGTH];
 	str_format(aFilename, sizeof(aFilename), "%s/names.txt", pDir);
-	IOHANDLE File = Storage()->OpenFile(pDir, IOFLAG_READ, IStorage::TYPE_ALL);
+	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_READ, IStorage::TYPE_ALL);
 
 	char aBuf[128];
 	if(!File)
