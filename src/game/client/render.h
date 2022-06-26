@@ -32,7 +32,7 @@ public:
 		m_ColorFeet = ColorRGBA(1, 1, 1);
 		m_Size = 1.0f;
 		m_GotAirJump = 1;
-		m_ShineDecoration = 0;
+		m_TeeRenderFlags = 0;
 	};
 
 	IGraphics::CTextureHandle m_Texture;
@@ -49,7 +49,14 @@ public:
 	ColorRGBA m_ColorFeet;
 	float m_Size;
 	int m_GotAirJump;
-	int m_ShineDecoration;
+	int m_TeeRenderFlags;
+};
+
+// Tee Render Flags
+enum
+{
+	TEE_EFFECT_FROZEN = 1,
+	TEE_NO_WEAPON = 2,
 };
 
 // sprite renderings
@@ -73,7 +80,6 @@ class CRenderTools
 
 	int m_TeeQuadContainerIndex;
 
-	void GetRenderTeeAnimScaleAndBaseSize(class CAnimState *pAnim, CTeeRenderInfo *pInfo, float &AnimScale, float &BaseSize);
 	void GetRenderTeeBodyScale(float BaseSize, float &BodyScale);
 	void GetRenderTeeFeetScale(float BaseSize, float &FeetScaleWidth, float &FeetScaleHeight);
 
@@ -94,6 +100,7 @@ public:
 	void DrawSprite(float x, float y, float size);
 	void DrawSprite(float x, float y, float ScaledWidth, float ScaledHeight);
 	void RenderCursor(vec2 Center, float Size);
+	void RenderIcon(int ImageId, int SpriteId, const CUIRect *pRect, const ColorRGBA *pColor = nullptr);
 	int QuadContainerAddSprite(int QuadContainerIndex, float x, float y, float size);
 	int QuadContainerAddSprite(int QuadContainerIndex, float size);
 	int QuadContainerAddSprite(int QuadContainerIndex, float Width, float Height);
@@ -117,6 +124,7 @@ public:
 	// larger rendering methods
 	void GetRenderTeeBodySize(class CAnimState *pAnim, CTeeRenderInfo *pInfo, vec2 &BodyOffset, float &Width, float &Height);
 	void GetRenderTeeFeetSize(class CAnimState *pAnim, CTeeRenderInfo *pInfo, vec2 &FeetOffset, float &Width, float &Height);
+	void GetRenderTeeAnimScaleAndBaseSize(class CAnimState *pAnim, CTeeRenderInfo *pInfo, float &AnimScale, float &BaseSize);
 
 	// returns the offset to use, to render the tee with @see RenderTee exactly in the mid
 	void GetRenderTeeOffsetToRenderedTee(class CAnimState *pAnim, CTeeRenderInfo *pInfo, vec2 &TeeOffsetToMid);

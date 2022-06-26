@@ -1281,6 +1281,7 @@ set(EXPECTED_DATA
   editor/water.rules
   editor/winter_main.rules
   emoticons.png
+  extras.png
   file_icons.png
   fonts/DejaVuSans.ttf
   fonts/GlowSansJCompressed-Book.otf
@@ -2471,14 +2472,6 @@ endif()
 ########################################################################
 
 if(TOOLS)
-  set_src(TWPING_SRC GLOB src/twping twping.cpp)
-  set(TARGET_TWPING twping)
-  add_executable(${TARGET_TWPING} EXCLUDE_FROM_ALL ${TWPING_SRC} $<TARGET_OBJECTS:engine-shared> ${DEPS})
-  target_link_libraries(${TARGET_TWPING} ${LIBS})
-
-  list(APPEND TARGETS_OWN ${TARGET_TWPING})
-  list(APPEND TARGETS_LINK ${TARGET_TWPING})
-
   set(TARGETS_TOOLS)
   set_src(TOOLS_SRC GLOB src/tools
     config_common.h
@@ -2496,6 +2489,7 @@ if(TOOLS)
     map_resave.cpp
     packetgen.cpp
     stun.cpp
+    twping.cpp
     unicode_confusables.cpp
     uuid.cpp
   )
