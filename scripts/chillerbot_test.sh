@@ -275,7 +275,7 @@ ins+=('client2: is war foo?');outs+=('not_client1: foo has war because: bullied 
 ins+=('client2: do you war me?');outs+=("not_client1: 'not_client1' is not on my warlist.")
 ins+=('client2: am i on warlist?');outs+=("not_client1: 'not_client1' is not on my warlist.")
 ins+=('client2 do you have war with client9 ?');outs+=("not_client1: 'client9' is not on my warlist.")
-ins+=('client2: where are you?');outs+=('not_client1 i am literally next to you (on your right)')
+ins+=('client2: where are you?');outs+=('not_client1 i am literally next to you (on your left)')
 ins+=('client2: client1 is ur war ?');outs+=('not_client1: client1 has war because: bullied me in school')
 ins+=('client2: do you have war with clientP ?');outs+=("not_client1: 'clientP' is not on my warlist.")
 ins+=('client2: im your enemy?');outs+=('not_client1 your name is neither on my friend nor enemy list.')
