@@ -122,6 +122,31 @@ echo clientbar >> 		chillerbot/warlist/team/bar/names.txt
 echo "# i joined foo" >>	chillerbot/warlist/warlist_clans.txt
 echo "# teamfoo" >> 		chillerbot/warlist/warlist_clans.txt
 
+
+function wait_for_fifo() {
+	local fifo="$1"
+	local tries="$2"
+	local fails=0
+	# give the client time to launch and create the fifo file
+	# but assume after X secs that the client crashed before
+	# being able to create the file
+	while [[ ! -p "$fifo" ]]
+	do
+		fails="$((fails+1))"
+		# if [ "$arg_verbose" == "1" ]
+		# then
+		# 	echo "[!] client fifo not found (attempts $fails/$tries)"
+		# fi
+		if [ "$fails" -gt "$tries" ]
+		then
+			print_results
+			echo "[-] Error: client possibly crashed on launch"
+			exit 1
+		fi
+		sleep 1
+	done
+}
+
 ./DDNet-Server "sv_input_fifo server.fifo;sv_port 17822;sv_spamprotection 0;sv_spam_mute_duration 0" > server.log &
 
 # support chillerbot-zx
@@ -135,7 +160,7 @@ echo "# teamfoo" >> 		chillerbot/warlist/warlist_clans.txt
 	cl_tabbed_out_msg 0;
 	connect localhost:17822" > client1.log &
 
-sleep 1
+wait_for_fifo client1.fifo 10
 
 # shellcheck disable=SC2211
 $gdb ./chillerbot-* \
@@ -149,10 +174,7 @@ $gdb ./chillerbot-* \
 	player_clan "Chilli.*";
 	inp_mousesens 1000' > client2.log &
 
-while [[ ! -p client2.fifo ]]
-do
-	sleep 1
-done
+wait_for_fifo client2.fifo 10
 
 sleep 1
 
