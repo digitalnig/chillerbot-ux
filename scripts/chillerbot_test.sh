@@ -189,7 +189,7 @@ ins+=('client2: ?');outs+=('client1 has war because: bullied me in school')
 ins+=('client2: is neutralPlyr on war list?');outs+=("client1: 'neutralPlyr' is not on my warlist.")
 ins+=('client2: who is against you?');outs+=('client1 1 of my 1 enemies are online: client1')
 ins+=('client2: who is with you?');outs+=('client1 currently 0 of my 1 friends are connected')
-ins+=('client2: u war me?');outs+=('client1 you have war because: bullied me in school')
+ins+=('client2: u war me?');outs+=('client1 has war because: bullied me in school')
 ins+=('client2 who is with you?');outs+=('client1 currently 0 of my 1 friends are connected')
 ins+=('kan i di was frage client2?');outs+=('client1 frag! Aber es kann sein, dass ich nicht antworte.')
 ins+=('client2: you war me?');outs+=('client1: client1 has war because: bullied me in school')
@@ -221,7 +221,7 @@ ins+=('client2: how do always drop money?');outs+=('client1 I auto drop money us
 ins+=('client2 why is my name red');outs+=('client1 has war because: bullied me in school')
 ins+=('client2 ah nice where can i download chillerbot?');outs+=('client1 I use chillerbot-ux ( https://chillerbot.github.io )')
 ins+=('client2 me is join your clan? yes?');outs+=('client1 Chilli.* is a fun clan everybody that uses the skin greensward can join')
-ins+=('client2: i is enemi?');outs+=('client1 you have war because: bullied me in school')
+ins+=('client2: i is enemi?');outs+=('client1 has war because: bullied me in school')
 
 function run_tests() {
 	local i
