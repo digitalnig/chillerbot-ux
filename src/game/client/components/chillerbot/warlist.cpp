@@ -734,6 +734,83 @@ void CWarList::Print(const char *pMsg)
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", pMsg);
 }
 
+bool CWarList::AddWar(const char *pFolder, const char *pName)
+{
+	char aBuf[512];
+	char aFilename[1024];
+	str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/war/%s/names.txt", pFolder);
+	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_APPEND, IStorage::TYPE_SAVE);
+	if(!File)
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
+		m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		return false;
+	}
+
+	io_write(File, pName, str_length(pName));
+	io_write_newline(File);
+	io_close(File);
+
+	str_format(aBuf, sizeof(aBuf), "Added '%s' to the folder %s", pName, pFolder);
+	ReloadList();
+	m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+	return true;
+}
+
+bool CWarList::SearchName(const char *pName, bool Silent)
+{
+	char aBuf[512];
+	char aFilenames[3][128];
+	GetWarlistPathByName(pName, sizeof(aBuf), aBuf);
+	if(aBuf[0])
+		str_format(aFilenames[0], sizeof(aFilenames[0]), "%s/names.txt", aBuf);
+	else
+		aFilenames[0][0] = '\0';
+	GetTraitorlistPathByName(pName, sizeof(aBuf), aBuf);
+	if(aBuf[0])
+		str_format(aFilenames[1], sizeof(aFilenames[1]), "%s/names.txt", aBuf);
+	else
+		aFilenames[1][0] = '\0';
+	GetNeutrallistPathByName(pName, sizeof(aBuf), aBuf);
+	if(aBuf[0])
+		str_format(aFilenames[2], sizeof(aFilenames[2]), "%s/names.txt", aBuf);
+	else
+		aFilenames[2][0] = '\0';
+
+	bool Found = false;
+	for(auto &pFilename : aFilenames)
+	{
+		if(!pFilename[0])
+			continue;
+
+		IOHANDLE File = Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
+
+		if(!File)
+			continue;
+
+		char *pLine;
+		CLineReader Reader;
+		Reader.Init(File);
+		// read one line only
+		pLine = Reader.Get();
+		if(pLine)
+		{
+			str_format(aBuf, sizeof(aBuf), "[%s] names: %s", pFilename, pLine);
+			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		}
+
+		io_close(File);
+		Found = true;
+	}
+	if(!Found)
+	{
+		if(!Silent)
+			m_pClient->m_Chat.AddLine(-2, 0, "Name not found.");
+		return false;
+	}
+	return true;
+}
+
 void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
 {
 	if(!g_Config.m_ClWarList)
@@ -755,9 +832,9 @@ void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
 			m_pClient->m_Chat.AddLine(-2, 0, "!unfriend <folder>");
 			m_pClient->m_Chat.AddLine(-2, 0, "!addreason <folder> [--force] <reason>");
 			m_pClient->m_Chat.AddLine(-2, 0, "!search <name>");
-			m_pClient->m_Chat.AddLine(-2, 0, "!create <war|team|neutral|traitor> <folder>");
+			m_pClient->m_Chat.AddLine(-2, 0, "!create <war|team|neutral|traitor> <folder> [name]");
 		}
-		else if(str_startswith(pBuf, "create ")) // "create <war|team|neutral|traitor> <folder>"
+		else if(str_startswith(pBuf, "create ")) // "create <war|team|neutral|traitor> <folder> [name]"
 		{
 			pBuf += str_length("create ");
 			aBuf[0] = '\0';
@@ -776,6 +853,8 @@ void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
 			str_copy(aFolder, aBuf, sizeof(aFolder));
 			aBuf[0] = '\0';
 			pBuf += i + 1;
+			char aName[64];
+			str_copy(aName, pBuf, sizeof(aName));
 			if(str_comp(aType, "war") &&
 				str_comp(aType, "team") &&
 				str_comp(aType, "neutral") &&
@@ -798,60 +877,28 @@ void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
 				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 				return;
 			}
-
-			str_format(aBuf, sizeof(aBuf), "Created folder %s/%s", aType, aFolder);
+			if(aName[0])
+			{
+				if(SearchName(aName, true))
+				{
+					str_format(aBuf, sizeof(aBuf), "Error: name '%s' is already used in different folder", aName);
+					m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+					return;
+				}
+				str_format(aBuf, sizeof(aBuf), "Created folder %s/%s and add name %s", aType, aFolder, aName);
+				AddWar(aFolder, aName);
+			}
+			else
+			{
+				str_format(aBuf, sizeof(aBuf), "Created folder %s/%s", aType, aFolder);
+			}
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 		}
 		else if(str_startswith(pBuf, "search ")) // "search <name can contain spaces>"
 		{
 			pBuf += str_length("search ");
-			char aFilenames[3][128];
-			GetWarlistPathByName(pBuf, sizeof(aBuf), aBuf);
-			if(aBuf[0])
-				str_format(aFilenames[0], sizeof(aFilenames[0]), "%s/names.txt", aBuf);
-			else
-				aFilenames[0][0] = '\0';
-			GetTraitorlistPathByName(pBuf, sizeof(aBuf), aBuf);
-			if(aBuf[0])
-				str_format(aFilenames[1], sizeof(aFilenames[1]), "%s/names.txt", aBuf);
-			else
-				aFilenames[1][0] = '\0';
-			GetNeutrallistPathByName(pBuf, sizeof(aBuf), aBuf);
-			if(aBuf[0])
-				str_format(aFilenames[2], sizeof(aFilenames[2]), "%s/names.txt", aBuf);
-			else
-				aFilenames[2][0] = '\0';
-
-			bool Found = false;
-			for(auto &pFilename : aFilenames)
-			{
-				if(!pFilename[0])
-					continue;
-
-				IOHANDLE File = Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
-
-				if(!File)
-					continue;
-
-				char *pLine;
-				CLineReader Reader;
-				Reader.Init(File);
-				// read one line only
-				pLine = Reader.Get();
-				if(pLine)
-				{
-					str_format(aBuf, sizeof(aBuf), "[%s] names: %s", pFilename, pLine);
-					m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-				}
-
-				io_close(File);
-				Found = true;
-			}
-			if(!Found)
-			{
+			if(!SearchName(pBuf))
 				m_pClient->m_Chat.AddLine(-2, 0, "Name not found.");
-				return;
-			}
 		}
 		else if(str_startswith(pBuf, "addwar ")) // "addwar <folder> <name can contain spaces>"
 		{
@@ -870,23 +917,7 @@ void CWarList::OnChatMessage(int ClientID, int Team, const char *pMsg)
 			aBuf[i] = '\0';
 			char aName[512];
 			str_copy(aName, aBuf, sizeof(aName));
-			char aFilename[1024];
-			str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/war/%s/names.txt", aFolder);
-			IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_APPEND, IStorage::TYPE_SAVE);
-			if(!File)
-			{
-				str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
-				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-				return;
-			}
-
-			io_write(File, aName, str_length(aName));
-			io_write_newline(File);
-			io_close(File);
-
-			str_format(aBuf, sizeof(aBuf), "Added '%s' to the folder %s", aName, aFolder);
-			ReloadList();
-			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+			AddWar(aFolder, aName);
 		}
 		if(str_startswith(pBuf, "addteam ")) // "addteam <folder> <name can contain spaces>"
 		{

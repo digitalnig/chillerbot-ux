@@ -95,6 +95,23 @@ class CWarList : public CComponent
 
 	static void ConchainWarList(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
+	/*
+		AddWar
+
+		Add username to warlist file
+		Returns true on success
+	*/
+	bool AddWar(const char *pFolder, const char *pName);
+	/*
+		SearchName
+
+		Search given name in all folders: war, traitor, neutral, team
+		Print all matches
+
+		Return true if found and false otherwise
+	*/
+	bool SearchName(const char *pName, bool Silent = false);
+
 	void Print(const char *pMsg);
 	bool m_Verbose;
 	int64_t m_NextReload;
