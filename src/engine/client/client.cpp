@@ -57,11 +57,6 @@
 
 #include <engine/client/demoedit.h>
 
-#if defined(CONF_FAMILY_WINDOWS)
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
 #include "client.h"
 #include "friends.h"
 #include "serverbrowser.h"
@@ -672,7 +667,7 @@ int *CClient::GetInput(int Tick, int IsDummy) const
 }
 
 // ------ state handling -----
-void CClient::SetState(int s)
+void CClient::SetState(EClientState s)
 {
 	if(m_State == IClient::STATE_QUITTING || m_State == IClient::STATE_RESTARTING)
 		return;
@@ -1265,6 +1260,10 @@ const char *CClient::LoadMap(const char *pName, const char *pFilename, SHA256_DI
 	static char s_aErrorMsg[128];
 
 	SetState(IClient::STATE_LOADING);
+	SetLoadingStateDetail(IClient::LOADING_STATE_DETAIL_LOADING_MAP);
+
+	if((bool)m_MapLoadingCBFunc)
+		m_MapLoadingCBFunc();
 
 	if(!m_pMap->Load(pFilename))
 	{
@@ -1347,6 +1346,7 @@ const char *CClient::LoadMapSearch(const char *pMapName, SHA256_DIGEST *pWantedS
 	str_format(aBuf, sizeof(aBuf), "loading map, map=%s wanted %scrc=%08x", pMapName, aWanted, WantedCrc);
 	m_pConsole->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "client", aBuf);
 	SetState(IClient::STATE_LOADING);
+	SetLoadingStateDetail(IClient::LOADING_STATE_DETAIL_LOADING_MAP);
 
 	// try the normal maps folder
 	str_format(aBuf, sizeof(aBuf), "maps/%s.map", pMapName);
@@ -1757,6 +1757,7 @@ void CClient::ProcessServerPacket(CNetChunk *pPacket, int Conn, bool Dummy)
 				if(!pError)
 				{
 					m_pConsole->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "client/network", "loading done");
+					SetLoadingStateDetail(IClient::LOADING_STATE_DETAIL_SENDING_READY);
 					SendReady();
 				}
 				else
@@ -2425,10 +2426,10 @@ void CClient::FinishDDNetInfo()
 	}
 }
 
-typedef std::tuple<int, int, int> Version;
-static const Version InvalidVersion = std::make_tuple(-1, -1, -1);
+typedef std::tuple<int, int, int> TVersion;
+static const TVersion InvalidVersion = std::make_tuple(-1, -1, -1);
 
-Version ToVersion(char *pStr)
+TVersion ToVersion(char *pStr)
 {
 	int version[3] = {0, 0, 0};
 	const char *p = strtok(pStr, ".");
@@ -2561,6 +2562,7 @@ void CClient::PumpNetwork()
 			// we switched to online
 			m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", "connected, sending info", ClientNetworkPrintColor);
 			SetState(IClient::STATE_LOADING);
+			SetLoadingStateDetail(IClient::LOADING_STATE_DETAIL_INITIAL);
 			SendInfo();
 		}
 	}
@@ -4452,6 +4454,7 @@ void CClient::RegisterCommands()
 
 #define CONSOLE_COMMAND(name, params, flags, callback, userdata, help) m_pConsole->Register(name, params, flags, 0, 0, help);
 #include <game/ddracecommands.h>
+#undef CONSOLE_COMMAND
 }
 
 static CClient *CreateClient()
