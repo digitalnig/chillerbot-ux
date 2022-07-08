@@ -185,7 +185,6 @@ void CPlayerPics::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 			ColorRGBA TOutlineColor = ColorRGBA(1.0f, 0.0f, 0.0f, 0.7f);
 			if(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex != -1)
 				TextRender()->RenderTextContainer(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex, TColor, TOutlineColor, Position.x - m_aNamePlates[ClientID].m_WarReasonTextWidth / 2.0f, YOffset);
-
 		}
 	}
 }

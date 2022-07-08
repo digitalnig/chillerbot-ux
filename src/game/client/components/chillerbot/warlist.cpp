@@ -389,7 +389,7 @@ void CWarList::SetNameplateColor(int ClientID, ColorRGBA *pColor)
 		return;
 
 	if(IsWar(ClientID))
-    *pColor = ColorRGBA(7.0f, 0.2f, 0.2f, 1.0f);
+		*pColor = ColorRGBA(7.0f, 0.2f, 0.2f, 1.0f);
 	else if(IsTeam(ClientID))
 		*pColor = ColorRGBA(0.0f, 0.9f, 0.2f, 1.0f);
 	else if(IsTraitor(ClientID))
