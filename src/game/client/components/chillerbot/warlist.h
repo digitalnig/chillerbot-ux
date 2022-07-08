@@ -138,7 +138,7 @@ public:
 	bool IsWarClan(int ClientID);
 	bool IsTeamClan(int ClientID);
 	bool IsWarClanmate(int ClientID);
-	void SetNameplateColor(int ClientID, STextRenderColor *pColor);
+	void SetNameplateColor(int ClientID, ColorRGBA *pColor);
 	void ReloadList();
 
 	int NumEnemies() { return m_WarDirs + m_TraitorDirs; }

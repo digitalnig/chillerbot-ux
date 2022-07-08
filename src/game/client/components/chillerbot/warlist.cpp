@@ -383,43 +383,25 @@ bool CWarList::IsWarClanmate(int ClientID)
 	return false;
 }
 
-void CWarList::SetNameplateColor(int ClientID, STextRenderColor *pColor)
+void CWarList::SetNameplateColor(int ClientID, ColorRGBA *pColor)
 {
 	if(!g_Config.m_ClWarList)
 		return;
 
 	if(IsWar(ClientID))
-	{
-		// TextRender()->TextColor(ColorRGBA(1.0f, 0.0f, 0.0f));
-		pColor->Set(7.0f, 0.2f, 0.2f, 1.0f);
-	}
+    *pColor = ColorRGBA(7.0f, 0.2f, 0.2f, 1.0f);
 	else if(IsTeam(ClientID))
-	{
-		// TextRender()->TextColor(ColorRGBA(2.0f, 7.0f, 2.0f));
-		pColor->Set(0.0f, 0.9f, 0.2f, 1.0f);
-	}
+		*pColor = ColorRGBA(0.0f, 0.9f, 0.2f, 1.0f);
 	else if(IsTraitor(ClientID))
-	{
-		// TextRender()->TextColor(ColorRGBA(0.1f, 0.1f, 0.1f));
-		pColor->Set(0.1f, 0.1f, 0.1f, 1.0f);
-	}
+		*pColor = ColorRGBA(0.1f, 0.1f, 0.1f, 1.0f);
 	else if(IsWarClan(ClientID))
-	{
-		pColor->Set(7.0f, 0.2f, 0.2f, 1.0f);
-	}
+		*pColor = ColorRGBA(7.0f, 0.2f, 0.2f, 1.0f);
 	else if(IsTeamClan(ClientID))
-	{
-		pColor->Set(0.0f, 0.9f, 0.2f, 1.0f);
-	}
+		*pColor = ColorRGBA(0.0f, 0.9f, 0.2f, 1.0f);
 	else if(IsWarClanmate(ClientID))
-	{
-		pColor->Set(7.0f, 0.5f, 0.2f, 1.0f);
-	}
+		*pColor = ColorRGBA(7.0f, 0.5f, 0.2f, 1.0f);
 	else
-	{
-		// TextRender()->TextColor(ColorRGBA(1.0f, 1.0f, 1.0f));
-		pColor->Set(1.0f, 1.0f, 1.0f, 1.0f);
-	}
+		*pColor = ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
 int CWarList::LoadWarNames(const char *pDir)
