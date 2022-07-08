@@ -143,6 +143,9 @@ public:
 	bool SetComponentNoteShort(const char *pComponent, const char *pNoteShort = 0);
 	bool SetComponentNoteLong(const char *pComponent, const char *pNoteLong = 0);
 	void UpdateComponents();
+
+	int GetTotalJumps();
+	int GetUnusedJumps();
 };
 
 #endif

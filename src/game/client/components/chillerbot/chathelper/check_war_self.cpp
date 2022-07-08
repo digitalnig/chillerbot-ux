@@ -31,6 +31,8 @@
 */
 bool CReplyToPing::WhyDoYouKillMe(int NameLen, int MsgLen)
 {
+	if(MsgLen - NameLen < 10 && str_find(m_pMessage, "got dj?"))
+		return false;
 	char aStripped[128];
 	StripSpacesAndPunctuationAndOwnName(m_pMessage, aStripped, sizeof(aStripped));
 	if(LangParser().IsQuestionWhy(m_pMessage) || (str_find(m_pMessage, "?") && str_length(aStripped) < NameLen + 4) ||

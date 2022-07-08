@@ -180,6 +180,8 @@ sleep 1
 
 ins=()
 outs=()
+ins+=('client2: how many jumpos do you have');outs+=('client1 I currently have 1 out of 1 jumps')
+ins+=('client2: got dj?');outs+=('client1 Yes. I currently have 1 out of 1 jumps')
 ins+=('client2: ?????');outs+=('client1 has war because: bullied me in school')
 ins+=('client2: do you play on windows or linux?');outs+=('client1 I currently use linux.')
 ins+=('client2: what??!?!?¿??');outs+=('client1 has war because: bullied me in school')

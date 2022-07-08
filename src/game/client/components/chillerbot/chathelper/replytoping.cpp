@@ -123,6 +123,30 @@ bool CReplyToPing::Reply()
 	if(Where())
 		return true;
 
+	// how many jumps do you have?
+	if(str_find_nocase(m_pMessage, "how") &&
+		(str_find_nocase(m_pMessage, "mani") || str_find_nocase(m_pMessage, "many") || str_find_nocase(m_pMessage, "much")) &&
+		(str_find_nocase(m_pMessage, "jamp") || str_find_nocase(m_pMessage, "jump") || str_find_nocase(m_pMessage, "jomp")))
+	{
+		int UnusedJumps = ChatHelper()->GameClient()->m_ChillerBotUX.GetUnusedJumps();
+		int TotalJumps = ChatHelper()->GameClient()->m_ChillerBotUX.GetTotalJumps();
+		str_format(m_pResponse, m_SizeOfResponse, "%s I currently have %d out of %d jumps", m_pMessageAuthor, UnusedJumps, TotalJumps);
+		return true;
+	}
+
+	// // do you have double jump?
+	if((str_find_nocase(m_pMessage, "have") || str_find_nocase(m_pMessage, "has") || str_find_nocase(m_pMessage, "got") || str_find_nocase(m_pMessage, "you") || str_find_nocase(m_pMessage, " u ")) &&
+		(str_find_nocase(m_pMessage, " dj") || str_find_nocase(m_pMessage, "double") || str_find_nocase(m_pMessage, "lejump") || str_find_nocase(m_pMessage, "lejamp") || str_find_nocase(m_pMessage, "lejomp")))
+	{
+		int UnusedJumps = ChatHelper()->GameClient()->m_ChillerBotUX.GetUnusedJumps();
+		int TotalJumps = ChatHelper()->GameClient()->m_ChillerBotUX.GetTotalJumps();
+		if(UnusedJumps > 0)
+			str_format(m_pResponse, m_SizeOfResponse, "%s Yes. I currently have %d out of %d jumps", m_pMessageAuthor, UnusedJumps, TotalJumps);
+		else
+			str_format(m_pResponse, m_SizeOfResponse, "%s No. I currently have %d out of %d jumps", m_pMessageAuthor, UnusedJumps, TotalJumps);
+		return true;
+	}
+
 	// spec me
 	if(str_find_nocase(m_pMessage, "spec") || str_find_nocase(m_pMessage, "watch") || (str_find_nocase(m_pMessage, "look") && !str_find_nocase(m_pMessage, "looks")) || str_find_nocase(m_pMessage, "schau"))
 	{

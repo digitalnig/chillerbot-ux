@@ -1135,3 +1135,69 @@ int CChillerBotUX::CountOnlinePlayers()
 			Num++;
 	return Num;
 }
+
+int CChillerBotUX::GetTotalJumps()
+{
+	int ClientID = GameClient()->m_LocalIDs[g_Config.m_ClDummy];
+	CCharacterCore *pCharacter = &m_pClient->m_aClients[ClientID].m_Predicted;
+	if(m_pClient->m_Snap.m_aCharacters[ClientID].m_HasExtendedDisplayInfo)
+		return maximum(minimum(abs(pCharacter->m_Jumps), 10), 0);
+	else
+		return abs(m_pClient->m_Snap.m_aCharacters[ClientID].m_ExtendedData.m_Jumps);
+}
+
+int CChillerBotUX::GetUnusedJumps()
+{
+	int ClientID = GameClient()->m_LocalIDs[g_Config.m_ClDummy];
+	CCharacterCore *pCharacter = &m_pClient->m_aClients[ClientID].m_Predicted;
+	int TotalJumpsToDisplay = 0, AvailableJumpsToDisplay = 0;
+	if(m_pClient->m_Snap.m_aCharacters[ClientID].m_HasExtendedDisplayInfo)
+	{
+		bool Grounded = false;
+		if(Collision()->CheckPoint(pCharacter->m_Pos.x + CCharacterCore::PhysicalSize() / 2,
+			   pCharacter->m_Pos.y + CCharacterCore::PhysicalSize() / 2 + 5))
+		{
+			Grounded = true;
+		}
+		if(Collision()->CheckPoint(pCharacter->m_Pos.x - CCharacterCore::PhysicalSize() / 2,
+			   pCharacter->m_Pos.y + CCharacterCore::PhysicalSize() / 2 + 5))
+		{
+			Grounded = true;
+		}
+
+		int UsedJumps = pCharacter->m_JumpedTotal;
+		if(pCharacter->m_Jumps > 1)
+		{
+			UsedJumps += !Grounded;
+		}
+		else if(pCharacter->m_Jumps == 1)
+		{
+			// If the player has only one jump, each jump is the last one
+			UsedJumps = pCharacter->m_Jumped & 2;
+		}
+		else if(pCharacter->m_Jumps == -1)
+		{
+			// The player has only one ground jump
+			UsedJumps = !Grounded;
+		}
+
+		if(pCharacter->m_EndlessJump && UsedJumps >= abs(pCharacter->m_Jumps))
+		{
+			UsedJumps = abs(pCharacter->m_Jumps) - 1;
+		}
+
+		int UnusedJumps = abs(pCharacter->m_Jumps) - UsedJumps;
+		if(!(pCharacter->m_Jumped & 2) && UnusedJumps <= 0)
+		{
+			// In some edge cases when the player just got another number of jumps, UnusedJumps is not correct
+			UnusedJumps = 1;
+		}
+		TotalJumpsToDisplay = maximum(minimum(abs(pCharacter->m_Jumps), 10), 0);
+		AvailableJumpsToDisplay = maximum(minimum(UnusedJumps, TotalJumpsToDisplay), 0);
+	}
+	else
+	{
+		AvailableJumpsToDisplay = abs(m_pClient->m_Snap.m_aCharacters[ClientID].m_ExtendedData.m_Jumps);
+	}
+	return AvailableJumpsToDisplay;
+}
