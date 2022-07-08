@@ -84,11 +84,7 @@ bool CCommandProcessorFragment_OpenGL3_3::Cmd_Init(const SCommand_Init *pCommand
 
 	m_OpenGLTextureLodBIAS = g_Config.m_GfxGLTextureLODBIAS;
 
-	m_UseMultipleTextureUnits = g_Config.m_GfxEnableTextureUnitOptimization;
-	if(!m_UseMultipleTextureUnits)
-	{
-		glActiveTexture(GL_TEXTURE0);
-	}
+	glActiveTexture(GL_TEXTURE0);
 
 	m_Has2DArrayTextures = true;
 	m_Has2DArrayTexturesAsExtension = false;
@@ -423,8 +419,6 @@ bool CCommandProcessorFragment_OpenGL3_3::Cmd_Init(const SCommand_Init *pCommand
 	glGenBuffers(1, &m_PrimitiveDrawBufferIDTex3D);
 	glGenVertexArrays(1, &m_PrimitiveDrawVertexIDTex3D);
 
-	m_UsePreinitializedVertexBuffer = g_Config.m_GfxUsePreinitBuffer;
-
 	for(int i = 0; i < MAX_STREAM_BUFFER_COUNT; ++i)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, m_PrimitiveDrawBufferID[i]);
@@ -436,9 +430,6 @@ bool CCommandProcessorFragment_OpenGL3_3::Cmd_Init(const SCommand_Init *pCommand
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(CCommandBuffer::SVertex), 0);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(CCommandBuffer::SVertex), (void *)(sizeof(float) * 2));
 		glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(CCommandBuffer::SVertex), (void *)(sizeof(float) * 4));
-
-		if(m_UsePreinitializedVertexBuffer)
-			glBufferData(GL_ARRAY_BUFFER, sizeof(CCommandBuffer::SVertex) * CCommandBuffer::MAX_VERTICES, NULL, GL_STREAM_DRAW);
 
 		m_LastIndexBufferBound[i] = 0;
 	}
@@ -453,20 +444,8 @@ bool CCommandProcessorFragment_OpenGL3_3::Cmd_Init(const SCommand_Init *pCommand
 	glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(CCommandBuffer::SVertexTex3DStream), (void *)(sizeof(float) * 2));
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(CCommandBuffer::SVertexTex3DStream), (void *)(sizeof(float) * 2 + sizeof(unsigned char) * 4));
 
-	if(m_UsePreinitializedVertexBuffer)
-		glBufferData(GL_ARRAY_BUFFER, sizeof(CCommandBuffer::SVertexTex3DStream) * CCommandBuffer::MAX_VERTICES, NULL, GL_STREAM_DRAW);
-
 	// query the image max size only once
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_MaxTexSize);
-
-	// query maximum of allowed textures
-	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &m_MaxTextureUnits);
-	m_vTextureSlotBoundToUnit.resize(m_MaxTextureUnits);
-	for(int i = 0; i < m_MaxTextureUnits; ++i)
-	{
-		m_vTextureSlotBoundToUnit[i].m_TextureSlot = -1;
-		m_vTextureSlotBoundToUnit[i].m_Is2DArray = false;
-	}
 
 	glBindVertexArray(0);
 	glGenBuffers(1, &m_QuadDrawIndexBufferID);
@@ -563,15 +542,6 @@ void CCommandProcessorFragment_OpenGL3_3::Cmd_Shutdown(const SCommand_Shutdown *
 
 void CCommandProcessorFragment_OpenGL3_3::TextureUpdate(int Slot, int X, int Y, int Width, int Height, int GLFormat, void *pTexData)
 {
-	if(m_UseMultipleTextureUnits)
-	{
-		int SamplerSlot = Slot % m_MaxTextureUnits;
-		// just tell, that we using this texture now
-		IsAndUpdateTextureSlotBound(SamplerSlot, Slot);
-		glActiveTexture(GL_TEXTURE0 + SamplerSlot);
-		glBindSampler(SamplerSlot, m_vTextures[Slot].m_Sampler);
-	}
-
 	glBindTexture(GL_TEXTURE_2D, m_vTextures[Slot].m_Tex);
 
 	if(m_vTextures[Slot].m_RescaleCount > 0)
@@ -602,16 +572,8 @@ void CCommandProcessorFragment_OpenGL3_3::Cmd_Texture_Update(const CCommandBuffe
 void CCommandProcessorFragment_OpenGL3_3::Cmd_Texture_Destroy(const CCommandBuffer::SCommand_Texture_Destroy *pCommand)
 {
 	int Slot = 0;
-	if(m_UseMultipleTextureUnits)
-	{
-		Slot = pCommand->m_Slot % m_MaxTextureUnits;
-		IsAndUpdateTextureSlotBound(Slot, pCommand->m_Slot);
-		glActiveTexture(GL_TEXTURE0 + Slot);
-	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindSampler(Slot, 0);
-	m_vTextureSlotBoundToUnit[Slot].m_TextureSlot = -1;
-	m_vTextureSlotBoundToUnit[Slot].m_Is2DArray = false;
 	DestroyTexture(pCommand->m_Slot);
 }
 
@@ -648,15 +610,6 @@ void CCommandProcessorFragment_OpenGL3_3::TextureCreate(int Slot, int Width, int
 		StoreOglformat = GL_R8;
 
 	int SamplerSlot = 0;
-	if(m_UseMultipleTextureUnits)
-	{
-		SamplerSlot = Slot % m_MaxTextureUnits;
-		// just tell, that we using this texture now
-		IsAndUpdateTextureSlotBound(SamplerSlot, Slot);
-		glActiveTexture(GL_TEXTURE0 + SamplerSlot);
-		m_vTextureSlotBoundToUnit[SamplerSlot].m_TextureSlot = -1;
-		m_vTextureSlotBoundToUnit[SamplerSlot].m_Is2DArray = false;
-	}
 
 	if((Flags & CCommandBuffer::TEXFLAG_NO_2D_TEXTURE) == 0)
 	{
@@ -839,17 +792,7 @@ void CCommandProcessorFragment_OpenGL3_3::UploadStreamBufferData(unsigned int Pr
 	else
 		glBindBuffer(GL_ARRAY_BUFFER, m_PrimitiveDrawBufferID[m_LastStreamBuffer]);
 
-	if(!m_UsePreinitializedVertexBuffer)
-		glBufferData(GL_ARRAY_BUFFER, VertSize * Count, pVertices, GL_STREAM_DRAW);
-	else
-	{
-		// This is better for some iGPUs. Probably due to not initializing a new buffer in the system memory again and again...(driver dependent)
-		void *pData = glMapBufferRange(GL_ARRAY_BUFFER, 0, VertSize * Count, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-
-		mem_copy(pData, pVertices, VertSize * Count);
-
-		glUnmapBuffer(GL_ARRAY_BUFFER);
-	}
+	glBufferData(GL_ARRAY_BUFFER, VertSize * Count, pVertices, GL_STREAM_DRAW);
 }
 
 void CCommandProcessorFragment_OpenGL3_3::Cmd_Render(const CCommandBuffer::SCommand_Render *pCommand)
@@ -1287,9 +1230,9 @@ void CCommandProcessorFragment_OpenGL3_3::Cmd_RenderQuadLayer(const CCommandBuff
 
 		for(size_t i = 0; i < (size_t)ActualQuadCount; ++i)
 		{
-			mem_copy(&aColors[i], pCommand->m_pQuadInfo[i + QuadOffset].m_aColor, sizeof(vec4));
-			mem_copy(&aOffsets[i], pCommand->m_pQuadInfo[i + QuadOffset].m_aOffsets, sizeof(vec2));
-			mem_copy(&aRotations[i], &pCommand->m_pQuadInfo[i + QuadOffset].m_Rotation, sizeof(float));
+			aColors[i] = pCommand->m_pQuadInfo[i + QuadOffset].m_Color;
+			aOffsets[i] = pCommand->m_pQuadInfo[i + QuadOffset].m_Offsets;
+			aRotations[i] = pCommand->m_pQuadInfo[i + QuadOffset].m_Rotation;
 		}
 
 		pProgram->SetUniformVec4(pProgram->m_LocColors, ActualQuadCount, (float *)aColors);
@@ -1303,7 +1246,7 @@ void CCommandProcessorFragment_OpenGL3_3::Cmd_RenderQuadLayer(const CCommandBuff
 	}
 }
 
-void CCommandProcessorFragment_OpenGL3_3::RenderText(const CCommandBuffer::SState &State, int DrawNum, int TextTextureIndex, int TextOutlineTextureIndex, int TextureSize, const float *pTextColor, const float *pTextOutlineColor)
+void CCommandProcessorFragment_OpenGL3_3::RenderText(const CCommandBuffer::SState &State, int DrawNum, int TextTextureIndex, int TextOutlineTextureIndex, int TextureSize, const ColorRGBA &TextColor, const ColorRGBA &TextOutlineColor)
 {
 	if(DrawNum == 0)
 	{
@@ -1313,39 +1256,13 @@ void CCommandProcessorFragment_OpenGL3_3::RenderText(const CCommandBuffer::SStat
 	UseProgram(m_pTextProgram);
 
 	int SlotText = 0;
-	int SlotTextOutline = 0;
-
-	if(m_UseMultipleTextureUnits)
-	{
-		SlotText = TextTextureIndex % m_MaxTextureUnits;
-		SlotTextOutline = TextOutlineTextureIndex % m_MaxTextureUnits;
-		if(SlotText == SlotTextOutline)
-			SlotTextOutline = (TextOutlineTextureIndex + 1) % m_MaxTextureUnits;
-
-		if(!IsAndUpdateTextureSlotBound(SlotText, TextTextureIndex))
-		{
-			glActiveTexture(GL_TEXTURE0 + SlotText);
-			glBindTexture(GL_TEXTURE_2D, m_vTextures[TextTextureIndex].m_Tex);
-			glBindSampler(SlotText, m_vTextures[TextTextureIndex].m_Sampler);
-		}
-		if(!IsAndUpdateTextureSlotBound(SlotTextOutline, TextOutlineTextureIndex))
-		{
-			glActiveTexture(GL_TEXTURE0 + SlotTextOutline);
-			glBindTexture(GL_TEXTURE_2D, m_vTextures[TextOutlineTextureIndex].m_Tex);
-			glBindSampler(SlotTextOutline, m_vTextures[TextOutlineTextureIndex].m_Sampler);
-		}
-	}
-	else
-	{
-		SlotText = 0;
-		SlotTextOutline = 1;
-		glBindTexture(GL_TEXTURE_2D, m_vTextures[TextTextureIndex].m_Tex);
-		glBindSampler(SlotText, m_vTextures[TextTextureIndex].m_Sampler);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, m_vTextures[TextOutlineTextureIndex].m_Tex);
-		glBindSampler(SlotTextOutline, m_vTextures[TextOutlineTextureIndex].m_Sampler);
-		glActiveTexture(GL_TEXTURE0);
-	}
+	int SlotTextOutline = 1;
+	glBindTexture(GL_TEXTURE_2D, m_vTextures[TextTextureIndex].m_Tex);
+	glBindSampler(SlotText, m_vTextures[TextTextureIndex].m_Sampler);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_vTextures[TextOutlineTextureIndex].m_Tex);
+	glBindSampler(SlotTextOutline, m_vTextures[TextOutlineTextureIndex].m_Sampler);
+	glActiveTexture(GL_TEXTURE0);
 
 	if(m_pTextProgram->m_LastTextSampler != SlotText)
 	{
@@ -1367,22 +1284,16 @@ void CCommandProcessorFragment_OpenGL3_3::RenderText(const CCommandBuffer::SStat
 		m_pTextProgram->m_LastTextureSize = TextureSize;
 	}
 
-	if(m_pTextProgram->m_LastOutlineColor[0] != pTextOutlineColor[0] || m_pTextProgram->m_LastOutlineColor[1] != pTextOutlineColor[1] || m_pTextProgram->m_LastOutlineColor[2] != pTextOutlineColor[2] || m_pTextProgram->m_LastOutlineColor[3] != pTextOutlineColor[3])
+	if(m_pTextProgram->m_LastOutlineColor != TextOutlineColor)
 	{
-		m_pTextProgram->SetUniformVec4(m_pTextProgram->m_LocOutlineColor, 1, (float *)pTextOutlineColor);
-		m_pTextProgram->m_LastOutlineColor[0] = pTextOutlineColor[0];
-		m_pTextProgram->m_LastOutlineColor[1] = pTextOutlineColor[1];
-		m_pTextProgram->m_LastOutlineColor[2] = pTextOutlineColor[2];
-		m_pTextProgram->m_LastOutlineColor[3] = pTextOutlineColor[3];
+		m_pTextProgram->SetUniformVec4(m_pTextProgram->m_LocOutlineColor, 1, (float *)&TextOutlineColor);
+		m_pTextProgram->m_LastOutlineColor = TextOutlineColor;
 	}
 
-	if(m_pTextProgram->m_LastColor[0] != pTextColor[0] || m_pTextProgram->m_LastColor[1] != pTextColor[1] || m_pTextProgram->m_LastColor[2] != pTextColor[2] || m_pTextProgram->m_LastColor[3] != pTextColor[3])
+	if(m_pTextProgram->m_LastColor != TextColor)
 	{
-		m_pTextProgram->SetUniformVec4(m_pTextProgram->m_LocColor, 1, (float *)pTextColor);
-		m_pTextProgram->m_LastColor[0] = pTextColor[0];
-		m_pTextProgram->m_LastColor[1] = pTextColor[1];
-		m_pTextProgram->m_LastColor[2] = pTextColor[2];
-		m_pTextProgram->m_LastColor[3] = pTextColor[3];
+		m_pTextProgram->SetUniformVec4(m_pTextProgram->m_LocColor, 1, (float *)&TextColor);
+		m_pTextProgram->m_LastColor = TextColor;
 	}
 
 	glDrawElements(GL_TRIANGLES, DrawNum, GL_UNSIGNED_INT, (void *)(0));
@@ -1406,7 +1317,7 @@ void CCommandProcessorFragment_OpenGL3_3::Cmd_RenderText(const CCommandBuffer::S
 		BufferContainer.m_LastIndexBufferBound = m_QuadDrawIndexBufferID;
 	}
 
-	RenderText(pCommand->m_State, pCommand->m_DrawNum, pCommand->m_TextTextureIndex, pCommand->m_TextOutlineTextureIndex, pCommand->m_TextureSize, pCommand->m_aTextColor, pCommand->m_aTextOutlineColor);
+	RenderText(pCommand->m_State, pCommand->m_DrawNum, pCommand->m_TextTextureIndex, pCommand->m_TextOutlineTextureIndex, pCommand->m_TextureSize, pCommand->m_TextColor, pCommand->m_TextOutlineColor);
 }
 
 void CCommandProcessorFragment_OpenGL3_3::Cmd_RenderQuadContainer(const CCommandBuffer::SCommand_RenderQuadContainer *pCommand)
@@ -1481,11 +1392,10 @@ void CCommandProcessorFragment_OpenGL3_3::Cmd_RenderQuadContainerEx(const CComma
 	UseProgram(pProgram);
 	SetState(pCommand->m_State, pProgram);
 
-	if(pCommand->m_Rotation != 0.0f && (pProgram->m_LastCenter[0] != pCommand->m_Center.x || pProgram->m_LastCenter[1] != pCommand->m_Center.y))
+	if(pCommand->m_Rotation != 0.0f && pProgram->m_LastCenter != pCommand->m_Center)
 	{
 		pProgram->SetUniformVec2(pProgram->m_LocCenter, 1, (float *)&pCommand->m_Center);
-		pProgram->m_LastCenter[0] = pCommand->m_Center.x;
-		pProgram->m_LastCenter[1] = pCommand->m_Center.y;
+		pProgram->m_LastCenter = pCommand->m_Center;
 	}
 
 	if(pProgram->m_LastRotation != pCommand->m_Rotation)
@@ -1494,13 +1404,10 @@ void CCommandProcessorFragment_OpenGL3_3::Cmd_RenderQuadContainerEx(const CComma
 		pProgram->m_LastRotation = pCommand->m_Rotation;
 	}
 
-	if(pProgram->m_LastVertciesColor[0] != pCommand->m_VertexColor.r || pProgram->m_LastVertciesColor[1] != pCommand->m_VertexColor.g || pProgram->m_LastVertciesColor[2] != pCommand->m_VertexColor.b || pProgram->m_LastVertciesColor[3] != pCommand->m_VertexColor.a)
+	if(pProgram->m_LastVerticesColor != pCommand->m_VertexColor)
 	{
 		pProgram->SetUniformVec4(pProgram->m_LocVertciesColor, 1, (float *)&pCommand->m_VertexColor);
-		pProgram->m_LastVertciesColor[0] = pCommand->m_VertexColor.r;
-		pProgram->m_LastVertciesColor[1] = pCommand->m_VertexColor.g;
-		pProgram->m_LastVertciesColor[2] = pCommand->m_VertexColor.b;
-		pProgram->m_LastVertciesColor[3] = pCommand->m_VertexColor.a;
+		pProgram->m_LastVerticesColor = pCommand->m_VertexColor;
 	}
 
 	glDrawElements(GL_TRIANGLES, pCommand->m_DrawNum, GL_UNSIGNED_INT, pCommand->m_pOffset);
@@ -1532,20 +1439,16 @@ void CCommandProcessorFragment_OpenGL3_3::Cmd_RenderQuadContainerAsSpriteMultipl
 	UseProgram(m_pSpriteProgramMultiple);
 	SetState(pCommand->m_State, m_pSpriteProgramMultiple);
 
-	if((m_pSpriteProgramMultiple->m_LastCenter[0] != pCommand->m_Center.x || m_pSpriteProgramMultiple->m_LastCenter[1] != pCommand->m_Center.y))
+	if(m_pSpriteProgramMultiple->m_LastCenter != pCommand->m_Center)
 	{
 		m_pSpriteProgramMultiple->SetUniformVec2(m_pSpriteProgramMultiple->m_LocCenter, 1, (float *)&pCommand->m_Center);
-		m_pSpriteProgramMultiple->m_LastCenter[0] = pCommand->m_Center.x;
-		m_pSpriteProgramMultiple->m_LastCenter[1] = pCommand->m_Center.y;
+		m_pSpriteProgramMultiple->m_LastCenter = pCommand->m_Center;
 	}
 
-	if(m_pSpriteProgramMultiple->m_LastVertciesColor[0] != pCommand->m_VertexColor.r || m_pSpriteProgramMultiple->m_LastVertciesColor[1] != pCommand->m_VertexColor.g || m_pSpriteProgramMultiple->m_LastVertciesColor[2] != pCommand->m_VertexColor.b || m_pSpriteProgramMultiple->m_LastVertciesColor[3] != pCommand->m_VertexColor.a)
+	if(m_pSpriteProgramMultiple->m_LastVerticesColor != pCommand->m_VertexColor)
 	{
 		m_pSpriteProgramMultiple->SetUniformVec4(m_pSpriteProgramMultiple->m_LocVertciesColor, 1, (float *)&pCommand->m_VertexColor);
-		m_pSpriteProgramMultiple->m_LastVertciesColor[0] = pCommand->m_VertexColor.r;
-		m_pSpriteProgramMultiple->m_LastVertciesColor[1] = pCommand->m_VertexColor.g;
-		m_pSpriteProgramMultiple->m_LastVertciesColor[2] = pCommand->m_VertexColor.b;
-		m_pSpriteProgramMultiple->m_LastVertciesColor[3] = pCommand->m_VertexColor.a;
+		m_pSpriteProgramMultiple->m_LastVerticesColor = pCommand->m_VertexColor;
 	}
 
 	int DrawCount = pCommand->m_DrawCount;
