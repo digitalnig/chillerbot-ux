@@ -177,7 +177,7 @@ void CPlayerPics::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 
 				m_aNamePlates[ClientID].m_WarReasonTextWidth = TextRender()->TextWidth(0, FontSizeClan, aWarReason, -1, -1.0f);
 
-				m_aNamePlates[ClientID].m_WarReasonTextContainerIndex = TextRender()->CreateTextContainer(&Cursor, aWarReason);
+				TextRender()->CreateTextContainer(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex, &Cursor, aWarReason);
 				Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 			}
 			YOffset += FontSizeClan;
