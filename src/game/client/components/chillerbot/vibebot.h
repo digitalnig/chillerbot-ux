@@ -74,7 +74,7 @@ public:
 	void SetEmoteBot(int Mode, int Delay, int ClientID);
 	void PrintInput(const CNetObj_PlayerInput *pInput);
 
-	CNetObj_PlayerInput m_InputData[NUM_DUMMIES];
+	CNetObj_PlayerInput m_aInputData[NUM_DUMMIES];
 	bool m_SendData[NUM_DUMMIES];
 };
 

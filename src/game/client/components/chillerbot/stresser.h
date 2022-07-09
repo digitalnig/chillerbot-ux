@@ -7,7 +7,7 @@ public:
 	virtual int Sizeof() const override { return sizeof(*this); }
 	virtual void OnInit() override;
 
-	CNetObj_PlayerInput m_InputData[NUM_DUMMIES];
+	CNetObj_PlayerInput m_aInputData[NUM_DUMMIES];
 	bool m_SendData[NUM_DUMMIES];
 
 private:

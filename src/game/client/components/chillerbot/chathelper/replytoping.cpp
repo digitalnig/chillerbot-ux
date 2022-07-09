@@ -50,10 +50,10 @@ bool CReplyToPing::Reply()
 
 	int MsgLen = str_length(m_pMessage);
 	int NameLen = 0;
-	const char *pName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[0]].m_aName;
-	const char *pDummyName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[1]].m_aName;
-	const char *pClan = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[0]].m_aClan;
-	const char *pDummyClan = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[1]].m_aClan;
+	const char *pName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_aLocalIDs[0]].m_aName;
+	const char *pDummyName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_aLocalIDs[1]].m_aName;
+	const char *pClan = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_aLocalIDs[0]].m_aClan;
+	const char *pDummyClan = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_aLocalIDs[1]].m_aClan;
 
 	if(ChatHelper()->LineShouldHighlight(m_pMessage, pName))
 		NameLen = str_length(pName);
@@ -263,7 +263,7 @@ bool CReplyToPing::Reply()
 			Weapon = WEAPON_GRENADE;
 		else if(str_find_nocase(m_pMessage, "rifle") || str_find_nocase(m_pMessage, "laser") || str_find_nocase(m_pMessage, "sniper"))
 			Weapon = WEAPON_LASER;
-		CCharacter *pChar = ChatHelper()->GameClient()->m_GameWorld.GetCharacterByID(ChatHelper()->GameClient()->m_LocalIDs[g_Config.m_ClDummy]);
+		CCharacter *pChar = ChatHelper()->GameClient()->m_GameWorld.GetCharacterByID(ChatHelper()->GameClient()->m_aLocalIDs[g_Config.m_ClDummy]);
 		if(pChar && Weapon != -1)
 		{
 			char aWeapons[1024];

@@ -195,7 +195,7 @@ void CTerminalUI::RenderScoreboard(int Team, WINDOW *pWin)
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		// make sure that we render the correct team
-		const CNetObj_PlayerInfo *pInfo = m_pClient->m_Snap.m_paInfoByDDTeamScore[i];
+		const CNetObj_PlayerInfo *pInfo = m_pClient->m_Snap.m_apInfoByDDTeamScore[i];
 		if(!pInfo || pInfo->m_Team != Team)
 			continue;
 
@@ -216,7 +216,7 @@ void CTerminalUI::RenderScoreboard(int Team, WINDOW *pWin)
 		// if(rendered++ < 0) continue;
 
 		// make sure that we render the correct team
-		const CNetObj_PlayerInfo *pInfo = m_pClient->m_Snap.m_paInfoByDDTeamScore[i];
+		const CNetObj_PlayerInfo *pInfo = m_pClient->m_Snap.m_apInfoByDDTeamScore[i];
 		if(!pInfo || pInfo->m_Team != Team)
 			continue;
 
@@ -908,20 +908,20 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 		m_pClient->SendKill(g_Config.m_ClDummy);
 	else if(KeyInHistory(' ', 5) || Key == ' ')
 	{
-		m_InputData[g_Config.m_ClDummy] = m_pClient->m_Controls.m_InputData[g_Config.m_ClDummy];
-		m_InputData[g_Config.m_ClDummy].m_Jump = 1;
+		m_aInputData[g_Config.m_ClDummy] = m_pClient->m_Controls.m_aInputData[g_Config.m_ClDummy];
+		m_aInputData[g_Config.m_ClDummy].m_Jump = 1;
 		m_SendData[g_Config.m_ClDummy] = true;
 	}
 	else if(KeyInHistory('a', 5) || Key == 'a')
 	{
-		m_InputData[g_Config.m_ClDummy] = m_pClient->m_Controls.m_InputData[g_Config.m_ClDummy];
-		m_InputData[g_Config.m_ClDummy].m_Direction = -1;
+		m_aInputData[g_Config.m_ClDummy] = m_pClient->m_Controls.m_aInputData[g_Config.m_ClDummy];
+		m_aInputData[g_Config.m_ClDummy].m_Direction = -1;
 		m_SendData[g_Config.m_ClDummy] = true;
 	}
 	else if(KeyInHistory('d', 5) || Key == 'd')
 	{
-		m_InputData[g_Config.m_ClDummy] = m_pClient->m_Controls.m_InputData[g_Config.m_ClDummy];
-		m_InputData[g_Config.m_ClDummy].m_Direction = 1;
+		m_aInputData[g_Config.m_ClDummy] = m_pClient->m_Controls.m_aInputData[g_Config.m_ClDummy];
+		m_aInputData[g_Config.m_ClDummy].m_Direction = 1;
 		m_SendData[g_Config.m_ClDummy] = true;
 	}
 	else if(KeyInHistory(' ', 3) || Key == ' ')

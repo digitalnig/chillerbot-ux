@@ -261,7 +261,7 @@ public:
 	int OnKeyPress(int Key, WINDOW *pWin);
 #endif
 public:
-	CNetObj_PlayerInput m_InputData[NUM_DUMMIES];
+	CNetObj_PlayerInput m_aInputData[NUM_DUMMIES];
 	bool m_SendData[NUM_DUMMIES];
 
 	virtual int Sizeof() const override { return sizeof(*this); }

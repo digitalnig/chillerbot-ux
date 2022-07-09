@@ -41,7 +41,7 @@ bool CReplyToPing::Where()
 				continue;
 
 			// TODO: dont get current dummy but the pinged dummy
-			CCharacter *pChar = ChatHelper()->GameClient()->m_GameWorld.GetCharacterByID(ChatHelper()->GameClient()->m_LocalIDs[g_Config.m_ClDummy]);
+			CCharacter *pChar = ChatHelper()->GameClient()->m_GameWorld.GetCharacterByID(ChatHelper()->GameClient()->m_aLocalIDs[g_Config.m_ClDummy]);
 			if(!pChar)
 				continue;
 			vec2 Self = pChar->m_Pos;

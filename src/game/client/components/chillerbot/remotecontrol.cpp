@@ -23,9 +23,9 @@ void CRemoteControl::OnChatMessage(int ClientID, int Team, const char *pMsg)
 		m_pClient->m_ChatHelper.Get128Name(pMsg, aName);
 	}
 	// ignore own and dummys messages
-	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_LocalIDs[0]].m_aName))
+	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName))
 		return;
-	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_LocalIDs[1]].m_aName))
+	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName))
 		return;
 	if(Team != 3) // whisper only
 		return;

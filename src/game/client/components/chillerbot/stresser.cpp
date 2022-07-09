@@ -37,15 +37,15 @@ void CStresser::ConchainPenTest(IConsole::IResult *pResult, void *pUserData, ICo
 void CStresser::RandomMovements()
 {
 	float t = Client()->LocalTime();
-	mem_zero(&m_InputData[g_Config.m_ClDummy], sizeof(m_InputData[0]));
+	mem_zero(&m_aInputData[g_Config.m_ClDummy], sizeof(m_aInputData[0]));
 
-	m_InputData[g_Config.m_ClDummy].m_Direction = rand() % 3 - 1;
-	m_InputData[g_Config.m_ClDummy].m_Jump = ((int)t);
-	m_InputData[g_Config.m_ClDummy].m_Fire = ((int)(t * 10));
-	m_InputData[g_Config.m_ClDummy].m_Hook = ((int)(t * 2)) & 1;
-	m_InputData[g_Config.m_ClDummy].m_WantedWeapon = ((int)t) % NUM_WEAPONS;
-	m_InputData[g_Config.m_ClDummy].m_TargetX = (int)(sinf(t * 3) * 100.0f);
-	m_InputData[g_Config.m_ClDummy].m_TargetY = (int)(cosf(t * 3) * 100.0f);
+	m_aInputData[g_Config.m_ClDummy].m_Direction = rand() % 3 - 1;
+	m_aInputData[g_Config.m_ClDummy].m_Jump = ((int)t);
+	m_aInputData[g_Config.m_ClDummy].m_Fire = ((int)(t * 10));
+	m_aInputData[g_Config.m_ClDummy].m_Hook = ((int)(t * 2)) & 1;
+	m_aInputData[g_Config.m_ClDummy].m_WantedWeapon = ((int)t) % NUM_WEAPONS;
+	m_aInputData[g_Config.m_ClDummy].m_TargetX = (int)(sinf(t * 3) * 100.0f);
+	m_aInputData[g_Config.m_ClDummy].m_TargetY = (int)(cosf(t * 3) * 100.0f);
 
 	m_SendData[g_Config.m_ClDummy] = true;
 }

@@ -244,9 +244,9 @@ void CChatHelper::OnChatMessage(int ClientID, int Team, const char *pMsg)
 	if(ClientID < 0 || ClientID > MAX_CLIENTS)
 		return;
 	bool Highlighted = false;
-	if(LineShouldHighlight(pMsg, m_pClient->m_aClients[m_pClient->m_LocalIDs[0]].m_aName))
+	if(LineShouldHighlight(pMsg, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName))
 		Highlighted = true;
-	if(m_pClient->Client()->DummyConnected() && LineShouldHighlight(pMsg, m_pClient->m_aClients[m_pClient->m_LocalIDs[1]].m_aName))
+	if(m_pClient->Client()->DummyConnected() && LineShouldHighlight(pMsg, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName))
 		Highlighted = true;
 	if(Team == 3) // whisper recv
 		Highlighted = true;
@@ -260,9 +260,9 @@ void CChatHelper::OnChatMessage(int ClientID, int Team, const char *pMsg)
 		// dbg_msg("chillerbot", "fixname 128 player '%s' -> '%s'", m_pClient->m_aClients[ClientID].m_aName, aName);
 	}
 	// ignore own and dummys messages
-	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_LocalIDs[0]].m_aName))
+	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName))
 		return;
-	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_LocalIDs[1]].m_aName))
+	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName))
 		return;
 	if(m_LangParser.IsGreeting(pMsg))
 	{
@@ -361,8 +361,8 @@ int CChatHelper::IsSpam(int ClientID, int Team, const char *pMsg)
 		return SPAM_NONE;
 	int MsgLen = str_length(pMsg);
 	int NameLen = 0;
-	const char *pName = m_pClient->m_aClients[m_pClient->m_LocalIDs[0]].m_aName;
-	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_LocalIDs[1]].m_aName;
+	const char *pName = m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName;
+	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName;
 	bool Highlighted = false;
 	if(LineShouldHighlight(pMsg, pName))
 	{
@@ -389,9 +389,9 @@ int CChatHelper::IsSpam(int ClientID, int Team, const char *pMsg)
 		// dbg_msg("chillerbot", "fixname 128 player '%s' -> '%s'", m_pClient->m_aClients[ClientID].m_aName, aName);
 	}
 	// ignore own and dummys messages
-	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_LocalIDs[0]].m_aName))
+	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName))
 		return SPAM_NONE;
-	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_LocalIDs[1]].m_aName))
+	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName))
 		return SPAM_NONE;
 
 	// ping without further context

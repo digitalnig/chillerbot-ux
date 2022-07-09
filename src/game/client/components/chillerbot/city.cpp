@@ -240,7 +240,7 @@ int CCityHelper::ClosestClientIDToPos(vec2 Pos, int Dummy)
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		int ClientID = m_pClient->m_LocalIDs[Dummy];
+		int ClientID = m_pClient->m_aLocalIDs[Dummy];
 		if(!m_pClient->m_Snap.m_aCharacters[i].m_Active)
 			continue;
 		if(ClientID == i)
@@ -267,8 +267,8 @@ int CCityHelper::ClosestClientIDToPos(vec2 Pos, int Dummy)
 void CCityHelper::OnChatMsg(int ClientID, int Team, const char *pMsg)
 {
 	// TODO: move this to chat helper? or do I want a new chat command system in each component? -.-
-	const char *pName = m_pClient->m_aClients[m_pClient->m_LocalIDs[0]].m_aName;
-	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_LocalIDs[1]].m_aName;
+	const char *pName = m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName;
+	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName;
 	int NameLen = 0;
 
 	if(str_startswith(pMsg, pName))

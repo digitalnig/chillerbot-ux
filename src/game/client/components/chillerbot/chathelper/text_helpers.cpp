@@ -65,8 +65,8 @@ void CReplyToPing::StripSpacesAndPunctuationAndOwnName(const char *pStr, char *p
 			while(str_endswith(aBuf, Punc)) // cut off punctuation and spaces
 				aBuf[str_length(aBuf) - str_length(Punc)] = '\0';
 	int Offset = 0;
-	const char *pName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[0]].m_aName;
-	const char *pDummyName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[1]].m_aName;
+	const char *pName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_aLocalIDs[0]].m_aName;
+	const char *pDummyName = ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_aLocalIDs[1]].m_aName;
 	char aName[128];
 	str_format(aName, sizeof(aName), "%s: ", pName);
 	if(!Offset && str_startswith(pStr, aName))

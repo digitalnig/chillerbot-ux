@@ -46,12 +46,12 @@ bool CReplyToPing::WhyWar(const char *pVictim, bool IsCheck)
 		// cut off own name from the victime name if question in this format "why do you war foo (your name)"
 		char aOwnName[MAX_NAME_LENGTH + 3];
 		// main tee
-		str_format(aOwnName, sizeof(aOwnName), " %s", ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[0]].m_aName);
+		str_format(aOwnName, sizeof(aOwnName), " %s", ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_aLocalIDs[0]].m_aName);
 		if(str_endswith_nocase(aVictim, aOwnName))
 			aVictim[str_length(aVictim) - str_length(aOwnName)] = '\0';
 		if(ChatHelper()->GameClient()->Client()->DummyConnected())
 		{
-			str_format(aOwnName, sizeof(aOwnName), " %s", ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_LocalIDs[1]].m_aName);
+			str_format(aOwnName, sizeof(aOwnName), " %s", ChatHelper()->GameClient()->m_aClients[ChatHelper()->GameClient()->m_aLocalIDs[1]].m_aName);
 			if(str_endswith_nocase(aVictim, aOwnName))
 				aVictim[str_length(aVictim) - str_length(aOwnName)] = '\0';
 		}

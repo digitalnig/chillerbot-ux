@@ -96,12 +96,12 @@ void CChillerBotUX::OnRender()
 	CampHackTick();
 	if(!m_ForceDir && m_LastForceDir)
 	{
-		m_pClient->m_Controls.m_InputDirectionRight[g_Config.m_ClDummy] = 0;
-		m_pClient->m_Controls.m_InputDirectionLeft[g_Config.m_ClDummy] = 0;
+		m_pClient->m_Controls.m_aInputDirectionRight[g_Config.m_ClDummy] = 0;
+		m_pClient->m_Controls.m_aInputDirectionLeft[g_Config.m_ClDummy] = 0;
 		if(m_pClient->m_VibeBot.IsVibing(g_Config.m_ClDummy))
 		{
-			m_pClient->m_Controls.m_InputData[g_Config.m_ClDummy].m_Direction = 0;
-			m_pClient->m_VibeBot.m_InputData[g_Config.m_ClDummy].m_Direction = 0;
+			m_pClient->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Direction = 0;
+			m_pClient->m_VibeBot.m_aInputData[g_Config.m_ClDummy].m_Direction = 0;
 		}
 	}
 	m_LastForceDir = m_ForceDir;
@@ -125,8 +125,8 @@ void CChillerBotUX::ChangeTileNotifyTick()
 	if(!g_Config.m_ClChangeTileNotification)
 		return;
 	static int LastTile = -1;
-	float X = m_pClient->m_Snap.m_aCharacters[m_pClient->m_LocalIDs[g_Config.m_ClDummy]].m_Cur.m_X;
-	float Y = m_pClient->m_Snap.m_aCharacters[m_pClient->m_LocalIDs[g_Config.m_ClDummy]].m_Cur.m_Y;
+	float X = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[g_Config.m_ClDummy]].m_Cur.m_X;
+	float Y = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[g_Config.m_ClDummy]].m_Cur.m_Y;
 	int CurrentTile = Collision()->GetTileIndex(Collision()->GetPureMapIndex(X, Y));
 	if(LastTile != CurrentTile && m_LastNotification + time_freq() * 10 < time_get())
 	{
@@ -145,7 +145,7 @@ void CChillerBotUX::RenderWeaponHud()
 {
 	if(!g_Config.m_ClWeaponHud)
 		return;
-	if(CCharacter *pChar = m_pClient->m_GameWorld.GetCharacterByID(m_pClient->m_LocalIDs[g_Config.m_ClDummy]))
+	if(CCharacter *pChar = m_pClient->m_GameWorld.GetCharacterByID(m_pClient->m_aLocalIDs[g_Config.m_ClDummy]))
 	{
 		char aWeapons[1024];
 		aWeapons[0] = '\0';
@@ -370,24 +370,24 @@ void CChillerBotUX::CampHackTick()
 		return;
 	if(m_CampHackX1 > GameClient()->m_Snap.m_pLocalCharacter->m_X)
 	{
-		m_pClient->m_Controls.m_InputDirectionRight[g_Config.m_ClDummy] = 1;
-		m_pClient->m_Controls.m_InputDirectionLeft[g_Config.m_ClDummy] = 0;
+		m_pClient->m_Controls.m_aInputDirectionRight[g_Config.m_ClDummy] = 1;
+		m_pClient->m_Controls.m_aInputDirectionLeft[g_Config.m_ClDummy] = 0;
 		m_ForceDir = 1;
 		if(m_pClient->m_VibeBot.IsVibing(g_Config.m_ClDummy))
 		{
-			m_pClient->m_Controls.m_InputData[g_Config.m_ClDummy].m_Direction = 1;
-			m_pClient->m_VibeBot.m_InputData[g_Config.m_ClDummy].m_Direction = 1;
+			m_pClient->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Direction = 1;
+			m_pClient->m_VibeBot.m_aInputData[g_Config.m_ClDummy].m_Direction = 1;
 		}
 	}
 	else if(m_CampHackX2 < GameClient()->m_Snap.m_pLocalCharacter->m_X)
 	{
-		m_pClient->m_Controls.m_InputDirectionRight[g_Config.m_ClDummy] = 0;
-		m_pClient->m_Controls.m_InputDirectionLeft[g_Config.m_ClDummy] = 1;
+		m_pClient->m_Controls.m_aInputDirectionRight[g_Config.m_ClDummy] = 0;
+		m_pClient->m_Controls.m_aInputDirectionLeft[g_Config.m_ClDummy] = 1;
 		m_ForceDir = -1;
 		if(m_pClient->m_VibeBot.IsVibing(g_Config.m_ClDummy))
 		{
-			m_pClient->m_Controls.m_InputData[g_Config.m_ClDummy].m_Direction = -1;
-			m_pClient->m_VibeBot.m_InputData[g_Config.m_ClDummy].m_Direction = -1;
+			m_pClient->m_Controls.m_aInputData[g_Config.m_ClDummy].m_Direction = -1;
+			m_pClient->m_VibeBot.m_aInputData[g_Config.m_ClDummy].m_Direction = -1;
 		}
 	}
 }
@@ -720,7 +720,7 @@ void CChillerBotUX::DumpPlayers(const char *pSearch)
 	dbg_msg("dump_players", "+----------+--+----------------+----------------+---+-------+");
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		const CNetObj_PlayerInfo *pInfo = m_pClient->m_Snap.m_paInfoByDDTeamScore[i];
+		const CNetObj_PlayerInfo *pInfo = m_pClient->m_Snap.m_apInfoByDDTeamScore[i];
 		if(!pInfo)
 			continue;
 
@@ -765,7 +765,7 @@ void CChillerBotUX::DumpPlayers(const char *pSearch)
 
 		for(int j = i + 1; j < MAX_CLIENTS; j++)
 		{
-			const CNetObj_PlayerInfo *pInfo2 = m_pClient->m_Snap.m_paInfoByDDTeamScore[j];
+			const CNetObj_PlayerInfo *pInfo2 = m_pClient->m_Snap.m_apInfoByDDTeamScore[j];
 
 			if(!pInfo2)
 				continue;
@@ -778,7 +778,7 @@ void CChillerBotUX::DumpPlayers(const char *pSearch)
 		{
 			for(int j = i - 1; j >= 0; j--)
 			{
-				const CNetObj_PlayerInfo *pInfo2 = m_pClient->m_Snap.m_paInfoByDDTeamScore[j];
+				const CNetObj_PlayerInfo *pInfo2 = m_pClient->m_Snap.m_apInfoByDDTeamScore[j];
 
 				if(!pInfo2)
 					continue;
@@ -851,8 +851,8 @@ void CChillerBotUX::ConUnCampHack(IConsole::IResult *pResult, void *pUserData)
 	CChillerBotUX *pSelf = (CChillerBotUX *)pUserData;
 	g_Config.m_ClCampHack = 0;
 	pSelf->DisableComponent("camp hack");
-	pSelf->m_pClient->m_Controls.m_InputDirectionRight[g_Config.m_ClDummy] = 0;
-	pSelf->m_pClient->m_Controls.m_InputDirectionLeft[g_Config.m_ClDummy] = 0;
+	pSelf->m_pClient->m_Controls.m_aInputDirectionRight[g_Config.m_ClDummy] = 0;
+	pSelf->m_pClient->m_Controls.m_aInputDirectionLeft[g_Config.m_ClDummy] = 0;
 }
 
 void CChillerBotUX::ConGotoSwitch(IConsole::IResult *pResult, void *pUserData)
@@ -922,8 +922,8 @@ void CChillerBotUX::TraceSpikes()
 	if(!m_pClient->m_Snap.m_pLocalCharacter)
 		return;
 
-	// int CurrentX = (int)(m_pClient->m_Snap.m_aCharacters[m_pClient->m_LocalIDs[0]].m_Cur.m_X / 32);
-	// int CurrentY = (int)(m_pClient->m_Snap.m_aCharacters[m_pClient->m_LocalIDs[0]].m_Cur.m_Y / 32);
+	// int CurrentX = (int)(m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[0]].m_Cur.m_X / 32);
+	// int CurrentY = (int)(m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[0]].m_Cur.m_Y / 32);
 	int CurrentX = (int)(m_pClient->m_Snap.m_pLocalCharacter->m_X / 32);
 	int CurrentY = (int)(m_pClient->m_Snap.m_pLocalCharacter->m_Y / 32);
 	int FromX = maximum(0, CurrentX - g_Config.m_ClSpikeTracer);
@@ -1059,7 +1059,7 @@ void CChillerBotUX::OnMessage(int MsgType, void *pRawMsg)
 		{
 			for(int i = 0; i < 2; i++)
 			{
-				if(m_pClient->m_LocalIDs[i] != Kill.m_VictimID)
+				if(m_pClient->m_aLocalIDs[i] != Kill.m_VictimID)
 					continue;
 
 				str_copy(m_aLastKiller[i], Kill.m_aKillerName, sizeof(m_aLastKiller[i]));
@@ -1130,7 +1130,7 @@ int CChillerBotUX::CountOnlinePlayers()
 {
 	// Code from scoreboard. There is probably a better way to do this
 	int Num = 0;
-	for(const auto *pInfo : m_pClient->m_Snap.m_paInfoByDDTeamScore)
+	for(const auto *pInfo : m_pClient->m_Snap.m_apInfoByDDTeamScore)
 		if(pInfo)
 			Num++;
 	return Num;
@@ -1138,7 +1138,7 @@ int CChillerBotUX::CountOnlinePlayers()
 
 int CChillerBotUX::GetTotalJumps()
 {
-	int ClientID = GameClient()->m_LocalIDs[g_Config.m_ClDummy];
+	int ClientID = GameClient()->m_aLocalIDs[g_Config.m_ClDummy];
 	CCharacterCore *pCharacter = &m_pClient->m_aClients[ClientID].m_Predicted;
 	if(m_pClient->m_Snap.m_aCharacters[ClientID].m_HasExtendedDisplayInfo)
 		return maximum(minimum(abs(pCharacter->m_Jumps), 10), 0);
@@ -1148,7 +1148,7 @@ int CChillerBotUX::GetTotalJumps()
 
 int CChillerBotUX::GetUnusedJumps()
 {
-	int ClientID = GameClient()->m_LocalIDs[g_Config.m_ClDummy];
+	int ClientID = GameClient()->m_aLocalIDs[g_Config.m_ClDummy];
 	CCharacterCore *pCharacter = &m_pClient->m_aClients[ClientID].m_Predicted;
 	int TotalJumpsToDisplay = 0, AvailableJumpsToDisplay = 0;
 	if(m_pClient->m_Snap.m_aCharacters[ClientID].m_HasExtendedDisplayInfo)
