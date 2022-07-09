@@ -798,7 +798,7 @@ void CTerminalUI::CompleteNames(bool IsReverse)
 	int Matches = 0;
 	const char *pMatch = NULL;
 	bool Found = false;
-	for(auto &PlayerInfo : m_pClient->m_Snap.m_paInfoByName)
+	for(auto &PlayerInfo : m_pClient->m_Snap.m_apInfoByName)
 	{
 		if(!PlayerInfo)
 			continue;
