@@ -39,7 +39,6 @@ CChat::CChat()
 	std::sort(m_vCommands.begin(), m_vCommands.end());
 
 	m_Mode = MODE_NONE;
-	Reset();
 }
 
 void CChat::RegisterCommand(const char *pName, const char *pParams, int flags, const char *pHelp)
@@ -51,9 +50,7 @@ void CChat::RebuildChat()
 {
 	for(auto &Line : m_aLines)
 	{
-		if(Line.m_TextContainerIndex != -1)
-			TextRender()->DeleteTextContainer(Line.m_TextContainerIndex);
-		Line.m_TextContainerIndex = -1;
+		TextRender()->DeleteTextContainer(Line.m_TextContainerIndex);
 		if(Line.m_QuadContainerIndex != -1)
 			Graphics()->DeleteQuadContainer(Line.m_QuadContainerIndex);
 		Line.m_QuadContainerIndex = -1;
@@ -72,8 +69,7 @@ void CChat::Reset()
 {
 	for(auto &Line : m_aLines)
 	{
-		if(Line.m_TextContainerIndex != -1)
-			TextRender()->DeleteTextContainer(Line.m_TextContainerIndex);
+		TextRender()->DeleteTextContainer(Line.m_TextContainerIndex);
 		if(Line.m_QuadContainerIndex != -1)
 			Graphics()->DeleteQuadContainer(Line.m_QuadContainerIndex);
 		Line.m_Time = 0;
@@ -171,6 +167,11 @@ void CChat::OnConsoleInit()
 	Console()->Register("+show_chat", "", CFGFLAG_CLIENT, ConShowChat, this, "Show chat");
 	Console()->Register("echo", "r[message]", CFGFLAG_CLIENT, ConEcho, this, "Echo the text in chat window");
 	Console()->Chain("cl_chat_old", ConchainChatOld, this);
+}
+
+void CChat::OnInit()
+{
+	Reset();
 }
 
 bool CChat::OnInput(IInput::CEvent Event)
@@ -746,9 +747,7 @@ void CChat::AddLine(int ClientID, int Team, const char *pLine)
 		if(pCurrentLine->m_TeamNumber == Team && pCurrentLine->m_ClientID == ClientID && str_comp(pCurrentLine->m_aText, pLine) == 0)
 		{
 			pCurrentLine->m_TimesRepeated++;
-			if(pCurrentLine->m_TextContainerIndex != -1)
-				TextRender()->DeleteTextContainer(pCurrentLine->m_TextContainerIndex);
-			pCurrentLine->m_TextContainerIndex = -1;
+			TextRender()->DeleteTextContainer(pCurrentLine->m_TextContainerIndex);
 
 			if(pCurrentLine->m_QuadContainerIndex != -1)
 				Graphics()->DeleteQuadContainer(pCurrentLine->m_QuadContainerIndex);
@@ -774,9 +773,7 @@ void CChat::AddLine(int ClientID, int Team, const char *pLine)
 		pCurrentLine->m_Whisper = Team >= 2;
 		pCurrentLine->m_NameColor = -2;
 
-		if(pCurrentLine->m_TextContainerIndex != -1)
-			TextRender()->DeleteTextContainer(pCurrentLine->m_TextContainerIndex);
-		pCurrentLine->m_TextContainerIndex = -1;
+		TextRender()->DeleteTextContainer(pCurrentLine->m_TextContainerIndex);
 
 		if(pCurrentLine->m_QuadContainerIndex != -1)
 			Graphics()->DeleteQuadContainer(pCurrentLine->m_QuadContainerIndex);
@@ -991,10 +988,7 @@ void CChat::OnPrepareLines()
 		if(m_aLines[r].m_TextContainerIndex != -1 && !ForceRecreate)
 			continue;
 
-		if(m_aLines[r].m_TextContainerIndex != -1)
-			TextRender()->DeleteTextContainer(m_aLines[r].m_TextContainerIndex);
-
-		m_aLines[r].m_TextContainerIndex = -1;
+		TextRender()->DeleteTextContainer(m_aLines[r].m_TextContainerIndex);
 
 		if(m_aLines[r].m_QuadContainerIndex != -1)
 			Graphics()->DeleteQuadContainer(m_aLines[r].m_QuadContainerIndex);
@@ -1088,10 +1082,7 @@ void CChat::OnPrepareLines()
 				const char *pHeartStr = "♥ ";
 				ColorRGBA rgb = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClMessageFriendColor));
 				TextRender()->TextColor(rgb.WithAlpha(1.f));
-				if(m_aLines[r].m_TextContainerIndex == -1)
-					m_aLines[r].m_TextContainerIndex = TextRender()->CreateTextContainer(&Cursor, pHeartStr);
-				else
-					TextRender()->AppendTextContainer(&Cursor, m_aLines[r].m_TextContainerIndex, pHeartStr);
+				TextRender()->CreateOrAppendTextContainer(m_aLines[r].m_TextContainerIndex, &Cursor, pHeartStr);
 			}
 		}
 
@@ -1124,27 +1115,18 @@ void CChat::OnPrepareLines()
 
 		TextRender()->TextColor(NameColor);
 
-		if(m_aLines[r].m_TextContainerIndex == -1)
-			m_aLines[r].m_TextContainerIndex = TextRender()->CreateTextContainer(&Cursor, aName);
-		else
-			TextRender()->AppendTextContainer(&Cursor, m_aLines[r].m_TextContainerIndex, aName);
+		TextRender()->CreateOrAppendTextContainer(m_aLines[r].m_TextContainerIndex, &Cursor, aName);
 
 		if(m_aLines[r].m_TimesRepeated > 0)
 		{
 			TextRender()->TextColor(1.0f, 1.0f, 1.0f, 0.3f);
-			if(m_aLines[r].m_TextContainerIndex == -1)
-				m_aLines[r].m_TextContainerIndex = TextRender()->CreateTextContainer(&Cursor, aCount);
-			else
-				TextRender()->AppendTextContainer(&Cursor, m_aLines[r].m_TextContainerIndex, aCount);
+			TextRender()->CreateOrAppendTextContainer(m_aLines[r].m_TextContainerIndex, &Cursor, aCount);
 		}
 
 		if(m_aLines[r].m_ClientID >= 0 && m_aLines[r].m_aName[0] != '\0')
 		{
 			TextRender()->TextColor(NameColor);
-			if(m_aLines[r].m_TextContainerIndex == -1)
-				m_aLines[r].m_TextContainerIndex = TextRender()->CreateTextContainer(&Cursor, ": ");
-			else
-				TextRender()->AppendTextContainer(&Cursor, m_aLines[r].m_TextContainerIndex, ": ");
+			TextRender()->CreateOrAppendTextContainer(m_aLines[r].m_TextContainerIndex, &Cursor, ": ");
 		}
 
 		// render line
@@ -1169,10 +1151,7 @@ void CChat::OnPrepareLines()
 			AppendCursor.m_StartX = Cursor.m_X;
 		}
 
-		if(m_aLines[r].m_TextContainerIndex == -1)
-			m_aLines[r].m_TextContainerIndex = TextRender()->CreateTextContainer(&AppendCursor, m_aLines[r].m_aText);
-		else
-			TextRender()->AppendTextContainer(&AppendCursor, m_aLines[r].m_TextContainerIndex, m_aLines[r].m_aText);
+		TextRender()->CreateOrAppendTextContainer(m_aLines[r].m_TextContainerIndex, &AppendCursor, m_aLines[r].m_aText);
 
 		if(!g_Config.m_ClChatOld && (m_aLines[r].m_aText[0] != '\0' || m_aLines[r].m_aName[0] != '\0'))
 		{
