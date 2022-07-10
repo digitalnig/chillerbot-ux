@@ -4,6 +4,13 @@
 #define GAME_VARIABLES_H
 #undef GAME_VARIABLES_H // this file will be included several times
 
+#ifndef MACRO_CONFIG_INT
+#error "The config macros must be defined"
+#define MACRO_CONFIG_INT(Name, ScriptName, Def, Min, Max, Save, Desc) ;
+#define MACRO_CONFIG_COL(Name, ScriptName, Def, Save, Desc) ;
+#define MACRO_CONFIG_STR(Name, ScriptName, Len, Def, Save, Desc) ;
+#endif
+
 // chillerbot-ux
 MACRO_CONFIG_INT(ClRenderPic, cl_render_pic, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Render nice thumbnails of players if there are some")
 MACRO_CONFIG_INT(ClRenderPicWidth, cl_render_pic_width, 64, 2, 1024, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Size of player pics")

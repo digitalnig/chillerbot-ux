@@ -45,7 +45,7 @@ CVideo::CVideo(CGraphics_Threaded *pGraphics, ISound *pSound, IStorage *pStorage
 
 	m_Width = Width;
 	m_Height = Height;
-	str_copy(m_aName, pName, sizeof(m_aName));
+	str_copy(m_aName, pName);
 
 	m_FPS = g_Config.m_ClVideoRecorderFPS;
 
@@ -826,7 +826,7 @@ bool CVideo::AddStream(OutputStream *pStream, AVFormatContext *pOC, const AVCode
 
 #if defined(CONF_ARCH_IA32) || defined(CONF_ARCH_ARM)
 	// use only 1 ffmpeg thread on 32-bit to save memory
-	c->thread_count = 1;
+	pContext->thread_count = 1;
 #endif
 
 	switch((*ppCodec)->type)
