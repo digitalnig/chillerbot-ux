@@ -2051,8 +2051,6 @@ if(CLIENT)
     components/chillerbot/chathelper/smalltalk.cpp
     components/chillerbot/chathelper/text_helpers.cpp
     components/chillerbot/chathelper/where.cpp
-    components/chillerbot/chillconsole.cpp
-    components/chillerbot/chillconsole.h
     components/chillerbot/chillerbotux.cpp
     components/chillerbot/chillerbotux.h
     components/chillerbot/chillpw.cpp

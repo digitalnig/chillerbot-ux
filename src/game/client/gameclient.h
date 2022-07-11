@@ -55,7 +55,7 @@
 #include "components/voting.h"
 
 #include "components/chillerbot/chathelper.h"
-#include "components/chillerbot/chillconsole.h"
+// #include "components/chillerbot/chillconsole.h"
 #include "components/chillerbot/chillerbotux.h"
 #include "components/chillerbot/chillpw.h"
 #include "components/chillerbot/city.h"
@@ -167,7 +167,7 @@ public:
 
 	CChillerBotUX m_ChillerBotUX;
 	CChatHelper m_ChatHelper;
-	CChillConsole m_ChillConsole;
+	// CChillConsole m_ChillConsole;
 	CChillPw m_ChillPw;
 	CPlayerPics m_PlayerPics;
 	CRemoteControl m_RemoteControl;

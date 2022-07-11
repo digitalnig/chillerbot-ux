@@ -72,7 +72,7 @@
 #include "prediction/entities/projectile.h"
 
 #include "components/chillerbot/chathelper.h"
-#include "components/chillerbot/chillconsole.h"
+// #include "components/chillerbot/chillconsole.h"
 #include "components/chillerbot/chillerbotux.h"
 #include "components/chillerbot/chillpw.h"
 #include "components/chillerbot/city.h"
@@ -169,7 +169,7 @@ void CGameClient::OnConsoleInit()
 					      &m_CityHelper,
 					      &m_TerminalUI,
 					      &m_Stresser,
-					      &m_ChillConsole,
+					      /* &m_ChillConsole, */
 					      &m_Unix,
 					      /* >>> chillerbot-ux */
 
@@ -180,7 +180,7 @@ void CGameClient::OnConsoleInit()
 
 						  /* <<< chillerbot-ux */
 						  &m_ChillerBotUX,
-						  &m_ChillConsole,
+						  /* &m_ChillConsole, */
 						  /* >>> chillerbot-ux */
 
 						  &m_Binds.m_SpecialBinds,
@@ -962,7 +962,7 @@ void CGameClient::OnLanguageChange()
 
 void CGameClient::OnRconType(bool UsernameReq)
 {
-	m_ChillConsole.RequireUsername(UsernameReq);
+	// m_ChillConsole.RequireUsername(UsernameReq);
 	m_GameConsole.RequireUsername(UsernameReq);
 }
 
@@ -973,7 +973,7 @@ void CGameClient::OnRconLine(const char *pLine)
 #if defined(CONF_CURSES_CLIENT)
 	curses_log_push(pLine);
 #endif
-	m_ChillConsole.PrintLine(CGameConsole::CONSOLETYPE_REMOTE, pLine);
+	// m_ChillConsole.PrintLine(CGameConsole::CONSOLETYPE_REMOTE, pLine);
 	m_GameConsole.PrintLine(CGameConsole::CONSOLETYPE_REMOTE, pLine);
 }
 

@@ -243,12 +243,8 @@ void CChillerBotUX::RenderEnabledComponents()
 		float TwNoteShort = 2.f;
 		if(m_aEnabledComponent.m_aNoteShort[0])
 			TwNoteShort += TextRender()->TextWidth(0, 10.0f, m_aEnabledComponent.m_aNoteShort, -1, -1);
-		Graphics()->BlendNormal();
-		Graphics()->TextureClear();
-		Graphics()->QuadsBegin();
-		Graphics()->SetColor(0, 0, 0, 0.5f);
-		RenderTools()->DrawRoundRect(4.0f, 60.f + offset * 15, TwName + TwNoteShort, 14.0f, 3.0f);
-		Graphics()->QuadsEnd();
+		RenderTools()->DrawRect(4.0f, 60.f + offset * 15, TwName + TwNoteShort, 14.0f, ColorRGBA(0, 0, 0, 0.5f), CUI::CORNER_ALL, 3.0f);
+
 		TextRender()->Text(0, 5.0f, 60.f + offset * 15, 10.0f, m_aEnabledComponent.m_aName, -1);
 		TextRender()->Text(0, 5.0f + TwName + 2.f, 60.f + offset * 15, 10.0f, m_aEnabledComponent.m_aNoteShort, -1);
 		TextRender()->Text(0, 5.0f, 60.f + offset * 15 + 10, 4.0f, m_aEnabledComponent.m_aNoteLong, -1);
@@ -345,21 +341,15 @@ void CChillerBotUX::CampHackTick()
 		float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
 		Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
 		MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), m_pClient->m_Camera.m_Zoom);
-		Graphics()->BlendNormal();
-		Graphics()->TextureClear();
-		Graphics()->QuadsBegin();
-		Graphics()->SetColor(0, 0, 0, 0.4f);
-		RenderTools()->DrawRoundRect(m_CampHackX1, m_CampHackY1, 20.0f, 20.0f, 3.0f);
-		RenderTools()->DrawRoundRect(m_CampHackX2, m_CampHackY2, 20.0f, 20.0f, 3.0f);
+		RenderTools()->DrawRect(m_CampHackX1, m_CampHackY1, 20.0f, 20.0f, ColorRGBA(0, 0, 0, 0.4f), CUI::CORNER_ALL, 3.0f);
+		RenderTools()->DrawRect(m_CampHackX2, m_CampHackY2, 20.0f, 20.0f, ColorRGBA(0, 0, 0, 0.4f), CUI::CORNER_ALL, 3.0f);
 		if(m_CampHackX1 && m_CampHackX2 && m_CampHackY1 && m_CampHackY2)
 		{
 			if(m_CampHackX1 < m_CampHackX2)
-				Graphics()->SetColor(0, 1, 0, 0.2f);
+				RenderTools()->DrawRect(m_CampHackX1, m_CampHackY1, m_CampHackX2 - m_CampHackX1, m_CampHackY2 - m_CampHackY1, ColorRGBA(0, 1, 0, 0.2f), CUI::CORNER_ALL, 3.0f);
 			else
-				Graphics()->SetColor(1, 0, 0, 0.2f);
-			RenderTools()->DrawRoundRect(m_CampHackX1, m_CampHackY1, m_CampHackX2 - m_CampHackX1, m_CampHackY2 - m_CampHackY1, 3.0f);
+				RenderTools()->DrawRect(m_CampHackX1, m_CampHackY1, m_CampHackX2 - m_CampHackX1, m_CampHackY2 - m_CampHackY1, ColorRGBA(1, 0, 0, 0.2f), CUI::CORNER_ALL, 3.0f);
 		}
-		Graphics()->QuadsEnd();
 		TextRender()->Text(0, m_CampHackX1, m_CampHackY1, 10.0f, "1", -1);
 		TextRender()->Text(0, m_CampHackX2, m_CampHackY2, 10.0f, "2", -1);
 		Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
@@ -472,12 +462,7 @@ void CChillerBotUX::FinishRenameTick()
 	{
 		if(Client()->State() == IClient::STATE_ONLINE && !m_pClient->m_Menus.IsActive() && g_Config.m_ClEditor == 0)
 		{
-			Graphics()->BlendNormal();
-			Graphics()->TextureClear();
-			Graphics()->QuadsBegin();
-			Graphics()->SetColor(0, 0, 0, 0.5f);
-			RenderTools()->DrawRoundRect(10.0f, 30.0f, 150.0f, 50.0f, 10.0f);
-			Graphics()->QuadsEnd();
+			RenderTools()->DrawRect(10.0f, 30.0f, 150.0f, 50.0f, ColorRGBA(0, 0, 0, 0.5f), CUI::CORNER_ALL, 10.0f);
 			TextRender()->Text(0, 20.0f, 30.f, 20.0f, "chillerbot-ux", -1);
 			TextRender()->Text(0, 50.0f, 60.f, 10.0f, "finish rename", -1);
 		}
