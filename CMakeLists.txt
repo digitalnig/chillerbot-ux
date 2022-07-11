@@ -1731,6 +1731,7 @@ set_src(BASE GLOB_RECURSE src/base
   terminalui.cpp
   terminalui.h
   tl/threading.h
+  types.h
   unicode/confusables.cpp
   unicode/confusables.h
   unicode/confusables_data.h
@@ -1748,6 +1749,7 @@ set_src(ENGINE_INTERFACE GLOB src/engine
   discord.h
   editor.h
   engine.h
+  favorites.h
   friends.h
   ghost.h
   graphics.h
@@ -1991,6 +1993,7 @@ if(CLIENT)
     demoedit.cpp
     demoedit.h
     discord.cpp
+    favorites.cpp
     friends.cpp
     friends.h
     ghost.cpp

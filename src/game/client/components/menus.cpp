@@ -959,13 +959,7 @@ void CMenus::RenderLoading(const char *pCaption, const char *pContent, int Incre
 	UI()->DoLabel(&Part, apMsg[index], 24.f, TEXTALIGN_CENTER);
 
 	if(RenderLoadingBar)
-	{
-		Graphics()->TextureClear();
-		Graphics()->QuadsBegin();
-		Graphics()->SetColor(1, 1, 1, 0.75f);
-		RenderTools()->DrawRoundRect(Box.x + 40, Box.y + Box.h - 75, (Box.w - 80) * Percent, 25, 5.0f);
-		Graphics()->QuadsEnd();
-	}
+		RenderTools()->DrawRect(Box.x + 40, Box.y + Box.h - 75, (Box.w - 80) * Percent, 25, ColorRGBA(1.0f, 1.0f, 1.0f, 0.75f), CUI::CORNER_ALL, 5.0f);
 
 	Client()->UpdateAndSwap();
 }
@@ -1183,14 +1177,14 @@ void CMenus::RenderColorPicker()
 	rgb = color_cast<ColorRGBA, ColorHSVA>(ColorHSVA(PickerColorHSV.x, 1.0f, 1.0f));
 	vec4 BR(rgb.r, rgb.g, rgb.b, 1.0f);
 
-	RenderTools()->DrawUIRect4NoRounding(&ColorsArea, TL, TR, BL, BR);
+	RenderTools()->DrawUIRect4(&ColorsArea, TL, TR, BL, BR, CUI::CORNER_NONE, 0.0f);
 
 	TL = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	TR = vec4(0.0f, 0.0f, 0.0f, 0.0f);
 	BL = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	BR = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-	RenderTools()->DrawUIRect4NoRounding(&ColorsArea, TL, TR, BL, BR);
+	RenderTools()->DrawUIRect4(&ColorsArea, TL, TR, BL, BR, CUI::CORNER_NONE, 0.0f);
 
 	// Hue Area
 	static const float s_aColorIndices[7][3] = {
@@ -1213,7 +1207,7 @@ void CMenus::RenderColorPicker()
 		BL = vec4(s_aColorIndices[j + 1][0], s_aColorIndices[j + 1][1], s_aColorIndices[j + 1][2], 1.0f);
 
 		HuePartialArea.y = HueArea.y + HuePickerOffset * j;
-		RenderTools()->DrawUIRect4NoRounding(&HuePartialArea, TL, TL, BL, BL);
+		RenderTools()->DrawUIRect4(&HuePartialArea, TL, TL, BL, BL, CUI::CORNER_NONE, 0.0f);
 	}
 
 	//Editboxes Area
@@ -1470,7 +1464,7 @@ int CMenus::Render()
 			pButtonText = Localize("Abort");
 			if(Client()->State() == IClient::STATE_CONNECTING && time_get() - Client()->StateStartTime() > time_freq())
 			{
-				int Connectivity = Client()->UdpConnectivity(Client()->ServerAddress().type);
+				int Connectivity = Client()->UdpConnectivity(Client()->ConnectNetTypes());
 				const char *pMessage = nullptr;
 				switch(Connectivity)
 				{
@@ -2682,19 +2676,20 @@ bool CMenus::CheckHotKey(int Key) const
 	       Input()->KeyIsPressed(Key) && m_pClient->m_GameConsole.IsClosed();
 }
 
-int CMenus::DoButton_CheckBox_DontCare(const void *pID, const char *pText, int Checked, const CUIRect *pRect)
+int CMenus::DoButton_CheckBox_Tristate(const void *pID, const char *pText, TRISTATE Checked, const CUIRect *pRect)
 {
 	switch(Checked)
 	{
-	case 0:
+	case TRISTATE::NONE:
 		return DoButton_CheckBox_Common(pID, pText, "", pRect);
-	case 1:
-		return DoButton_CheckBox_Common(pID, pText, "X", pRect);
-	case 2:
+	case TRISTATE::SOME:
 		return DoButton_CheckBox_Common(pID, pText, "O", pRect);
+	case TRISTATE::ALL:
+		return DoButton_CheckBox_Common(pID, pText, "X", pRect);
 	default:
-		return DoButton_CheckBox_Common(pID, pText, "", pRect);
+		dbg_assert(false, "invalid tristate");
 	}
+	dbg_break();
 }
 
 int CMenus::MenuImageScan(const char *pName, int IsDir, int DirType, void *pUser)
