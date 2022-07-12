@@ -12,6 +12,7 @@
 #endif
 
 // chillerbot-ux
+MACRO_CONFIG_INT(ClNoParticels, cl_no_particles, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Skip particle rendering (not all just some annoying ones)")
 MACRO_CONFIG_INT(ClRenderPic, cl_render_pic, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Render nice thumbnails of players if there are some")
 MACRO_CONFIG_INT(ClRenderPicWidth, cl_render_pic_width, 64, 2, 1024, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Size of player pics")
 MACRO_CONFIG_INT(ClRenderPicHeight, cl_render_pic_height, 64, 2, 1024, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Size of player pics")

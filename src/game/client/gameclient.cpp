@@ -989,7 +989,7 @@ void CGameClient::ProcessEvents()
 		IClient::CSnapItem Item;
 		const void *pData = Client()->SnapGetItem(SnapType, Index, &Item);
 
-		if(Item.m_Type == NETEVENTTYPE_DAMAGEIND)
+		if(Item.m_Type == NETEVENTTYPE_DAMAGEIND && !Config()->m_ClNoParticels)
 		{
 			CNetEvent_DamageInd *pEvent = (CNetEvent_DamageInd *)pData;
 			m_Effects.DamageIndicator(vec2(pEvent->m_X, pEvent->m_Y), direction(pEvent->m_Angle / 256.0f));
@@ -1004,12 +1004,12 @@ void CGameClient::ProcessEvents()
 			CNetEvent_HammerHit *pEvent = (CNetEvent_HammerHit *)pData;
 			m_Effects.HammerHit(vec2(pEvent->m_X, pEvent->m_Y));
 		}
-		else if(Item.m_Type == NETEVENTTYPE_SPAWN)
+		else if(Item.m_Type == NETEVENTTYPE_SPAWN && !Config()->m_ClNoParticels)
 		{
 			CNetEvent_Spawn *pEvent = (CNetEvent_Spawn *)pData;
 			m_Effects.PlayerSpawn(vec2(pEvent->m_X, pEvent->m_Y));
 		}
-		else if(Item.m_Type == NETEVENTTYPE_DEATH)
+		else if(Item.m_Type == NETEVENTTYPE_DEATH && !Config()->m_ClNoParticels)
 		{
 			CNetEvent_Death *pEvent = (CNetEvent_Death *)pData;
 			m_Effects.PlayerDeath(vec2(pEvent->m_X, pEvent->m_Y), pEvent->m_ClientID);
