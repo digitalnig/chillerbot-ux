@@ -2546,6 +2546,8 @@ void CClient::LoadDDNetInfo()
 			log_debug("info", "got global tcp ip address: %s", (const char *)ConnectingIp);
 		}
 	}
+	const json_value &WarnPngliteIncompatibleImages = DDNetInfo["warn-pnglite-incompatible-images"];
+	Graphics()->WarnPngliteIncompatibleImages(WarnPngliteIncompatibleImages.type == json_boolean && (bool)WarnPngliteIncompatibleImages);
 }
 
 int CClient::ConnectNetTypes() const
@@ -3170,6 +3172,10 @@ void CClient::Run()
 		m_pEditor->Save(arg);
 	return;*/
 
+	m_ServerBrowser.OnInit();
+	// loads the existing ddnet info file if it exists
+	LoadDDNetInfo();
+
 	// load data
 	if(!LoadData())
 		return;
@@ -3180,7 +3186,6 @@ void CClient::Run()
 	}
 
 	GameClient()->OnInit();
-	m_ServerBrowser.OnInit();
 
 	m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", "version " GAME_RELEASE_VERSION " on " CONF_PLATFORM_STRING " " CONF_ARCH_STRING, ColorRGBA(0.7f, 0.7f, 1, 1.0f));
 	if(GIT_SHORTREV_HASH)
@@ -3213,9 +3218,7 @@ void CClient::Run()
 	InitChecksum();
 	m_pConsole->InitChecksum(ChecksumData());
 
-	// loads the existing ddnet info file if it exists
-	LoadDDNetInfo();
-	// but still request the new one from server
+	// request the new ddnet info from server if already past the welcome dialog
 	if(g_Config.m_ClShowWelcome)
 		g_Config.m_ClShowWelcome = 0;
 	else
@@ -3947,22 +3950,28 @@ const char *CClient::DemoPlayer_Play(const char *pFilename, int StorageType)
 		return "error loading demo";
 
 	// load map
-	int Crc = m_DemoPlayer.GetMapInfo()->m_Crc;
-	SHA256_DIGEST Sha = m_DemoPlayer.GetMapInfo()->m_Sha256;
-	const char *pError = LoadMapSearch(m_DemoPlayer.Info()->m_Header.m_aMapName, Sha != SHA256_ZEROED ? &Sha : nullptr, Crc);
+	const CMapInfo *pMapInfo = m_DemoPlayer.GetMapInfo();
+	int Crc = pMapInfo->m_Crc;
+	SHA256_DIGEST Sha = pMapInfo->m_Sha256;
+	const char *pError = LoadMapSearch(pMapInfo->m_aName, Sha != SHA256_ZEROED ? &Sha : nullptr, Crc);
 	if(pError)
 	{
 		if(!m_DemoPlayer.ExtractMap(Storage()))
 			return pError;
 
 		Sha = m_DemoPlayer.GetMapInfo()->m_Sha256;
-		pError = LoadMapSearch(m_DemoPlayer.Info()->m_Header.m_aMapName, &Sha, Crc);
+		pError = LoadMapSearch(pMapInfo->m_aName, &Sha, Crc);
 		if(pError)
 		{
 			DisconnectWithReason(pError);
 			return pError;
 		}
 	}
+
+	// setup current info
+	str_copy(m_CurrentServerInfo.m_aMap, pMapInfo->m_aName);
+	m_CurrentServerInfo.m_MapCrc = pMapInfo->m_Crc;
+	m_CurrentServerInfo.m_MapSize = pMapInfo->m_Size;
 
 	GameClient()->OnConnected();
 

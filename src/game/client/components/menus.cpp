@@ -1511,7 +1511,7 @@ int CMenus::Render()
 				else if(Client()->LoadingStateDetail() == IClient::LOADING_STATE_DETAIL_GETTING_READY)
 				{
 					pTitle = Localize("Connected");
-					pExtraText = Localize("Sending intial client info");
+					pExtraText = Localize("Sending initial client info");
 				}
 			}
 		}
@@ -2404,6 +2404,8 @@ void CMenus::SetActive(bool Active)
 	{
 		ms_ColorPicker.m_Active = false;
 		Input()->SetIMEState(Active);
+		UI()->SetHotItem(nullptr);
+		UI()->SetActiveItem(nullptr);
 	}
 	m_MenuActive = Active;
 	if(!m_MenuActive)
