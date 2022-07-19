@@ -222,6 +222,19 @@ void CTerminalUI::RenderScoreboard(int Team, WINDOW *pWin)
 
 		// dbg_msg("scoreboard", "i=%d name=%s", i, m_pClient->m_aClients[pInfo->m_ClientID].m_aName);
 
+		char aScore[64];
+
+		// score
+		if(m_pClient->m_GameInfo.m_TimeScore && g_Config.m_ClDDRaceScoreBoard)
+		{
+			if(pInfo->m_Score == -9999)
+				aScore[0] = 0;
+			else
+				str_time((int64_t)abs(pInfo->m_Score) * 100, TIME_HOURS, aScore, sizeof(aScore));
+		}
+		else
+			str_format(aScore, sizeof(aScore), "%d", clamp(pInfo->m_Score, -999, 99999));
+
 		char aLine[1024];
 		char aBuf[1024];
 		int NameSize;
@@ -231,8 +244,8 @@ void CTerminalUI::RenderScoreboard(int Team, WINDOW *pWin)
 		str_utf8_stats(m_pClient->m_aClients[pInfo->m_ClientID].m_aName, 60, 60, &NameSize, &NameCount);
 		str_utf8_stats(m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, 60, 60, &ClanSize, &ClanCount);
 		str_format(aBuf, sizeof(aBuf),
-			"%4d| %-*s | %-*s |",
-			clamp(pInfo->m_Score, -999, 9999),
+			"%8s| %-*s | %-*s |",
+			aScore,
 			20 + (NameSize - NameCount),
 			m_pClient->m_aClients[pInfo->m_ClientID].m_aName,
 			20 + (ClanSize - ClanCount),
