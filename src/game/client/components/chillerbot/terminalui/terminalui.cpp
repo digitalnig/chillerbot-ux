@@ -204,7 +204,7 @@ void CTerminalUI::RenderScoreboard(int Team, WINDOW *pWin)
 			break;
 	}
 	int height = minimum(NumRenderScoreIDs, my - 5);
-	if(height < 2)
+	if(height < 1)
 		return;
 
 	DrawBorders(pWin, offX, offY - 1, width, height + 2);
