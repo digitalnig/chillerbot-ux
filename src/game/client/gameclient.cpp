@@ -76,6 +76,7 @@
 #include "components/chillerbot/chillerbotux.h"
 #include "components/chillerbot/chillpw.h"
 #include "components/chillerbot/city.h"
+#include "components/chillerbot/edit_map.h"
 #include "components/chillerbot/playerpics.h"
 #include "components/chillerbot/remotecontrol.h"
 #include "components/chillerbot/stresser.h"
@@ -167,6 +168,7 @@ void CGameClient::OnConsoleInit()
 					      &m_WarList,
 					      &m_VibeBot,
 					      &m_CityHelper,
+					      &m_EditMap,
 					      &m_TerminalUI,
 					      &m_Stresser,
 					      /* &m_ChillConsole, */

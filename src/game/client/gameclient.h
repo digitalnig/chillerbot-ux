@@ -59,6 +59,7 @@
 #include "components/chillerbot/chillerbotux.h"
 #include "components/chillerbot/chillpw.h"
 #include "components/chillerbot/city.h"
+#include "components/chillerbot/edit_map.h"
 #include "components/chillerbot/playerpics.h"
 #include "components/chillerbot/remotecontrol.h"
 #include "components/chillerbot/stresser.h"
@@ -175,6 +176,7 @@ public:
 	CWarList m_WarList;
 	CVibeBot m_VibeBot;
 	CCityHelper m_CityHelper;
+	CEditMap m_EditMap;
 	CTerminalUI m_TerminalUI;
 	CStresser m_Stresser;
 
