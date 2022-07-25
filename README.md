@@ -91,6 +91,23 @@ Intended to avoid getting dragged into the next part when being afk in ddrace.
 Execute whisper messages in local console when prefixed with the correct token.
 Example "/whisper user sample_password say hello". Can be used to mess around with friends or control clients running on other devices.
 
+### Curses terminal client
+
+Compile the client with the cmake flags -DHEADLESS_CLIENT=ON and -DCURSES_CLIENT=ON to get a terminal only (no graphical window) client.
+It still can be controlled using keypresses in the terminal (powered by ncurses).
+
+The curses client only works on linux and needs ncurses installed (see dependencies section).
+
+    mkdir build
+    cd build
+    cmake .. -DHEADLESS_CLIENT=ON -DCURSES_CLIENT=ON
+    make -j$(nproc)
+    ./term-ux
+
+![term-ux browser](other/term-ux_browser.png)
+![term-ux scoreboard](other/term-ux_scoreboard.png)
+![term-ux help](other/term-ux_help.png)
+
 Cloning
 -------
 
@@ -105,38 +122,13 @@ To clone the libraries if you have previously cloned chillerbot without them:
 Dependencies on Linux
 ---------------------
 
-You can install the required libraries on your system, `touch CMakeLists.txt` and CMake will use the system-wide libraries by default. You can install all required dependencies and CMake on Debian or Ubuntu like this:
+Check the [ddnet readme](https://github.com/ddnet/ddnet/#dependencies-on-linux--macos) for up to date dependencys.
 
-    sudo apt install build-essential cmake git libcurl4-openssl-dev libssl-dev libfreetype6-dev libglew-dev libnotify-dev libogg-dev libopus-dev libopusfile-dev libpnglite-dev libsdl2-dev libsqlite3-dev libwavpack-dev python google-mock
+The only additional dependency is ncurses for the curses client as of right now.
 
-Or on Arch Linux like this:
+So for ubuntu/debian based systems it would be
 
-    sudo pacman -S --needed base-devel cmake curl freetype2 git glew libnotify opusfile python sdl2 sqlite wavpack gmock
-
-There is an [AUR package for pnglite](https://aur.archlinux.org/packages/pnglite/). For instructions on installing it, see [AUR packages installation instructions on ArchWiki](https://wiki.archlinux.org/index.php/Arch_User_Repository#Installing_packages).
-
-If you don't want to use the system libraries, you can pass the `-DPREFER_BUNDLED_LIBS=ON` parameter to cmake.
-
-Building on Linux and macOS
----------------------------
-
-To compile DDNet yourself, execute the following commands in the source root:
-
-    mkdir build
-    cd build
-    cmake ..
-    make
-
-
-Building on windows
--------------------
-
-    mkdir build
-    cd build
-    cmake ..
-    cmake --build .
-
-If you use MinGW as a compiler the client is in build/DDNet.exe if vs in build/Debug/DDNet.exe
+    sudo apt-get install libncurses-dev
 
 ## Development
 
