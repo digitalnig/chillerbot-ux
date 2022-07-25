@@ -122,7 +122,7 @@ To clone the libraries if you have previously cloned chillerbot without them:
 Dependencies on Linux
 ---------------------
 
-Check the [ddnet readme](https://github.com/ddnet/ddnet/#dependencies-on-linux--macos) for up to date dependencys.
+Check the [ddnet readme](https://github.com/ddnet/ddnet/#dependencies-on-linux--macos) for up to date dependencies.
 
 The only additional dependency is ncurses for the curses client as of right now.
 
