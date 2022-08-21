@@ -7,9 +7,6 @@
 #include <game/generated/client_data.h>
 #include <game/generated/protocol.h>
 
-#include <game/client/gameclient.h>
-#include <game/client/prediction/entities/character.h>
-
 #include "camera.h"
 #include "controls.h"
 #include "nameplates.h"

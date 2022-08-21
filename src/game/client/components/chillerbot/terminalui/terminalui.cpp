@@ -733,7 +733,6 @@ void CTerminalUI::CompleteCommands(bool IsReverse)
 		m_CompletionChosen--;
 	else
 		m_CompletionChosen++;
-
 	Console()->PossibleCommands(m_aCompletionBuffer, CompletionFlagmask, m_InputMode != INPUT_LOCAL_CONSOLE && Client()->RconAuthed() && Client()->UseTempRconCommands(), PossibleCommandsCompleteCallback, this);
 
 	// handle wrapping
@@ -750,7 +749,7 @@ void CTerminalUI::CompleteCommands(bool IsReverse)
 	UpdateCursor();
 }
 
-void CTerminalUI::PossibleCommandsCompleteCallback(const char *pStr, void *pUser)
+void CTerminalUI::PossibleCommandsCompleteCallback(int Index, const char *pStr, void *pUser)
 {
 	CTerminalUI *pSelf = (CTerminalUI *)pUser;
 	if(pSelf->m_CompletionChosen == pSelf->m_CompletionEnumerationCount)

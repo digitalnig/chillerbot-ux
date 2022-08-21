@@ -726,7 +726,7 @@ endif()
 if(TARGET_OS STREQUAL "windows")
   set(PLATFORM_CLIENT)
   set(PLATFORM_CLIENT_LIBS opengl32 winmm)
-  set(PLATFORM_LIBS version ws2_32) # Windows sockets
+  set(PLATFORM_LIBS shlwapi version ws2_32) # Windows sockets
 elseif(TARGET_OS STREQUAL "mac")
   find_library(CARBON Carbon)
   find_library(COCOA Cocoa)
@@ -2169,8 +2169,8 @@ if(CLIENT)
     skin.h
     ui.cpp
     ui.h
-    ui_ex.cpp
-    ui_ex.h
+    ui_rect.cpp
+    ui_rect.h
   )
   set_src(GAME_EDITOR GLOB_RECURSE src/game/editor
     auto_map.cpp
@@ -2353,12 +2353,15 @@ if(SERVER)
     databases/connection_pool.h
     databases/mysql.cpp
     databases/sqlite.cpp
+    main.cpp
     name_ban.cpp
     name_ban.h
     register.cpp
     register.h
     server.cpp
     server.h
+    server_logger.cpp
+    server_logger.h
     sql_string_helpers.cpp
     sql_string_helpers.h
     upnp.cpp

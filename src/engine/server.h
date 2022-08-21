@@ -60,6 +60,16 @@ public:
 	virtual void SetClientDDNetVersion(int ClientID, int DDNetVersion) = 0;
 	virtual void GetClientAddr(int ClientID, char *pAddrStr, int Size) const = 0;
 
+	/**
+	 * Returns the version of the client with the given client ID.
+	 *
+	 * @param ClientID the client ID, which must be between 0 and
+	 * MAX_CLIENTS - 1, or equal to SERVER_DEMO_CLIENT for server demos.
+	 *
+	 * @return The version of the client with the given client ID.
+	 * For server demos this is always the latest client version.
+	 * On errors, VERSION_NONE is returned.
+	 */
 	virtual int GetClientVersion(int ClientID) const = 0;
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID) = 0;
 
@@ -260,8 +270,6 @@ public:
 	virtual void OnInit() = 0;
 	virtual void OnConsoleInit() = 0;
 	virtual void OnMapChange(char *pNewMapName, int MapNameSize) = 0;
-
-	// FullShutdown is true if the program is about to exit (not if the map is changed)
 	virtual void OnShutdown() = 0;
 
 	virtual void OnTick() = 0;

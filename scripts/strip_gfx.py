@@ -36,7 +36,7 @@ def comment_gfx_file(filename, class_names, inplace):
 	function_name = ''
 	reached_body = False
 	is_pointer = False
-	with open(filename) as file:
+	with open(filename, encoding='utf8') as file:
 		for line in file:
 			# pre parser
 			if line.startswith('}') and current_function:
@@ -68,7 +68,7 @@ def comment_gfx_file(filename, class_names, inplace):
 					new_file_buffer += '\treturn ivec3(0, 0, 0);\n'
 				elif current_function == 'constructor':
 					if function_name == 'CGraphics_Threaded':
-						with open(filename) as file_handle:
+						with open(filename, encoding='utf8') as file_handle:
 							if 'm_DesktopScreenWidth' in file_handle.read():
 								new_file_buffer += "\tm_DesktopScreenWidth = 1920;m_DesktopScreenHeight = 1080;\n"
 				elif current_function == 'CWordWidthHint':
@@ -123,7 +123,7 @@ def comment_gfx_file(filename, class_names, inplace):
 						current_function = func_type
 						reached_body = False
 	if inplace:
-		with open(filename, 'w') as out_file:
+		with open(filename, 'w', encoding='utf8') as out_file:
 			out_file.write(new_file_buffer)
 			out_file.close()
 	else:
@@ -139,7 +139,7 @@ def comment_gfx_in_class(filename, class_names, inplace):
 	reached_body = False
 	is_pointer = False
 	in_class = False
-	with open(filename) as file:
+	with open(filename, encoding='utf8') as file:
 		for line in file:
 			# pre parser
 			if line.startswith('\t}') and current_function:
@@ -192,7 +192,7 @@ def comment_gfx_in_class(filename, class_names, inplace):
 					current_function = func_type
 					reached_body = False
 	if inplace:
-		with open(filename, 'w') as out_file:
+		with open(filename, 'w', encoding='utf8') as out_file:
 			out_file.write(new_file_buffer)
 			out_file.close()
 	else:

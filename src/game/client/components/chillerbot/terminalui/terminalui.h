@@ -247,7 +247,7 @@ class CTerminalUI : public CComponent
 	void CompleteNames(bool IsReverse = false);
 	void CompleteCommands(bool IsReverse = false);
 
-	static void PossibleCommandsCompleteCallback(const char *pStr, void *pUser);
+	static void PossibleCommandsCompleteCallback(int Index, const char *pStr, void *pUser);
 
 	// render in game
 	void RenderGame();
