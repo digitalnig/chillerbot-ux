@@ -322,14 +322,6 @@ bool CChillerBotUX::SetComponentNoteLong(const char *pComponent, const char *pNo
 	return false;
 }
 
-void CChillerBotUX::MapScreenToGroup(float CenterX, float CenterY, CMapItemGroup *pGroup, float Zoom)
-{
-	float Points[4];
-	RenderTools()->MapScreenToWorld(CenterX, CenterY, pGroup->m_ParallaxX, pGroup->m_ParallaxY,
-		pGroup->m_OffsetX, pGroup->m_OffsetY, Graphics()->ScreenAspect(), Zoom, Points);
-	Graphics()->MapScreen(Points[0], Points[1], Points[2], Points[3]);
-}
-
 void CChillerBotUX::CampHackTick()
 {
 	if(!GameClient()->m_Snap.m_pLocalCharacter)
@@ -340,7 +332,7 @@ void CChillerBotUX::CampHackTick()
 	{
 		float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
 		Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
-		MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), m_pClient->m_Camera.m_Zoom);
+		RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), Layers()->GameGroupEx(), m_pClient->m_Camera.m_Zoom);
 		Graphics()->DrawRect(m_CampHackX1, m_CampHackY1, 20.0f, 20.0f, ColorRGBA(0, 0, 0, 0.4f), IGraphics::CORNER_ALL, 3.0f);
 		Graphics()->DrawRect(m_CampHackX2, m_CampHackY2, 20.0f, 20.0f, ColorRGBA(0, 0, 0, 0.4f), IGraphics::CORNER_ALL, 3.0f);
 		if(m_CampHackX1 && m_CampHackX2 && m_CampHackY1 && m_CampHackY2)
@@ -910,7 +902,7 @@ void CChillerBotUX::TraceSpikes()
 	static float m_ScreenY0;
 	static float m_ScreenY1;
 	Graphics()->GetScreen(&m_ScreenX0, &m_ScreenY0, &m_ScreenX1, &m_ScreenY1);
-	MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), m_pClient->m_Camera.m_Zoom);
+	RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), Layers()->GameGroupEx(), m_pClient->m_Camera.m_Zoom);
 	for(int x = FromX; x < ToX; x++)
 	{
 		for(int y = FromY; y < ToY; y++)
