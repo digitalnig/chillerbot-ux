@@ -11,6 +11,7 @@
 #include <game/client/render.h>
 #include <game/client/ui.h>
 #include <game/mapitems.h>
+#include <game/mapitems_ex.h>
 
 #include <engine/editor.h>
 #include <engine/graphics.h>
@@ -189,6 +190,8 @@ public:
 
 	int m_ParallaxX;
 	int m_ParallaxY;
+	int m_CustomParallaxZoom;
+	int m_ParallaxZoom;
 
 	int m_UseClipping;
 	int m_ClipX;
@@ -254,6 +257,12 @@ public:
 				return false;
 		}
 	}*/
+
+	void OnEdited()
+	{
+		if(!m_CustomParallaxZoom)
+			m_ParallaxZoom = GetParallaxZoomDefault(m_ParallaxX, m_ParallaxY);
+	}
 
 	void Clear()
 	{
@@ -791,6 +800,7 @@ public:
 
 		m_GuiActive = true;
 		m_ProofBorders = false;
+		m_PreviewZoom = false;
 
 		m_ShowTileInfo = false;
 		m_ShowDetail = true;
@@ -965,6 +975,8 @@ public:
 	bool m_ShowMousePointer;
 	bool m_GuiActive;
 	bool m_ProofBorders;
+	bool m_PreviewZoom;
+	float m_MouseWScale = 1.0f; // Mouse (i.e. UI) scale relative to the World (selected Group)
 	float m_MouseX = 0.0f;
 	float m_MouseY = 0.0f;
 	float m_MouseWorldX = 0.0f;
@@ -1117,9 +1129,10 @@ public:
 
 	bool IsEnvelopeUsed(int EnvelopeIndex) const;
 
-	void RenderImages(CUIRect Toolbox, CUIRect View);
-	void RenderLayers(CUIRect Toolbox, CUIRect View);
-	void RenderSounds(CUIRect Toolbox, CUIRect View);
+	void RenderLayers(CUIRect LayersBox);
+	void RenderImagesList(CUIRect Toolbox);
+	void RenderSelectedImage(CUIRect View);
+	void RenderSounds(CUIRect Toolbox);
 	void RenderModebar(CUIRect View);
 	void RenderStatusbar(CUIRect View);
 	void RenderEnvelopeEditor(CUIRect View);
@@ -1131,7 +1144,7 @@ public:
 	void AddFileDialogEntry(int Index, CUIRect *pView);
 	void SelectGameLayer();
 	void SortImages();
-	void SelectLayerByTile(float &Scroll);
+	bool SelectLayerByTile();
 
 	//Tile Numbers For Explanations - TODO: Add/Improve tiles and explanations
 	enum

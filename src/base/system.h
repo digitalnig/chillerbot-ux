@@ -1589,6 +1589,23 @@ const char *str_find(const char *haystack, const char *needle);
 const char *str_rchr(const char *haystack, char needle);
 
 /*
+	Function: str_countchr
+		Counts the number of occurrences of a character in a string.
+
+	Parameters:
+		haystack - String to count in
+		needle - Character to count
+
+	Returns:
+		The number of characters in the haystack string matching
+		the needle character.
+
+	Remarks:
+		- The strings are treated as zero-terminated strings.
+*/
+int str_countchr(const char *haystack, char needle);
+
+/*
 	Function: str_hex
 		Takes a datablock and generates a hex string of it, with spaces
 		between bytes.
@@ -2519,6 +2536,19 @@ public:
 		cmdline_free(m_Argc, m_ppArgv);
 	}
 };
+
+#if defined(CONF_FAMILY_WINDOWS)
+/**
+ * This is a RAII wrapper to initialize/uninitialize the Windows COM library,
+ * which may be necessary for using the open_file and open_link functions.
+ */
+class CWindowsComLifecycle
+{
+public:
+	CWindowsComLifecycle();
+	~CWindowsComLifecycle();
+};
+#endif
 
 /**
  * Copies a string to a fixed-size array of chars.

@@ -1344,7 +1344,6 @@ static void FormatMapDownloadFilename(const char *pName, const SHA256_DIGEST *pS
 
 const char *CClient::LoadMapSearch(const char *pMapName, SHA256_DIGEST *pWantedSha256, int WantedCrc)
 {
-	const char *pError = 0;
 	char aBuf[512];
 	char aWanted[SHA256_MAXSTRSIZE + 16];
 	aWanted[0] = 0;
@@ -1361,15 +1360,15 @@ const char *CClient::LoadMapSearch(const char *pMapName, SHA256_DIGEST *pWantedS
 
 	// try the normal maps folder
 	str_format(aBuf, sizeof(aBuf), "maps/%s.map", pMapName);
-	pError = LoadMap(pMapName, aBuf, pWantedSha256, WantedCrc);
+	const char *pError = LoadMap(pMapName, aBuf, pWantedSha256, WantedCrc);
 	if(!pError)
-		return pError;
+		return nullptr;
 
 	// try the downloaded maps
 	FormatMapDownloadFilename(pMapName, pWantedSha256, WantedCrc, false, aBuf, sizeof(aBuf));
 	pError = LoadMap(pMapName, aBuf, pWantedSha256, WantedCrc);
 	if(!pError)
-		return pError;
+		return nullptr;
 
 	// backward compatibility with old names
 	if(pWantedSha256)
@@ -1377,16 +1376,22 @@ const char *CClient::LoadMapSearch(const char *pMapName, SHA256_DIGEST *pWantedS
 		FormatMapDownloadFilename(pMapName, 0, WantedCrc, false, aBuf, sizeof(aBuf));
 		pError = LoadMap(pMapName, aBuf, pWantedSha256, WantedCrc);
 		if(!pError)
-			return pError;
+			return nullptr;
 	}
 
 	// search for the map within subfolders
 	char aFilename[IO_MAX_PATH_LENGTH];
 	str_format(aFilename, sizeof(aFilename), "%s.map", pMapName);
 	if(Storage()->FindFile(aFilename, "maps", IStorage::TYPE_ALL, aBuf, sizeof(aBuf)))
+	{
 		pError = LoadMap(pMapName, aBuf, pWantedSha256, WantedCrc);
+		if(!pError)
+			return nullptr;
+	}
 
-	return pError;
+	static char s_aErrorMsg[256];
+	str_format(s_aErrorMsg, sizeof(s_aErrorMsg), "Could not find map '%s'", pMapName);
+	return s_aErrorMsg;
 }
 
 void CClient::ProcessConnlessPacket(CNetChunk *pPacket)
@@ -3949,7 +3954,10 @@ const char *CClient::DemoPlayer_Play(const char *pFilename, int StorageType)
 	if(pError)
 	{
 		if(!m_DemoPlayer.ExtractMap(Storage()))
+		{
+			DisconnectWithReason(pError);
 			return pError;
+		}
 
 		Sha = m_DemoPlayer.GetMapInfo()->m_Sha256;
 		pError = LoadMapSearch(pMapInfo->m_aName, &Sha, Crc);
@@ -4607,6 +4615,8 @@ int main(int argc, const char **argv)
 {
 #if defined(CONF_PLATFORM_ANDROID)
 	const char **argv = const_cast<const char **>(argv2);
+#elif defined(CONF_FAMILY_WINDOWS)
+	CWindowsComLifecycle WindowsComLifecycle;
 #endif
 	CCmdlineFix CmdlineFix(&argc, &argv);
 	bool Silent = false;

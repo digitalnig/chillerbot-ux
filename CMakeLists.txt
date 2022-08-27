@@ -2171,6 +2171,8 @@ if(CLIENT)
     ui.h
     ui_rect.cpp
     ui_rect.h
+    ui_scrollregion.cpp
+    ui_scrollregion.h
   )
   set_src(GAME_EDITOR GLOB_RECURSE src/game/editor
     auto_map.cpp
@@ -2486,8 +2488,10 @@ if(TOOLS)
     dilate.cpp
     dummy_map.cpp
     map_convert_07.cpp
+    map_create_pixelart.cpp
     map_diff.cpp
     map_extract.cpp
+    map_find_env.cpp
     map_optimize.cpp
     map_replace_area.cpp
     map_replace_image.cpp
@@ -2504,7 +2508,7 @@ if(TOOLS)
       string(REGEX REPLACE "\\.cpp$" "" TOOL "${T}")
       set(TOOL_DEPS ${DEPS})
       set(TOOL_LIBS ${LIBS})
-      if(TOOL MATCHES "^(dilate|map_convert_07|map_optimize|map_extract|map_replace_image)$")
+      if(TOOL MATCHES "^(dilate|map_convert_07|map_create_pixelart|map_optimize|map_extract|map_replace_image)$")
         list(APPEND TOOL_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
 	list(APPEND TOOL_DEPS $<TARGET_OBJECTS:engine-gfx>)
         list(APPEND TOOL_LIBS ${PNG_LIBRARIES})
@@ -2930,6 +2934,7 @@ if(CLIENT AND DMGBUILD)
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/ddnet-libs/sdl/${LIB_DIR}/SDL2.framework ${DMG_TMPDIR}/${TARGET_CLIENT}.app/Contents/Frameworks/SDL2.framework
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/ddnet-libs/discord/${LIB_DIR}/discord_game_sdk.dylib ${DMG_TMPDIR}/${TARGET_CLIENT}.app/Contents/Frameworks/
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/ddnet-libs/freetype/${LIB_DIR}/libfreetype.6.dylib ${DMG_TMPDIR}/${TARGET_CLIENT}.app/Contents/Frameworks/
+    COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/ddnet-libs/png/${LIB_DIR}/libpng16.16.dylib ${DMG_TMPDIR}/${TARGET_CLIENT}.app/Contents/Frameworks/
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/ddnet-libs/ffmpeg/${LIB_DIR}/libavcodec.59.dylib ${DMG_TMPDIR}/${TARGET_CLIENT}.app/Contents/Frameworks/
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/ddnet-libs/ffmpeg/${LIB_DIR}/libavformat.59.dylib ${DMG_TMPDIR}/${TARGET_CLIENT}.app/Contents/Frameworks/
     COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/ddnet-libs/ffmpeg/${LIB_DIR}/libavutil.57.dylib ${DMG_TMPDIR}/${TARGET_CLIENT}.app/Contents/Frameworks/

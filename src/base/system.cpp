@@ -65,6 +65,7 @@
 
 #include <cerrno>
 #include <io.h>
+#include <objbase.h>
 #include <process.h>
 #include <share.h>
 #include <shellapi.h>
@@ -3005,6 +3006,18 @@ const char *str_rchr(const char *haystack, char needle)
 	return strrchr(haystack, needle);
 }
 
+int str_countchr(const char *haystack, char needle)
+{
+	int count = 0;
+	while(*haystack)
+	{
+		if(*haystack == needle)
+			count++;
+		haystack++;
+	}
+	return count;
+}
+
 void str_hex(char *dst, int dst_size, const void *data, int data_size)
 {
 	static const char hex[] = "0123456789ABCDEF";
@@ -3049,11 +3062,10 @@ static int hexval(char x)
 	}
 }
 
-static int byteval(const char *byte, unsigned char *dst)
+static int byteval(const char *hex, unsigned char *dst)
 {
-	int v1 = -1, v2 = -1;
-	v1 = hexval(byte[0]);
-	v2 = hexval(byte[1]);
+	int v1 = hexval(hex[0]);
+	int v2 = hexval(hex[1]);
 
 	if(v1 < 0 || v2 < 0)
 		return 1;
@@ -3562,9 +3574,9 @@ int str_utf8_encode(char *ptr, int chr)
 
 static unsigned char str_byte_next(const char **ptr)
 {
-	unsigned char byte = **ptr;
+	unsigned char byte_value = **ptr;
 	(*ptr)++;
-	return byte;
+	return byte_value;
 }
 
 static void str_byte_rewind(const char **ptr)
@@ -3582,35 +3594,35 @@ int str_utf8_decode(const char **ptr)
 	int utf8_bytes_needed = 0;
 	while(true)
 	{
-		unsigned char byte = str_byte_next(ptr);
+		unsigned char byte_value = str_byte_next(ptr);
 		if(utf8_bytes_needed == 0)
 		{
-			if(byte <= 0x7F)
+			if(byte_value <= 0x7F)
 			{
-				return byte;
+				return byte_value;
 			}
-			else if(0xC2 <= byte && byte <= 0xDF)
+			else if(0xC2 <= byte_value && byte_value <= 0xDF)
 			{
 				utf8_bytes_needed = 1;
-				utf8_code_point = byte - 0xC0;
+				utf8_code_point = byte_value - 0xC0;
 			}
-			else if(0xE0 <= byte && byte <= 0xEF)
+			else if(0xE0 <= byte_value && byte_value <= 0xEF)
 			{
-				if(byte == 0xE0)
+				if(byte_value == 0xE0)
 					utf8_lower_boundary = 0xA0;
-				if(byte == 0xED)
+				if(byte_value == 0xED)
 					utf8_upper_boundary = 0x9F;
 				utf8_bytes_needed = 2;
-				utf8_code_point = byte - 0xE0;
+				utf8_code_point = byte_value - 0xE0;
 			}
-			else if(0xF0 <= byte && byte <= 0xF4)
+			else if(0xF0 <= byte_value && byte_value <= 0xF4)
 			{
-				if(byte == 0xF0)
+				if(byte_value == 0xF0)
 					utf8_lower_boundary = 0x90;
-				if(byte == 0xF4)
+				if(byte_value == 0xF4)
 					utf8_upper_boundary = 0x8F;
 				utf8_bytes_needed = 3;
-				utf8_code_point = byte - 0xF0;
+				utf8_code_point = byte_value - 0xF0;
 			}
 			else
 			{
@@ -3619,7 +3631,7 @@ int str_utf8_decode(const char **ptr)
 			utf8_code_point = utf8_code_point << (6 * utf8_bytes_needed);
 			continue;
 		}
-		if(!(utf8_lower_boundary <= byte && byte <= utf8_upper_boundary))
+		if(!(utf8_lower_boundary <= byte_value && byte_value <= utf8_upper_boundary))
 		{
 			// Resetting variables not necessary, will be done when
 			// the function is called again.
@@ -3629,7 +3641,7 @@ int str_utf8_decode(const char **ptr)
 		utf8_lower_boundary = 0x80;
 		utf8_upper_boundary = 0xBF;
 		utf8_bytes_seen += 1;
-		utf8_code_point = utf8_code_point + ((byte - 0x80) << (6 * (utf8_bytes_needed - utf8_bytes_seen)));
+		utf8_code_point = utf8_code_point + ((byte_value - 0x80) << (6 * (utf8_bytes_needed - utf8_bytes_seen)));
 		if(utf8_bytes_seen != utf8_bytes_needed)
 		{
 			continue;
@@ -4207,6 +4219,17 @@ int net_socket_read_wait(NETSOCKET sock, std::chrono::nanoseconds nanoseconds)
 	using namespace std::chrono_literals;
 	return ::net_socket_read_wait(sock, (nanoseconds / std::chrono::nanoseconds(1us).count()).count());
 }
+
+#if defined(CONF_FAMILY_WINDOWS)
+CWindowsComLifecycle::CWindowsComLifecycle()
+{
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+}
+CWindowsComLifecycle::~CWindowsComLifecycle()
+{
+	CoUninitialize();
+}
+#endif
 
 size_t std::hash<NETADDR>::operator()(const NETADDR &Addr) const noexcept
 {
