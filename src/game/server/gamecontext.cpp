@@ -8,7 +8,6 @@
 #include <antibot/antibot_data.h>
 #include <base/logger.h>
 #include <base/math.h>
-#include <cstring>
 #include <engine/console.h>
 #include <engine/engine.h>
 #include <engine/map.h>
@@ -1379,7 +1378,7 @@ void CGameContext::OnClientEnter(int ClientID)
 		if(g_Config.m_SvShowOthersDefault > SHOW_OTHERS_OFF)
 		{
 			if(g_Config.m_SvShowOthers)
-				SendChatTarget(ClientID, "You can see other players. To disable this use DDNet client and type /showothers .");
+				SendChatTarget(ClientID, "You can see other players. To disable this use DDNet client and type /showothers");
 
 			m_apPlayers[ClientID]->m_ShowOthers = g_Config.m_SvShowOthersDefault;
 		}
@@ -1782,7 +1781,10 @@ void CGameContext::CensorMessage(char *pCensoredMessage, const char *pMessage, i
 			pCurLoc = (char *)str_utf8_find_nocase(pCurLoc, Item.c_str());
 			if(pCurLoc)
 			{
-				memset(pCurLoc, '*', Item.length());
+				for(int i = 0; i < (int)Item.length(); i++)
+				{
+					pCurLoc[i] = '*';
+				}
 				pCurLoc++;
 			}
 		} while(pCurLoc);

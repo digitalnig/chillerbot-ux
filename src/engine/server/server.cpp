@@ -542,7 +542,7 @@ int CServer::Init()
 	m_CurrentGameTick = 0;
 
 	m_AnnouncementLastLine = 0;
-	memset(m_aPrevStates, CClient::STATE_EMPTY, MAX_CLIENTS * sizeof(int));
+	mem_zero(m_aPrevStates, sizeof(m_aPrevStates));
 
 	return 0;
 }
@@ -1200,6 +1200,7 @@ void CServer::SendMap(int ClientID)
 		Msg.AddRaw(&m_aCurrentMapSha256[MapType].data, sizeof(m_aCurrentMapSha256[MapType].data));
 		Msg.AddInt(m_aCurrentMapCrc[MapType]);
 		Msg.AddInt(m_aCurrentMapSize[MapType]);
+		Msg.AddString("", 0); // HTTPS map download URL
 		SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 	}
 	{
@@ -1537,7 +1538,11 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				str_format(aBuf, sizeof(aBuf), "player has entered the game. ClientID=%d addr=<{%s}> sixup=%d", ClientID, aAddrStr, IsSixup(ClientID));
 				Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
 				m_aClients[ClientID].m_State = CClient::STATE_INGAME;
-				if(IsSixup(ClientID))
+				if(!IsSixup(ClientID))
+				{
+					SendServerInfo(m_NetServer.ClientAddr(ClientID), -1, SERVERINFO_EXTENDED, false);
+				}
+				else
 				{
 					CMsgPacker Msgp(4, true, true); //NETMSG_SERVERINFO //TODO: Import the shared protocol from 7 aswell
 					GetServerInfoSixup(&Msgp, -1, false);
@@ -1885,7 +1890,8 @@ void CServer::CacheServerInfo(CCache *pCache, int Type, bool SendClients)
 		}
 		else
 		{
-			str_format(aBuf, sizeof(aBuf), "%s [%d/%d]", Config()->m_SvName, ClientCount, m_NetServer.MaxClients());
+			const int MaxClients = maximum(ClientCount, m_NetServer.MaxClients() - Config()->m_SvReservedSlots);
+			str_format(aBuf, sizeof(aBuf), "%s [%d/%d]", Config()->m_SvName, ClientCount, MaxClients);
 			p.AddString(aBuf, 64);
 		}
 	}
@@ -3387,8 +3393,8 @@ void CServer::ConAddSqlServer(IConsole::IResult *pResult, void *pUserData)
 
 	auto pMysqlConn = CreateMysqlConnection(
 		pResult->GetString(1), pResult->GetString(2), pResult->GetString(3),
-		pResult->GetString(4), pResult->GetString(5), pResult->GetInteger(6),
-		SetUpDb);
+		pResult->GetString(4), pResult->GetString(5), g_Config.m_SvSqlBindaddr,
+		pResult->GetInteger(6), SetUpDb);
 
 	if(!pMysqlConn)
 	{

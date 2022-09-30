@@ -549,6 +549,7 @@ int CEditor::UiDoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, in
 	{
 		s_pLastTextpID = pID;
 		s_TextMode = true;
+		m_LockMouse = false;
 		if(IsHex)
 			str_format(s_aNumStr, sizeof(s_aNumStr), "%06X", Current);
 		else
@@ -604,7 +605,7 @@ int CEditor::UiDoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, in
 				else
 					s_Value += m_MouseDeltaX;
 
-				if(absolute(s_Value) > Scale)
+				if(absolute(s_Value) >= Scale)
 				{
 					int Count = (int)(s_Value / Scale);
 					s_Value = fmod(s_Value, Scale);
@@ -912,7 +913,7 @@ void CEditor::DoToolbar(CUIRect ToolBar)
 			(Input()->KeyPress(KEY_I) && ModPressed))
 		{
 			m_ShowTileInfo = !m_ShowTileInfo;
-			m_ShowEnvelopePreview = 0;
+			m_ShowEnvelopePreview = SHOWENV_NONE;
 		}
 
 		TB_Top.VSplitLeft(5.0f, nullptr, &TB_Top);
@@ -1090,6 +1091,21 @@ void CEditor::DoToolbar(CUIRect ToolBar)
 			{
 				m_WorldOffsetX = 0;
 				m_WorldOffsetY = 0;
+			}
+			TB_Bottom.VSplitLeft(5.0f, nullptr, &TB_Bottom);
+		}
+
+		// goto xy button
+		{
+			TB_Bottom.VSplitLeft(50.0, &Button, &TB_Bottom);
+			static int s_GotoButton = 0;
+			if(DoButton_Editor(&s_GotoButton, "Goto XY", 0, &Button, 0, "Go to a specified coordinate point on the map"))
+			{
+				static int s_ModifierPopupID = 0;
+				if(!UiPopupExists(&s_ModifierPopupID))
+				{
+					UiInvokePopupMenu(&s_ModifierPopupID, 0, Button.x, Button.y + Button.h, 120, 52, PopupGoto);
+				}
 			}
 			TB_Bottom.VSplitLeft(5.0f, nullptr, &TB_Bottom);
 		}
@@ -2077,7 +2093,7 @@ void CEditor::DoQuadEnvelopes(const std::vector<CQuad> &vQuads, IGraphics::CText
 	mem_zero(apEnvelope, sizeof(CEnvelope *) * Num); // NOLINT(bugprone-sizeof-expression)
 	for(size_t i = 0; i < Num; i++)
 	{
-		if((m_ShowEnvelopePreview == 1 && vQuads[i].m_PosEnv == m_SelectedEnvelope) || m_ShowEnvelopePreview == 2)
+		if((m_ShowEnvelopePreview == SHOWENV_SELECTED && vQuads[i].m_PosEnv == m_SelectedEnvelope) || m_ShowEnvelopePreview == SHOWENV_ALL)
 			if(vQuads[i].m_PosEnv >= 0 && vQuads[i].m_PosEnv < (int)m_Map.m_vpEnvelopes.size())
 				apEnvelope[i] = m_Map.m_vpEnvelopes[vQuads[i].m_PosEnv];
 	}
@@ -2771,8 +2787,8 @@ void CEditor::DoMapEditor(CUIRect View)
 					{
 						CLayerQuads *pLayer = (CLayerQuads *)apEditLayers[k];
 
-						if(!m_ShowEnvelopePreview)
-							m_ShowEnvelopePreview = 2;
+						if(m_ShowEnvelopePreview == SHOWENV_NONE)
+							m_ShowEnvelopePreview = SHOWENV_ALL;
 
 						if(m_QuadKnifeActive)
 							DoQuadKnife(m_vSelectedQuads[m_SelectedQuadIndex]);
@@ -2972,7 +2988,7 @@ void CEditor::DoMapEditor(CUIRect View)
 		}
 	}
 
-	if(!m_ShowPicker && m_ShowTileInfo && m_ShowEnvelopePreview != 0 && GetSelectedLayer(0) && GetSelectedLayer(0)->m_Type == LAYERTYPE_QUADS)
+	if(!m_ShowPicker && m_ShowTileInfo && m_ShowEnvelopePreview != SHOWENV_NONE && GetSelectedLayer(0) && GetSelectedLayer(0)->m_Type == LAYERTYPE_QUADS)
 	{
 		GetSelectedGroup()->MapScreen();
 
@@ -2982,7 +2998,7 @@ void CEditor::DoMapEditor(CUIRect View)
 			Texture = m_Map.m_vpImages[pLayer->m_Image]->m_Texture;
 
 		DoQuadEnvelopes(pLayer->m_vQuads, Texture);
-		m_ShowEnvelopePreview = 0;
+		m_ShowEnvelopePreview = SHOWENV_NONE;
 	}
 
 	UI()->MapScreen();
@@ -3791,6 +3807,7 @@ static void ModifyIndexDeleted(int *pIndex)
 
 int CEditor::PopupImage(CEditor *pEditor, CUIRect View, void *pContext)
 {
+	static int s_ReaddButton = 0;
 	static int s_ReplaceButton = 0;
 	static int s_RemoveButton = 0;
 
@@ -3821,6 +3838,18 @@ int CEditor::PopupImage(CEditor *pEditor, CUIRect View, void *pContext)
 		View.HSplitTop(12.0f, &Slot, &View);
 	}
 
+	if(pEditor->DoButton_MenuItem(&s_ReaddButton, "Readd", 0, &Slot, 0, "Reloads the image from mapres folder"))
+	{
+		bool bIsExternal = pImg->m_External;
+		char aBuffer[1024];
+		str_format(aBuffer, sizeof(aBuffer), "mapres/%s.png", pImg->m_aName);
+		pEditor->ReplaceImage(aBuffer, IStorage::TYPE_ALL, pEditor);
+		pImg->m_External = bIsExternal;
+		return 1;
+	}
+
+	View.HSplitTop(5.0f, &Slot, &View);
+	View.HSplitTop(12.0f, &Slot, &View);
 	if(pEditor->DoButton_MenuItem(&s_ReplaceButton, "Replace", 0, &Slot, 0, "Replaces the image with a new one"))
 	{
 		pEditor->InvokeFileDialog(IStorage::TYPE_ALL, FILETYPE_IMG, "Replace Image", "Replace", "mapres", "", ReplaceImage, pEditor);
@@ -3843,11 +3872,24 @@ int CEditor::PopupImage(CEditor *pEditor, CUIRect View, void *pContext)
 
 int CEditor::PopupSound(CEditor *pEditor, CUIRect View, void *pContext)
 {
+	static int s_ReaddButton = 0;
 	static int s_ReplaceButton = 0;
 	static int s_RemoveButton = 0;
 
 	CUIRect Slot;
 	View.HSplitTop(2.0f, &Slot, &View);
+	View.HSplitTop(12.0f, &Slot, &View);
+	CEditorSound *pSound = pEditor->m_Map.m_vpSounds[pEditor->m_SelectedSound];
+
+	if(pEditor->DoButton_MenuItem(&s_ReaddButton, "Readd", 0, &Slot, 0, "Reloads the sound from mapres folder"))
+	{
+		char aBuffer[1024];
+		str_format(aBuffer, sizeof(aBuffer), "mapres/%s.opus", pSound->m_aName);
+		pEditor->ReplaceSound(aBuffer, IStorage::TYPE_ALL, pEditor);
+		return 1;
+	}
+
+	View.HSplitTop(5.0f, &Slot, &View);
 	View.HSplitTop(12.0f, &Slot, &View);
 	if(pEditor->DoButton_MenuItem(&s_ReplaceButton, "Replace", 0, &Slot, 0, "Replaces the sound with a new one"))
 	{
@@ -3857,7 +3899,6 @@ int CEditor::PopupSound(CEditor *pEditor, CUIRect View, void *pContext)
 
 	View.HSplitTop(5.0f, &Slot, &View);
 	View.HSplitTop(12.0f, &Slot, &View);
-	CEditorSound *pSound = pEditor->m_Map.m_vpSounds[pEditor->m_SelectedSound];
 	if(pEditor->DoButton_MenuItem(&s_RemoveButton, "Remove", 0, &Slot, 0, "Removes the sound from the map"))
 	{
 		delete pSound;
@@ -4045,9 +4086,9 @@ void CEditor::RenderImagesList(CUIRect ToolBox)
 					CEditorImage *pImg = m_Map.m_vpImages[m_SelectedImage];
 					int Height;
 					if(pImg->m_External || IsVanillaImage(pImg->m_aName))
-						Height = 60;
+						Height = 73;
 					else
-						Height = 43;
+						Height = 60;
 					UiInvokePopupMenu(&s_PopupImageID, 0, UI()->MouseX(), UI()->MouseY(), 120, Height, PopupImage);
 				}
 			}
@@ -4230,7 +4271,36 @@ void CEditor::AddFileDialogEntry(int Index, CUIRect *pView)
 	Button.VSplitLeft(Button.h, &FileIcon, &Button);
 	Button.VSplitLeft(5.0f, nullptr, &Button);
 
-	RenderTools()->RenderIcon(IMAGE_FILEICONS, m_vFileList[Index].m_IsDir ? SPRITE_FILE_FOLDER : SPRITE_FILE_MAP2, &FileIcon);
+	const char *pIconType;
+
+	if(!m_vFileList[Index].m_IsDir)
+	{
+		switch(m_FileDialogFileType)
+		{
+		case FILETYPE_MAP:
+			pIconType = "\xEF\x89\xB9";
+			break;
+		case FILETYPE_IMG:
+			pIconType = "\xEF\x80\xBE";
+			break;
+		case FILETYPE_SOUND:
+			pIconType = "\xEF\x80\x81";
+			break;
+		default:
+			pIconType = "";
+		}
+	}
+	else
+	{
+		if(str_comp(m_vFileList[Index].m_aFilename, "..") == 0)
+			pIconType = "\xEF\xA0\x82";
+		else
+			pIconType = "\xEF\x81\xBB";
+	}
+
+	TextRender()->SetCurFont(TextRender()->GetFont(TEXT_FONT_ICON_FONT));
+	UI()->DoLabel(&FileIcon, pIconType, 12.0f, TEXTALIGN_LEFT);
+	TextRender()->SetCurFont(nullptr);
 
 	if(DoButton_File(&m_vFileList[Index], m_vFileList[Index].m_aName, m_FilesSelectedIndex == Index, &Button, 0, nullptr))
 	{
@@ -4983,7 +5053,7 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 					m_Map.m_Modified = true;
 				}
 
-				m_ShowEnvelopePreview = 1;
+				m_ShowEnvelopePreview = SHOWENV_SELECTED;
 				m_pTooltip = "Press right mouse button to create a new point";
 			}
 		}
@@ -5168,7 +5238,7 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 							}
 
 							m_SelectedQuadEnvelope = m_SelectedEnvelope;
-							m_ShowEnvelopePreview = 1;
+							m_ShowEnvelopePreview = SHOWENV_SELECTED;
 							m_SelectedEnvelopePoint = i;
 							m_Map.m_Modified = true;
 						}
@@ -5203,7 +5273,7 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 							m_Map.m_Modified = true;
 						}
 
-						m_ShowEnvelopePreview = 1;
+						m_ShowEnvelopePreview = SHOWENV_SELECTED;
 						ColorMod = 100.0f;
 						Graphics()->SetColor(1, 0.75f, 0.75f, 1);
 						m_pTooltip = "Left mouse to drag. Hold ctrl to be more precise. Hold shift to alter time point as well. Right click to delete.";
@@ -5394,60 +5464,34 @@ void CEditor::RenderServerSettingsEditor(CUIRect View, bool ShowServerSettingsEd
 	CUIRect ListBox;
 	View.Margin(1.0f, &ListBox);
 
-	float ListHeight = 17.0f * m_Map.m_vSettings.size();
-	static float s_ScrollValue = 0;
+	const float ButtonHeight = 15.0f;
+	const float ButtonMargin = 2.0f;
 
-	float ScrollDifference = ListHeight - ListBox.h;
+	static CScrollRegion s_ScrollRegion;
+	vec2 ScrollOffset(0.0f, 0.0f);
+	CScrollRegionParams ScrollParams;
+	ScrollParams.m_ScrollUnit = (ButtonHeight + ButtonMargin) * 5.0f;
+	s_ScrollRegion.Begin(&ListBox, &ScrollOffset, &ScrollParams);
+	ListBox.y += ScrollOffset.y;
 
-	if(ListHeight > ListBox.h) // Do we even need a scrollbar?
-	{
-		CUIRect Scroll;
-		ListBox.VSplitRight(20.0f, &ListBox, &Scroll);
-		s_ScrollValue = UI()->DoScrollbarV(&s_ScrollValue, &Scroll, s_ScrollValue);
-
-		if(UI()->MouseInside(&Scroll) || UI()->MouseInside(&ListBox))
-		{
-			int ScrollNum = (int)((ListHeight - ListBox.h) / 17.0f) + 1;
-			if(ScrollNum > 0)
-			{
-				if(Input()->KeyPress(KEY_MOUSE_WHEEL_UP))
-					s_ScrollValue = clamp(s_ScrollValue - 1.0f / ScrollNum, 0.0f, 1.0f);
-				if(Input()->KeyPress(KEY_MOUSE_WHEEL_DOWN))
-					s_ScrollValue = clamp(s_ScrollValue + 1.0f / ScrollNum, 0.0f, 1.0f);
-			}
-		}
-	}
-
-	float ListStartAt = ScrollDifference * s_ScrollValue;
-	if(ListStartAt < 0.0f)
-		ListStartAt = 0.0f;
-
-	float ListStopAt = ListHeight - ScrollDifference * (1 - s_ScrollValue);
-	float ListCur = 0;
-
-	UI()->ClipEnable(&ListBox);
 	for(size_t i = 0; i < m_Map.m_vSettings.size(); i++)
 	{
-		if(ListCur > ListStopAt)
-			break;
-
-		if(ListCur >= ListStartAt)
+		CUIRect Button;
+		ListBox.HSplitTop(ButtonHeight, &Button, &ListBox);
+		ListBox.HSplitTop(ButtonMargin, nullptr, &ListBox);
+		Button.VSplitLeft(5.0f, nullptr, &Button);
+		if(s_ScrollRegion.AddRect(Button))
 		{
-			CUIRect Button;
-			ListBox.HSplitTop(15.0f, &Button, &ListBox);
-			ListBox.HSplitTop(2.0f, nullptr, &ListBox);
-			Button.VSplitLeft(5.0f, nullptr, &Button);
-
 			if(DoButton_MenuItem(&m_Map.m_vSettings[i], m_Map.m_vSettings[i].m_aCommand, s_CommandSelectedIndex >= 0 && (size_t)s_CommandSelectedIndex == i, &Button, 0, nullptr))
 			{
 				s_CommandSelectedIndex = i;
-				str_copy(m_aSettingsCommand, m_Map.m_vSettings[i].m_aCommand, sizeof(m_aSettingsCommand));
+				str_copy(m_aSettingsCommand, m_Map.m_vSettings[i].m_aCommand);
 				UI()->SetActiveItem(&m_CommandBox);
 			}
 		}
-		ListCur += 17.0f;
 	}
-	UI()->ClipDisable();
+
+	s_ScrollRegion.End();
 }
 
 int CEditor::PopupMenuFile(CEditor *pEditor, CUIRect View, void *pContext)
@@ -5992,7 +6036,7 @@ void CEditor::Reset(bool CreateDefault)
 
 	m_Map.m_Modified = false;
 
-	m_ShowEnvelopePreview = 0;
+	m_ShowEnvelopePreview = SHOWENV_NONE;
 	m_ShiftBy = 1;
 
 	m_Map.m_Modified = false;
@@ -6034,6 +6078,12 @@ void CEditor::ZoomMouseTarget(float ZoomFactor)
 	// adjust camera
 	m_WorldOffsetX += (Mwx - m_WorldOffsetX) * (1 - ZoomFactor);
 	m_WorldOffsetY += (Mwy - m_WorldOffsetY) * (1 - ZoomFactor);
+}
+
+void CEditor::Goto(float X, float Y)
+{
+	m_WorldOffsetX = X * 32;
+	m_WorldOffsetY = Y * 32;
 }
 
 void CEditorMap::DeleteEnvelope(int Index)
@@ -6278,6 +6328,9 @@ void CEditor::OnUpdate()
 		Reset();
 	}
 
+	for(int i = 0; i < Input()->NumEvents(); i++)
+		UI()->OnInput(Input()->GetEvent(i));
+
 	// handle cursor movement
 	{
 		static float s_MouseX = 0.0f;
@@ -6360,6 +6413,7 @@ void CEditor::OnRender()
 	}
 
 	UI()->FinishCheck();
+	UI()->ClearHotkeys();
 	Input()->Clear();
 }
 

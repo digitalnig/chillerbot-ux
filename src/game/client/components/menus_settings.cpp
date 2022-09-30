@@ -420,6 +420,10 @@ void CMenus::RefreshSkins()
 			RenderLoading(Localize("Loading skin files"), "", 0, false);
 		}
 	});
+	if(Client()->State() >= IClient::STATE_ONLINE)
+	{
+		m_pClient->RefindSkins();
+	}
 }
 
 void CMenus::RenderSettingsTee(CUIRect MainView)
@@ -441,25 +445,6 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 		pColorBody = &g_Config.m_ClDummyColorBody;
 		pColorFeet = &g_Config.m_ClDummyColorFeet;
 	}
-
-	// skin info
-	CTeeRenderInfo OwnSkinInfo;
-	const CSkin *pSkin = m_pClient->m_Skins.Get(m_pClient->m_Skins.Find(pSkinName));
-	OwnSkinInfo.m_OriginalRenderSkin = pSkin->m_OriginalSkin;
-	OwnSkinInfo.m_ColorableRenderSkin = pSkin->m_ColorableSkin;
-	OwnSkinInfo.m_SkinMetrics = pSkin->m_Metrics;
-	OwnSkinInfo.m_CustomColoredSkin = *pUseCustomColor;
-	if(*pUseCustomColor)
-	{
-		OwnSkinInfo.m_ColorBody = color_cast<ColorRGBA>(ColorHSLA(*pColorBody).UnclampLighting());
-		OwnSkinInfo.m_ColorFeet = color_cast<ColorRGBA>(ColorHSLA(*pColorFeet).UnclampLighting());
-	}
-	else
-	{
-		OwnSkinInfo.m_ColorBody = ColorRGBA(1.0f, 1.0f, 1.0f);
-		OwnSkinInfo.m_ColorFeet = ColorRGBA(1.0f, 1.0f, 1.0f);
-	}
-	OwnSkinInfo.m_Size = 50.0f;
 
 	MainView.HSplitTop(10.0f, &Label, &MainView);
 	Label.VSplitLeft(280.0f, &Label, &Dummy);
@@ -525,19 +510,40 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 	SkinPrefix.HSplitTop(2.0f, 0, &SkinPrefix);
 	{
 		static const char *s_apSkinPrefixes[] = {"kitty", "santa"};
-		for(auto &pPrefix : s_apSkinPrefixes)
+		static CButtonContainer s_aPrefixButtons[std::size(s_apSkinPrefixes)];
+		for(size_t i = 0; i < std::size(s_apSkinPrefixes); i++)
 		{
 			SkinPrefix.HSplitTop(20.0f, &Button, &SkinPrefix);
 			Button.HMargin(2.0f, &Button);
-			static CButtonContainer s_PrefixButton;
-			if(DoButton_Menu(&s_PrefixButton, pPrefix, 0, &Button))
+			if(DoButton_Menu(&s_aPrefixButtons[i], s_apSkinPrefixes[i], 0, &Button))
 			{
-				str_copy(g_Config.m_ClSkinPrefix, pPrefix);
+				str_copy(g_Config.m_ClSkinPrefix, s_apSkinPrefixes[i]);
 			}
 		}
 	}
 
 	Dummy.HSplitTop(20.0f, &DummyLabel, &Dummy);
+
+	// note: get the skin info after the settings buttons, because they can trigger a refresh
+	// which invalidates the skin
+	// skin info
+	CTeeRenderInfo OwnSkinInfo;
+	const CSkin *pSkin = m_pClient->m_Skins.Get(m_pClient->m_Skins.Find(pSkinName));
+	OwnSkinInfo.m_OriginalRenderSkin = pSkin->m_OriginalSkin;
+	OwnSkinInfo.m_ColorableRenderSkin = pSkin->m_ColorableSkin;
+	OwnSkinInfo.m_SkinMetrics = pSkin->m_Metrics;
+	OwnSkinInfo.m_CustomColoredSkin = *pUseCustomColor;
+	if(*pUseCustomColor)
+	{
+		OwnSkinInfo.m_ColorBody = color_cast<ColorRGBA>(ColorHSLA(*pColorBody).UnclampLighting());
+		OwnSkinInfo.m_ColorFeet = color_cast<ColorRGBA>(ColorHSLA(*pColorFeet).UnclampLighting());
+	}
+	else
+	{
+		OwnSkinInfo.m_ColorBody = ColorRGBA(1.0f, 1.0f, 1.0f);
+		OwnSkinInfo.m_ColorFeet = ColorRGBA(1.0f, 1.0f, 1.0f);
+	}
+	OwnSkinInfo.m_Size = 50.0f;
 
 	MainView.HSplitTop(50.0f, &Label, &MainView);
 	Label.VSplitLeft(230.0f, &Label, 0);
@@ -763,7 +769,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 	static CButtonContainer s_SkinDBDirID;
 	if(DoButton_Menu(&s_SkinDBDirID, Localize("Skin Database"), 0, &SkinDB))
 	{
-		const char *pLink = "https://ddnet.tw/skins/";
+		const char *pLink = "https://ddnet.org/skins/";
 		if(!open_link(pLink))
 		{
 			dbg_msg("menus", "couldn't open link '%s'", pLink);
@@ -795,10 +801,6 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 		TextRender()->SetCurFont(NULL);
 		RefreshSkins();
 		s_InitSkinlist = true;
-		if(Client()->State() >= IClient::STATE_ONLINE)
-		{
-			m_pClient->RefindSkins();
-		}
 	}
 	TextRender()->SetRenderFlags(0);
 	TextRender()->SetCurFont(NULL);
@@ -2968,18 +2970,65 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 	{
 		MainView.VSplitMid(&LeftView, &RightView);
 
-		// ***** Laser ***** //
+		// ***** Weapons ***** //
 		LeftView.HSplitTop(HeadlineAndVMargin, &Label, &LeftView);
-		UI()->DoLabel(&Label, Localize("Laser"), HeadlineFontSize, TEXTALIGN_LEFT);
+		UI()->DoLabel(&Label, Localize("Weapons"), HeadlineFontSize, TEXTALIGN_LEFT);
 
-		// General laser settings
-		LeftView.HSplitTop(SectionTotalMargin + 2 * ColorPickerLineSize, &Section, &LeftView);
+		// General weapon laser settings
+		LeftView.HSplitTop(SectionTotalMargin + 4 * ColorPickerLineSize, &Section, &LeftView);
 		Section.Margin(SectionMargin, &Section);
 
-		static CButtonContainer s_LaserOutResetID, s_LaserInResetID;
+		static CButtonContainer s_LaserRifleOutResetID, s_LaserRifleInResetID, s_LaserShotgunOutResetID, s_LaserShotgunInResetID;
 
-		ColorHSLA LaserOutlineColor = DoLine_ColorPicker(&s_LaserOutResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Laser Outline Color"), &g_Config.m_ClLaserOutlineColor, ColorRGBA(0.074402f, 0.074402f, 0.247166f, 1.0f), false);
-		ColorHSLA LaserInnerColor = DoLine_ColorPicker(&s_LaserInResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Laser Inner Color"), &g_Config.m_ClLaserInnerColor, ColorRGBA(0.498039f, 0.498039f, 1.0f, 1.0f), false);
+		ColorHSLA LaserRifleOutlineColor = DoLine_ColorPicker(&s_LaserRifleOutResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Rifle Laser Outline Color"), &g_Config.m_ClLaserRifleOutlineColor, ColorRGBA(0.074402f, 0.074402f, 0.247166f, 1.0f), false);
+		ColorHSLA LaserRifleInnerColor = DoLine_ColorPicker(&s_LaserRifleInResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Rifle Laser Inner Color"), &g_Config.m_ClLaserRifleInnerColor, ColorRGBA(0.498039f, 0.498039f, 1.0f, 1.0f), false);
+		ColorHSLA LaserShotgunOutlineColor = DoLine_ColorPicker(&s_LaserShotgunOutResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Shotgun Laser Outline Color"), &g_Config.m_ClLaserShotgunOutlineColor, ColorRGBA(0.125490f, 0.098039f, 0.043137f, 1.0f), false);
+		ColorHSLA LaserShotgunInnerColor = DoLine_ColorPicker(&s_LaserShotgunInResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Shotgun Laser Inner Color"), &g_Config.m_ClLaserShotgunInnerColor, ColorRGBA(0.570588f, 0.417647f, 0.252941f, 1.0f), false);
+
+		// ***** Entities ***** //
+		LeftView.HSplitTop(MarginToNextSection * 2.0f, 0x0, &LeftView);
+		LeftView.HSplitTop(HeadlineAndVMargin, &Label, &LeftView);
+		UI()->DoLabel(&Label, Localize("Entities"), HeadlineFontSize, TEXTALIGN_LEFT);
+
+		// General entity laser settings
+		LeftView.HSplitTop(SectionTotalMargin + 4 * ColorPickerLineSize, &Section, &LeftView);
+		Section.Margin(SectionMargin, &Section);
+
+		static CButtonContainer s_LaserDoorOutResetID, s_LaserDoorInResetID, s_LaserFreezeOutResetID, s_LaserFreezeInResetID;
+
+		ColorHSLA LaserDoorOutlineColor = DoLine_ColorPicker(&s_LaserDoorOutResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Door Laser Outline Color"), &g_Config.m_ClLaserDoorOutlineColor, ColorRGBA(0.0f, 0.131372f, 0.096078f, 1.0f), false);
+		ColorHSLA LaserDoorInnerColor = DoLine_ColorPicker(&s_LaserDoorInResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Door Laser Inner Color"), &g_Config.m_ClLaserDoorInnerColor, ColorRGBA(0.262745f, 0.760784f, 0.639215f, 1.0f), false);
+		ColorHSLA LaserFreezeOutlineColor = DoLine_ColorPicker(&s_LaserFreezeOutResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Freeze Laser Outline Color"), &g_Config.m_ClLaserFreezeOutlineColor, ColorRGBA(0.131372f, 0.123529f, 0.182352f, 1.0f), false);
+		ColorHSLA LaserFreezeInnerColor = DoLine_ColorPicker(&s_LaserFreezeInResetID, ColorPickerLineSize, LeftViewColorPickerPosition, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Freeze Laser Inner Color"), &g_Config.m_ClLaserFreezeInnerColor, ColorRGBA(0.482352f, 0.443137f, 0.564705f, 1.0f), false);
+
+		static CButtonContainer s_AllToRifleResetID, s_AllToDefaultResetID;
+
+		LeftView.HSplitTop(20.0f, 0x0, &LeftView);
+		LeftView.HSplitTop(20.0f, &Button, &LeftView);
+		if(DoButton_Menu(&s_AllToRifleResetID, Localize("Set all to Rifle"), 0, &Button))
+		{
+			g_Config.m_ClLaserShotgunOutlineColor = g_Config.m_ClLaserRifleOutlineColor;
+			g_Config.m_ClLaserShotgunInnerColor = g_Config.m_ClLaserRifleInnerColor;
+			g_Config.m_ClLaserDoorOutlineColor = g_Config.m_ClLaserRifleOutlineColor;
+			g_Config.m_ClLaserDoorInnerColor = g_Config.m_ClLaserRifleInnerColor;
+			g_Config.m_ClLaserFreezeOutlineColor = g_Config.m_ClLaserRifleOutlineColor;
+			g_Config.m_ClLaserFreezeInnerColor = g_Config.m_ClLaserRifleInnerColor;
+		}
+
+		// values taken from the CL commands
+		LeftView.HSplitTop(10.0f, 0x0, &LeftView);
+		LeftView.HSplitTop(20.0f, &Button, &LeftView);
+		if(DoButton_Menu(&s_AllToDefaultResetID, Localize("Reset to defaults"), 0, &Button))
+		{
+			g_Config.m_ClLaserRifleOutlineColor = 11176233;
+			g_Config.m_ClLaserRifleInnerColor = 11206591;
+			g_Config.m_ClLaserShotgunOutlineColor = 1866773;
+			g_Config.m_ClLaserShotgunInnerColor = 1467241;
+			g_Config.m_ClLaserDoorOutlineColor = 7667473;
+			g_Config.m_ClLaserDoorInnerColor = 7701379;
+			g_Config.m_ClLaserFreezeOutlineColor = 11613223;
+			g_Config.m_ClLaserFreezeInnerColor = 12001153;
+		}
 
 		// ***** Laser Preview ***** //
 		RightView.HSplitTop(HeadlineAndVMargin, &Label, &RightView);
@@ -2987,8 +3036,19 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 
 		RightView.HSplitTop(SectionTotalMargin + 50.0f, &Section, &RightView);
 		Section.Margin(SectionMargin, &Section);
+		DoLaserPreview(&Section, LaserRifleOutlineColor, LaserRifleInnerColor, LASERTYPE_RIFLE);
 
-		DoLaserPreview(&Section, LaserOutlineColor, LaserInnerColor);
+		RightView.HSplitTop(SectionTotalMargin + 50.0f, &Section, &RightView);
+		Section.Margin(SectionMargin, &Section);
+		DoLaserPreview(&Section, LaserShotgunOutlineColor, LaserShotgunInnerColor, LASERTYPE_SHOTGUN);
+
+		RightView.HSplitTop(SectionTotalMargin + 50.0f, &Section, &RightView);
+		Section.Margin(SectionMargin, &Section);
+		DoLaserPreview(&Section, LaserDoorOutlineColor, LaserDoorInnerColor, LASERTYPE_DOOR);
+
+		RightView.HSplitTop(SectionTotalMargin + 50.0f, &Section, &RightView);
+		Section.Margin(SectionMargin, &Section);
+		DoLaserPreview(&Section, LaserFreezeOutlineColor, LaserFreezeInnerColor, LASERTYPE_DOOR);
 	}
 }
 
@@ -3221,10 +3281,6 @@ void CMenus::RenderSettingsDDNet(CUIRect MainView)
 	static CButtonContainer s_ResetID1;
 	Miscellaneous.HSplitTop(25.0f, &Button, &Right);
 	DoLine_ColorPicker(&s_ResetID1, 25.0f, 194.0f, 13.0f, 5.0f, &Button, Localize("Regular Background Color"), &g_Config.m_ClBackgroundColor, GreyDefault, false);
-	Right.HSplitTop(5.0f, 0x0, &Right);
-	Right.HSplitTop(20.0f, &Button, &Right);
-	if(DoButton_CheckBox(&g_Config.m_ClHttpMapDownload, Localize("Try fast HTTP map download first"), g_Config.m_ClHttpMapDownload, &Button))
-		g_Config.m_ClHttpMapDownload ^= 1;
 
 	static CButtonContainer s_ButtonTimeout;
 	Right.HSplitTop(10.0f, 0x0, &Right);

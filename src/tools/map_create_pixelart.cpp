@@ -6,27 +6,25 @@
 #include <engine/storage.h>
 #include <game/mapitems.h>
 
-#include <cstring>
-
-bool CreatePixelArt(const char[][64], const int[], const int[], int[], const bool[]);
+bool CreatePixelArt(const char[3][64], const int[2], const int[2], int[2], const bool[2]);
 void InsertCurrentQuads(CDataFileReader &, CMapItemLayerQuads *, CQuad *);
-int InsertPixelArtQuads(CQuad *, int &, const CImageInfo &, const int[], const int[], const bool[]);
+int InsertPixelArtQuads(CQuad *, int &, const CImageInfo &, const int[2], const int[2], const bool[2]);
 
 bool LoadPNG(CImageInfo *, const char *);
-bool OpenMaps(const char[][64], CDataFileReader &, CDataFileWriter &);
+bool OpenMaps(const char[2][64], CDataFileReader &, CDataFileWriter &);
 void SaveOutputMap(CDataFileReader &, CDataFileWriter &, CMapItemLayerQuads *, int, CQuad *, int);
 
-CMapItemLayerQuads *GetQuadLayer(CDataFileReader &, const int[], int *);
-CQuad CreateNewQuad(float, float, int, int, const uint8_t[], const int[]);
+CMapItemLayerQuads *GetQuadLayer(CDataFileReader &, const int[2], int *);
+CQuad CreateNewQuad(float, float, int, int, const uint8_t[4], const int[2]);
 
-bool GetPixelClamped(const CImageInfo &, int, int, uint8_t[]);
-bool ComparePixel(const uint8_t[], const uint8_t[]);
-bool IsPixelOptimizable(const CImageInfo &, int, int, const uint8_t[], const bool[]);
+bool GetPixelClamped(const CImageInfo &, int, int, uint8_t[4]);
+bool ComparePixel(const uint8_t[4], const uint8_t[4]);
+bool IsPixelOptimizable(const CImageInfo &, int, int, const uint8_t[4], const bool[]);
 void SetVisitedPixels(const CImageInfo &, int, int, int, int, bool[]);
 
 int GetImagePixelSize(const CImageInfo &);
-int FindSuperPixelSize(const CImageInfo &, const uint8_t[], int, int, int, bool[]);
-void GetOptimizedQuadSize(const CImageInfo &, int, const uint8_t[], int, int, int &, int &, bool[]);
+int FindSuperPixelSize(const CImageInfo &, const uint8_t[4], int, int, int, bool[]);
+void GetOptimizedQuadSize(const CImageInfo &, int, const uint8_t[4], int, int, int &, int &, bool[]);
 
 int main(int argc, const char **argv)
 {
@@ -217,7 +215,10 @@ bool GetPixelClamped(const CImageInfo &Img, int x, int y, uint8_t aPixel[4])
 {
 	x = clamp<int>(x, 0, (int)Img.m_Width - 1);
 	y = clamp<int>(y, 0, (int)Img.m_Height - 1);
-	memset(aPixel, 255, sizeof(uint8_t[4]));
+	aPixel[0] = 255;
+	aPixel[1] = 255;
+	aPixel[2] = 255;
+	aPixel[3] = 255;
 
 	int BPP = Img.m_Format == CImageInfo::FORMAT_RGB ? 3 : 4;
 	for(int i = 0; i < BPP; i++)
