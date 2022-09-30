@@ -240,7 +240,7 @@ function run_tests() {
 		sleep 0.5
 		echo "reply_to_last_ping" > client2.fifo
 		sleep 0.5
-		srv_log="$(grep -F '[chat]' server.log | tail -n2)"
+		srv_log="$(grep -F ' chat: ' server.log | tail -n2)"
 		if ! echo "$srv_log" | grep -qF "$out_msg"
 		then
 			echo ""
