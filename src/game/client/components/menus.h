@@ -414,7 +414,7 @@ protected:
 			const CDemoItem &Right = g_Config.m_BrDemoSortOrder ? *this : Other;
 
 			if(g_Config.m_BrDemoSort == SORT_DEMONAME)
-				return str_comp_nocase(Left.m_aFilename, Right.m_aFilename) < 0;
+				return str_comp_filenames(Left.m_aFilename, Right.m_aFilename) < 0;
 			if(g_Config.m_BrDemoSort == SORT_DATE)
 				return Left.m_Date < Right.m_Date;
 
@@ -507,6 +507,7 @@ protected:
 	void RenderServerControl(CUIRect MainView);
 	bool RenderServerControlKick(CUIRect MainView, bool FilterSpectators);
 	bool RenderServerControlServer(CUIRect MainView);
+	void RenderIngameHint();
 
 	// found in menus_browser.cpp
 	int m_SelectedIndex;
@@ -613,7 +614,6 @@ public:
 		BIG_TAB_LENGTH,
 
 		SMALL_TAB_HOME = 0,
-		SMALL_TAB_CLOSE,
 		SMALL_TAB_QUIT,
 		SMALL_TAB_SETTINGS,
 		SMALL_TAB_EDITOR,

@@ -2657,11 +2657,13 @@ int str_format(char *buffer, int buffer_size, const char *format, ...)
 	return str_utf8_fix_truncation(buffer);
 }
 
-char *str_trim_words(char *str, int words)
+const char *str_trim_words(const char *str, int words)
 {
+	while(*str && str_isspace(*str))
+		str++;
 	while(words && *str)
 	{
-		if(isspace(*str) && !isspace(*(str + 1)))
+		if(str_isspace(*str) && !str_isspace(*(str + 1)))
 			words--;
 		str++;
 	}
@@ -2751,28 +2753,28 @@ void str_clean_whitespaces(char *str_in)
 
 char *str_skip_to_whitespace(char *str)
 {
-	while(*str && (*str != ' ' && *str != '\t' && *str != '\n'))
+	while(*str && !str_isspace(*str))
 		str++;
 	return str;
 }
 
 const char *str_skip_to_whitespace_const(const char *str)
 {
-	while(*str && (*str != ' ' && *str != '\t' && *str != '\n'))
+	while(*str && !str_isspace(*str))
 		str++;
 	return str;
 }
 
 char *str_skip_whitespaces(char *str)
 {
-	while(*str && (*str == ' ' || *str == '\t' || *str == '\n' || *str == '\r'))
+	while(*str && str_isspace(*str))
 		str++;
 	return str;
 }
 
 const char *str_skip_whitespaces_const(const char *str)
 {
-	while(*str && (*str == ' ' || *str == '\t' || *str == '\n' || *str == '\r'))
+	while(*str && str_isspace(*str))
 		str++;
 	return str;
 }
@@ -2831,8 +2833,9 @@ int str_comp_filenames(const char *a, const char *b)
 				return result;
 		}
 
-		if(*a != *b)
-			break;
+		result = tolower(*a) - tolower(*b);
+		if(result)
+			return result;
 	}
 	return *a - *b;
 }
@@ -3047,15 +3050,16 @@ int str_countchr(const char *haystack, char needle)
 void str_hex(char *dst, int dst_size, const void *data, int data_size)
 {
 	static const char hex[] = "0123456789ABCDEF";
-	int b;
-
-	for(b = 0; b < data_size && b < dst_size / 4 - 4; b++)
+	int data_index;
+	int dst_index;
+	for(data_index = 0, dst_index = 0; data_index < data_size && dst_index < dst_size - 3; data_index++)
 	{
-		dst[b * 3] = hex[((const unsigned char *)data)[b] >> 4];
-		dst[b * 3 + 1] = hex[((const unsigned char *)data)[b] & 0xf];
-		dst[b * 3 + 2] = ' ';
-		dst[b * 3 + 3] = 0;
+		dst[data_index * 3] = hex[((const unsigned char *)data)[data_index] >> 4];
+		dst[data_index * 3 + 1] = hex[((const unsigned char *)data)[data_index] & 0xf];
+		dst[data_index * 3 + 2] = ' ';
+		dst_index += 3;
 	}
+	dst[dst_index] = '\0';
 }
 
 static int hexval(char x)
@@ -3378,7 +3382,10 @@ void net_stats(NETSTATS *stats_inout)
 	*stats_inout = network_stats;
 }
 
-int str_isspace(char c) { return c == ' ' || c == '\n' || c == '\t'; }
+int str_isspace(char c)
+{
+	return c == ' ' || c == '\n' || c == '\r' || c == '\t';
+}
 
 char str_uppercase(char c)
 {
@@ -4115,27 +4122,27 @@ int secure_rand_below(int below)
 int os_version_str(char *version, int length)
 {
 #if defined(CONF_FAMILY_WINDOWS)
-	const char *DLL = "C:\\Windows\\System32\\user32.dll";
+	const WCHAR *module_path = L"kernel32.dll";
 	DWORD handle;
-	DWORD size = GetFileVersionInfoSizeA(DLL, &handle);
+	DWORD size = GetFileVersionInfoSizeW(module_path, &handle);
 	if(!size)
 	{
 		return 1;
 	}
 	void *data = malloc(size);
-	if(!GetFileVersionInfoA(DLL, handle, size, data))
+	if(!GetFileVersionInfoW(module_path, handle, size, data))
 	{
 		free(data);
 		return 1;
 	}
 	VS_FIXEDFILEINFO *fileinfo;
 	UINT unused;
-	if(!VerQueryValueA(data, "\\", (void **)&fileinfo, &unused))
+	if(!VerQueryValueW(data, L"\\", (void **)&fileinfo, &unused))
 	{
 		free(data);
 		return 1;
 	}
-	str_format(version, length, "Windows %d.%d.%d.%d",
+	str_format(version, length, "Windows %hu.%hu.%hu.%hu",
 		HIWORD(fileinfo->dwProductVersionMS),
 		LOWORD(fileinfo->dwProductVersionMS),
 		HIWORD(fileinfo->dwProductVersionLS),
