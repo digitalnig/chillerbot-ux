@@ -347,23 +347,34 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 			else if(ID == COL_NAME)
 			{
 				float FontSize = 12.0f;
+				bool Printed = false;
 
 				if(g_Config.m_BrFilterString[0] && (pItem->m_QuickSearchHit & IServerBrowser::QUICK_SERVERNAME))
 				{
-					// highlight the parts that matches
-					const char *pStr = str_utf8_find_nocase(pItem->m_aName, g_Config.m_BrFilterString);
-					if(pStr)
+					const char *pStrToken = g_Config.m_BrFilterString;
+					char aFilterStr[sizeof(g_Config.m_BrFilterString)];
+					while((pStrToken = str_next_token(pStrToken, IServerBrowser::SEARCH_EXCLUDE_TOKEN, aFilterStr, sizeof(aFilterStr))))
 					{
-						UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColName + 0), &Button, pItem->m_aName, FontSize, TEXTALIGN_LEFT, Button.w, 1, true, (int)(pStr - pItem->m_aName));
-						TextRender()->TextColor(0.4f, 0.4f, 1.0f, 1);
-						UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColName + 1), &Button, pStr, FontSize, TEXTALIGN_LEFT, Button.w, 1, true, (int)str_length(g_Config.m_BrFilterString), &pItem->m_pUIElement->Rect(gs_OffsetColName + 0)->m_Cursor);
-						TextRender()->TextColor(1, 1, 1, 1);
-						UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColName + 2), &Button, pStr + str_length(g_Config.m_BrFilterString), FontSize, TEXTALIGN_LEFT, Button.w, 1, true, -1, &pItem->m_pUIElement->Rect(gs_OffsetColName + 1)->m_Cursor);
+						if(aFilterStr[0] == '\0')
+						{
+							continue;
+						}
+
+						// highlight the parts that matches
+						const char *pStr = str_utf8_find_nocase(pItem->m_aName, aFilterStr);
+						if(pStr)
+						{
+							UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColName + 0), &Button, pItem->m_aName, FontSize, TEXTALIGN_LEFT, Button.w, 1, true, (int)(pStr - pItem->m_aName));
+							TextRender()->TextColor(0.4f, 0.4f, 1.0f, 1);
+							UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColName + 1), &Button, pStr, FontSize, TEXTALIGN_LEFT, Button.w, 1, true, (int)str_length(aFilterStr), &pItem->m_pUIElement->Rect(gs_OffsetColName + 0)->m_Cursor);
+							TextRender()->TextColor(1, 1, 1, 1);
+							UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColName + 2), &Button, pStr + str_length(aFilterStr), FontSize, TEXTALIGN_LEFT, Button.w, 1, true, -1, &pItem->m_pUIElement->Rect(gs_OffsetColName + 1)->m_Cursor);
+							Printed = true;
+							break;
+						}
 					}
-					else
-						UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColName), &Button, pItem->m_aName, FontSize, TEXTALIGN_LEFT, Button.w, 1, true);
 				}
-				else
+				if(!Printed)
 					UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColName), &Button, pItem->m_aName, FontSize, TEXTALIGN_LEFT, Button.w, 1, true);
 			}
 			else if(ID == COL_MAP)
@@ -382,23 +393,29 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 				}
 
 				float FontSize = 12.0f;
+				bool Printed = false;
 
 				if(g_Config.m_BrFilterString[0] && (pItem->m_QuickSearchHit & IServerBrowser::QUICK_MAPNAME))
 				{
-					// highlight the parts that matches
-					const char *pStr = str_utf8_find_nocase(pItem->m_aMap, g_Config.m_BrFilterString);
-					if(pStr)
+					const char *pStrToken = g_Config.m_BrFilterString;
+					char aFilterStr[sizeof(g_Config.m_BrFilterString)];
+					while((pStrToken = str_next_token(pStrToken, IServerBrowser::SEARCH_EXCLUDE_TOKEN, aFilterStr, sizeof(aFilterStr))))
 					{
-						UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColMap + 0), &Button, pItem->m_aMap, FontSize, TEXTALIGN_LEFT, Button.w, 1, true, (int)(pStr - pItem->m_aMap));
-						TextRender()->TextColor(0.4f, 0.4f, 1.0f, 1);
-						UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColMap + 1), &Button, pStr, FontSize, TEXTALIGN_LEFT, Button.w, 1, true, (int)str_length(g_Config.m_BrFilterString), &pItem->m_pUIElement->Rect(gs_OffsetColMap + 0)->m_Cursor);
-						TextRender()->TextColor(1, 1, 1, 1);
-						UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColMap + 2), &Button, pStr + str_length(g_Config.m_BrFilterString), FontSize, TEXTALIGN_LEFT, Button.w, 1, true, -1, &pItem->m_pUIElement->Rect(gs_OffsetColMap + 1)->m_Cursor);
+						// highlight the parts that matches
+						const char *pStr = str_utf8_find_nocase(pItem->m_aMap, aFilterStr);
+						if(pStr)
+						{
+							UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColMap + 0), &Button, pItem->m_aMap, FontSize, TEXTALIGN_LEFT, Button.w, 1, true, (int)(pStr - pItem->m_aMap));
+							TextRender()->TextColor(0.4f, 0.4f, 1.0f, 1);
+							UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColMap + 1), &Button, pStr, FontSize, TEXTALIGN_LEFT, Button.w, 1, true, (int)str_length(aFilterStr), &pItem->m_pUIElement->Rect(gs_OffsetColMap + 0)->m_Cursor);
+							TextRender()->TextColor(1, 1, 1, 1);
+							UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColMap + 2), &Button, pStr + str_length(aFilterStr), FontSize, TEXTALIGN_LEFT, Button.w, 1, true, -1, &pItem->m_pUIElement->Rect(gs_OffsetColMap + 1)->m_Cursor);
+							Printed = true;
+							break;
+						}
 					}
-					else
-						UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColMap), &Button, pItem->m_aMap, FontSize, TEXTALIGN_LEFT, Button.w, 1, true);
 				}
-				else
+				if(!Printed)
 					UI()->DoLabelStreamed(*pItem->m_pUIElement->Rect(gs_OffsetColMap), &Button, pItem->m_aMap, FontSize, TEXTALIGN_LEFT, Button.w, 1, true);
 			}
 			else if(ID == COL_PLAYERS)
@@ -447,19 +464,19 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 				{
 					ColorHSLA hsl = ColorHSLA(1.0f, 1.0f, 1.0f);
 
-					if(IsVanilla(pItem))
+					if(str_comp(pItem->m_aGameType, "DM") == 0 || str_comp(pItem->m_aGameType, "TDM") == 0 || str_comp(pItem->m_aGameType, "CTF") == 0)
 						hsl = ColorHSLA(0.33f, 1.0f, 0.75f);
-					else if(IsCatch(pItem))
+					else if(str_find_nocase(pItem->m_aGameType, "catch"))
 						hsl = ColorHSLA(0.17f, 1.0f, 0.75f);
-					else if(IsInsta(pItem))
+					else if(str_find_nocase(pItem->m_aGameType, "idm") || str_find_nocase(pItem->m_aGameType, "itdm") || str_find_nocase(pItem->m_aGameType, "ictf"))
 						hsl = ColorHSLA(0.00f, 1.0f, 0.75f);
-					else if(IsFNG(pItem))
+					else if(str_find_nocase(pItem->m_aGameType, "fng"))
 						hsl = ColorHSLA(0.83f, 1.0f, 0.75f);
-					else if(IsDDNet(pItem))
+					else if(str_find_nocase(pItem->m_aGameType, "ddracenet") || str_find_nocase(pItem->m_aGameType, "ddnet"))
 						hsl = ColorHSLA(0.58f, 1.0f, 0.75f);
-					else if(IsDDRace(pItem))
+					else if(str_find_nocase(pItem->m_aGameType, "ddrace") || str_find_nocase(pItem->m_aGameType, "mkrace"))
 						hsl = ColorHSLA(0.75f, 1.0f, 0.75f);
-					else if(IsRace(pItem))
+					else if(str_find_nocase(pItem->m_aGameType, "race") || str_find_nocase(pItem->m_aGameType, "fastcap"))
 						hsl = ColorHSLA(0.46f, 1.0f, 0.75f);
 
 					ColorRGBA rgb = color_cast<ColorRGBA>(hsl);
@@ -1150,7 +1167,7 @@ void CMenus::RenderServerbrowserServerDetail(CUIRect View)
 
 			if(!pSelectedServer->m_aClients[i].m_Player)
 				str_copy(aTemp, "SPEC");
-			else if(IsRace(pSelectedServer) && g_Config.m_ClDDRaceScoreBoard)
+			else if((str_find_nocase(pSelectedServer->m_aGameType, "race") || str_find_nocase(pSelectedServer->m_aGameType, "fastcap")) && g_Config.m_ClDDRaceScoreBoard)
 			{
 				if(pSelectedServer->m_aClients[i].m_Score == -9999 || pSelectedServer->m_aClients[i].m_Score == 0)
 					aTemp[0] = 0;
@@ -1172,44 +1189,56 @@ void CMenus::RenderServerbrowserServerDetail(CUIRect View)
 			TextRender()->SetCursor(&Cursor, Name.x, Name.y + (Name.h - (FontSize - 2)) / 2.f, FontSize - 2, TEXTFLAG_RENDER | TEXTFLAG_STOP_AT_END);
 			Cursor.m_LineWidth = Name.w;
 			const char *pName = pSelectedServer->m_aClients[i].m_aName;
+			bool Printed = false;
 			if(g_Config.m_BrFilterString[0])
 			{
-				// highlight the parts that matches
-				const char *pFilteredStr = str_utf8_find_nocase(pName, g_Config.m_BrFilterString);
-				if(pFilteredStr)
+				const char *pStr = g_Config.m_BrFilterString;
+				char aFilterStr[sizeof(g_Config.m_BrFilterString)];
+				while((pStr = str_next_token(pStr, IServerBrowser::SEARCH_EXCLUDE_TOKEN, aFilterStr, sizeof(aFilterStr))))
 				{
-					TextRender()->TextEx(&Cursor, pName, (int)(pFilteredStr - pName));
-					TextRender()->TextColor(0.4f, 0.4f, 1.0f, 1.0f);
-					TextRender()->TextEx(&Cursor, pFilteredStr, str_length(g_Config.m_BrFilterString));
-					TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
-					TextRender()->TextEx(&Cursor, pFilteredStr + str_length(g_Config.m_BrFilterString), -1);
+					// highlight the parts that matches
+					const char *pFilteredStr = str_utf8_find_nocase(pName, aFilterStr);
+					if(pFilteredStr)
+					{
+						TextRender()->TextEx(&Cursor, pName, (int)(pFilteredStr - pName));
+						TextRender()->TextColor(0.4f, 0.4f, 1.0f, 1.0f);
+						TextRender()->TextEx(&Cursor, pFilteredStr, str_length(aFilterStr));
+						TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
+						TextRender()->TextEx(&Cursor, pFilteredStr + str_length(aFilterStr), -1);
+						Printed = true;
+						break;
+					}
 				}
-				else
-					TextRender()->TextEx(&Cursor, pName, -1);
 			}
-			else
+			if(!Printed)
 				TextRender()->TextEx(&Cursor, pName, -1);
 
 			// clan
 			TextRender()->SetCursor(&Cursor, Clan.x, Clan.y + (Clan.h - (FontSize - 2)) / 2.f, FontSize - 2, TEXTFLAG_RENDER | TEXTFLAG_STOP_AT_END);
 			Cursor.m_LineWidth = Clan.w;
 			const char *pClan = pSelectedServer->m_aClients[i].m_aClan;
+			Printed = false;
 			if(g_Config.m_BrFilterString[0])
 			{
-				// highlight the parts that matches
-				const char *pFilteredString = str_utf8_find_nocase(pClan, g_Config.m_BrFilterString);
-				if(pFilteredString)
+				const char *pStr = g_Config.m_BrFilterString;
+				char aFilterStr[sizeof(g_Config.m_BrFilterString)];
+				while((pStr = str_next_token(pStr, IServerBrowser::SEARCH_EXCLUDE_TOKEN, aFilterStr, sizeof(aFilterStr))))
 				{
-					TextRender()->TextEx(&Cursor, pClan, (int)(pFilteredString - pClan));
-					TextRender()->TextColor(0.4f, 0.4f, 1.0f, 1.0f);
-					TextRender()->TextEx(&Cursor, pFilteredString, str_length(g_Config.m_BrFilterString));
-					TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
-					TextRender()->TextEx(&Cursor, pFilteredString + str_length(g_Config.m_BrFilterString), -1);
+					// highlight the parts that matches
+					const char *pFilteredString = str_utf8_find_nocase(pClan, aFilterStr);
+					if(pFilteredString)
+					{
+						TextRender()->TextEx(&Cursor, pClan, (int)(pFilteredString - pClan));
+						TextRender()->TextColor(0.4f, 0.4f, 1.0f, 1.0f);
+						TextRender()->TextEx(&Cursor, pFilteredString, str_length(aFilterStr));
+						TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
+						TextRender()->TextEx(&Cursor, pFilteredString + str_length(aFilterStr), -1);
+						Printed = true;
+						break;
+					}
 				}
-				else
-					TextRender()->TextEx(&Cursor, pClan, -1);
 			}
-			else
+			if(!Printed)
 				TextRender()->TextEx(&Cursor, pClan, -1);
 
 			// flag

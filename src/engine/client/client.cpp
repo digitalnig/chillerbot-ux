@@ -691,8 +691,9 @@ void CClient::SetState(EClientState s)
 
 		if(s == IClient::STATE_ONLINE)
 		{
-			Discord()->SetGameInfo(ServerAddress(), m_aCurrentMap);
-			Steam()->SetGameInfo(ServerAddress(), m_aCurrentMap);
+			const bool AnnounceAddr = m_ServerBrowser.IsRegistered(ServerAddress());
+			Discord()->SetGameInfo(ServerAddress(), m_aCurrentMap, AnnounceAddr);
+			Steam()->SetGameInfo(ServerAddress(), m_aCurrentMap, AnnounceAddr);
 		}
 		else if(Old == IClient::STATE_ONLINE)
 		{
@@ -1027,7 +1028,7 @@ int CClient::LoadData()
 void *CClient::SnapGetItem(int SnapID, int Index, CSnapItem *pItem) const
 {
 	dbg_assert(SnapID >= 0 && SnapID < NUM_SNAPSHOT_TYPES, "invalid SnapID");
-	CSnapshotItem *pSnapshotItem = m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pAltSnap->GetItem(Index);
+	const CSnapshotItem *pSnapshotItem = m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pAltSnap->GetItem(Index);
 	pItem->m_DataSize = m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pAltSnap->GetItemSize(Index);
 	pItem->m_Type = m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pAltSnap->GetItemType(Index);
 	pItem->m_ID = pSnapshotItem->ID();
@@ -1040,21 +1041,7 @@ int CClient::SnapItemSize(int SnapID, int Index) const
 	return m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pAltSnap->GetItemSize(Index);
 }
 
-void CClient::SnapInvalidateItem(int SnapID, int Index)
-{
-	dbg_assert(SnapID >= 0 && SnapID < NUM_SNAPSHOT_TYPES, "invalid SnapID");
-	CSnapshotItem *pSnapshotItem = m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pAltSnap->GetItem(Index);
-	if(pSnapshotItem)
-	{
-		if((char *)pSnapshotItem < (char *)m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pAltSnap || (char *)pSnapshotItem > (char *)m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pAltSnap + m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_AltSnapSize)
-			m_pConsole->Print(IConsole::OUTPUT_LEVEL_DEBUG, "client", "snap invalidate problem");
-		if((char *)pSnapshotItem >= (char *)m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pSnap && (char *)pSnapshotItem < (char *)m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_pSnap + m_aapSnapshots[g_Config.m_ClDummy][SnapID]->m_SnapSize)
-			m_pConsole->Print(IConsole::OUTPUT_LEVEL_DEBUG, "client", "snap invalidate problem");
-		pSnapshotItem->m_TypeAndID = -1;
-	}
-}
-
-void *CClient::SnapFindItem(int SnapID, int Type, int ID) const
+const void *CClient::SnapFindItem(int SnapID, int Type, int ID) const
 {
 	if(!m_aapSnapshots[g_Config.m_ClDummy][SnapID])
 		return 0x0;
@@ -1403,8 +1390,6 @@ void CClient::ProcessConnlessPacket(CNetChunk *pPacket)
 		int Type = -1;
 		if(mem_comp(pPacket->m_pData, SERVERBROWSE_INFO, sizeof(SERVERBROWSE_INFO)) == 0)
 			Type = SERVERINFO_VANILLA;
-		else if(mem_comp(pPacket->m_pData, SERVERBROWSE_INFO_64_LEGACY, sizeof(SERVERBROWSE_INFO_64_LEGACY)) == 0)
-			Type = SERVERINFO_64_LEGACY;
 		else if(mem_comp(pPacket->m_pData, SERVERBROWSE_INFO_EXTENDED, sizeof(SERVERBROWSE_INFO_EXTENDED)) == 0)
 			Type = SERVERINFO_EXTENDED;
 		else if(mem_comp(pPacket->m_pData, SERVERBROWSE_INFO_EXTENDED_MORE, sizeof(SERVERBROWSE_INFO_EXTENDED_MORE)) == 0)
@@ -1433,8 +1418,7 @@ void CClient::ProcessServerInfo(int RawType, NETADDR *pFrom, const void *pData, 
 
 	CServerInfo Info = {0};
 	int SavedType = SavedServerInfoType(RawType);
-	if((SavedType == SERVERINFO_64_LEGACY || SavedType == SERVERINFO_EXTENDED) &&
-		pEntry && pEntry->m_GotInfo && SavedType == pEntry->m_Info.m_Type)
+	if(SavedType == SERVERINFO_EXTENDED && pEntry && pEntry->m_GotInfo && SavedType == pEntry->m_Info.m_Type)
 	{
 		Info = pEntry->m_Info;
 	}
@@ -1449,7 +1433,6 @@ void CClient::ProcessServerInfo(int RawType, NETADDR *pFrom, const void *pData, 
 #define GET_STRING(array) str_copy(array, Up.GetString(CUnpacker::SANITIZE_CC | CUnpacker::SKIP_START_WHITESPACES), sizeof(array))
 #define GET_INT(integer) (integer) = str_toint(Up.GetString())
 
-	int Offset = 0; // Only used for SavedType == SERVERINFO_64_LEGACY
 	int Token;
 	int PacketNo = 0; // Only used if SavedType == SERVERINFO_EXTENDED
 
@@ -1507,13 +1490,6 @@ void CClient::ProcessServerInfo(int RawType, NETADDR *pFrom, const void *pData, 
 			dbg_assert(false, "unknown serverinfo type");
 		}
 
-		if(SavedType == SERVERINFO_64_LEGACY)
-			Offset = Up.GetInt();
-
-		// Check for valid offset.
-		if(Offset < 0)
-			return;
-
 		if(SavedType == SERVERINFO_EXTENDED)
 			PacketNo = 0;
 	}
@@ -1536,7 +1512,7 @@ void CClient::ProcessServerInfo(int RawType, NETADDR *pFrom, const void *pData, 
 	}
 
 	bool IgnoreError = false;
-	for(int i = Offset; i < MAX_CLIENTS && Info.m_NumReceivedClients < MAX_CLIENTS && !Up.Error(); i++)
+	for(int i = 0; i < MAX_CLIENTS && Info.m_NumReceivedClients < MAX_CLIENTS && !Up.Error(); i++)
 	{
 		CServerInfo::CClient *pClient = &Info.m_aClients[Info.m_NumReceivedClients];
 		GET_STRING(pClient->m_aName);
@@ -1628,15 +1604,6 @@ void CClient::ProcessServerInfo(int RawType, NETADDR *pFrom, const void *pData, 
 
 #undef GET_STRING
 #undef GET_INT
-}
-
-bool CClient::ShouldSendChatTimeoutCodeHeuristic()
-{
-	if(m_ServerSentCapabilities)
-	{
-		return false;
-	}
-	return IsDDNet(&m_CurrentServerInfo);
 }
 
 static CServerCapabilities GetServerCapabilities(int Version, int Flags)
@@ -2225,7 +2192,7 @@ void CClient::ProcessServerPacket(CNetChunk *pPacket, int Conn, bool Dummy)
 
 					if(m_aReceivedSnapshots[Conn] > 50 && !m_aCodeRunAfterJoin[Conn])
 					{
-						if(m_ServerCapabilities.m_ChatTimeoutCode || ShouldSendChatTimeoutCodeHeuristic())
+						if(m_ServerCapabilities.m_ChatTimeoutCode)
 						{
 							CNetMsg_Cl_Say MsgP;
 							MsgP.m_Team = 0;
@@ -2318,10 +2285,10 @@ int CClient::UnpackAndValidateSnapshot(CSnapshot *pFrom, CSnapshot *pTo)
 	int Num = pFrom->NumItems();
 	for(int Index = 0; Index < Num; Index++)
 	{
-		CSnapshotItem *pFromItem = pFrom->GetItem(Index);
+		const CSnapshotItem *pFromItem = pFrom->GetItem(Index);
 		const int FromItemSize = pFrom->GetItemSize(Index);
 		const int ItemType = pFrom->GetItemType(Index);
-		void *pData = pFromItem->Data();
+		const void *pData = pFromItem->Data();
 		Unpacker.Reset(pData, FromItemSize);
 
 		void *pRawObj = pNetObjHandler->SecureUnpackObj(ItemType, &Unpacker);
@@ -4633,7 +4600,7 @@ int main(int argc, const char **argv)
 #if defined(CONF_PLATFORM_ANDROID)
 	const char **argv = const_cast<const char **>(argv2);
 #elif defined(CONF_FAMILY_WINDOWS)
-	CWindowsComLifecycle WindowsComLifecycle;
+	CWindowsComLifecycle WindowsComLifecycle(true);
 #endif
 	CCmdlineFix CmdlineFix(&argc, &argv);
 	bool Silent = false;

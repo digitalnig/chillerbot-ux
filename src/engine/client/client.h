@@ -251,8 +251,6 @@ class CClient : public IClient, public CDemoPlayer::IListener
 	bool m_ServerSentCapabilities;
 	CServerCapabilities m_ServerCapabilities;
 
-	bool ShouldSendChatTimeoutCodeHeuristic();
-
 	CServerInfo m_CurrentServerInfo;
 	int64_t m_CurrentServerInfoRequestTime; // >= 0 should request, == -1 got info
 
@@ -378,8 +376,7 @@ public:
 	int GetPredictionTime() override;
 	void *SnapGetItem(int SnapID, int Index, CSnapItem *pItem) const override;
 	int SnapItemSize(int SnapID, int Index) const override;
-	void SnapInvalidateItem(int SnapID, int Index) override;
-	void *SnapFindItem(int SnapID, int Type, int ID) const override;
+	const void *SnapFindItem(int SnapID, int Type, int ID) const override;
 	int SnapNumItems(int SnapID) const override;
 	void SnapSetStaticsize(int ItemType, int Size) override;
 
