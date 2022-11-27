@@ -1,0 +1,30 @@
+image: ubuntu:22.04
+
+build_curses_cmake:
+  before_script:
+    - apt-get update -y
+    - apt-get upgrade -y
+    - apt-get install
+      pkg-config
+      clang rustc
+      cargo cmake ninja-build
+      libfreetype6-dev libnotify-dev libsdl2-dev libsqlite3-dev libvulkan-dev
+      glslang-tools spirv-tools libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev
+      libx264-dev libpng-dev
+      libcurl4 libcurl3-gnutls libcurl4-openssl-dev libcurlpp-dev
+      libogg-dev libopus-dev libopusfile-dev
+      valgrind -y
+    - apt-get install libncursesw5-dev git -y
+  stage: build
+  script:
+    - mkdir build && cd build
+    - cmake ..
+      -DCMAKE_BUILD_TYPE=Debug
+      -Werror=dev
+      -DDOWNLOAD_GTEST=ON
+      -DDEV=ON
+      -DHEADLESS_CLIENT=ON
+      -DCURSES_CLIENT=ON
+    - cmake --build . --config Debug --target everything
+    - cmake --build . --config Debug --target run_tests
+    - TERM=linux ./term-ux "cl_download_skins 0;quit"
