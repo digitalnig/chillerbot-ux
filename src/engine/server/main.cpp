@@ -108,7 +108,7 @@ int main(int argc, const char **argv)
 	IEngine *pEngine = CreateEngine(GAME_NAME, pFutureConsoleLogger, 2);
 	IEngineMap *pEngineMap = CreateEngineMap();
 	IGameServer *pGameServer = CreateGameServer();
-	IConsole *pConsole = CreateConsole(CFGFLAG_SERVER | CFGFLAG_ECON);
+	IConsole *pConsole = CreateConsole(CFGFLAG_SERVER | CFGFLAG_ECON).release();
 	IStorage *pStorage = CreateStorage(IStorage::STORAGETYPE_SERVER, argc, argv);
 	IConfigManager *pConfigManager = CreateConfigManager();
 	IEngineAntibot *pEngineAntibot = CreateEngineAntibot();
@@ -174,7 +174,7 @@ int main(int argc, const char **argv)
 	log_set_loglevel((LEVEL)g_Config.m_Loglevel);
 	if(g_Config.m_Logfile[0])
 	{
-		IOHANDLE Logfile = io_open(g_Config.m_Logfile, IOFLAG_WRITE);
+		IOHANDLE Logfile = pStorage->OpenFile(g_Config.m_Logfile, IOFLAG_WRITE, IStorage::TYPE_SAVE_OR_ABSOLUTE);
 		if(Logfile)
 		{
 			pFutureFileLogger->Set(log_logger_file(Logfile));

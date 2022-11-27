@@ -187,7 +187,7 @@ void CGameClient::OnConsoleInit()
 
 						  &m_Binds.m_SpecialBinds,
 						  &m_GameConsole,
-						  &m_Chat, // chat has higher prio due to tha you can quit it by pressing esc
+						  &m_Chat, // chat has higher prio, due to that you can quit it by pressing esc
 						  &m_Motd, // for pressing esc to remove it
 						  &m_Menus,
 						  &m_Spectator,
@@ -391,8 +391,8 @@ void CGameClient::OnInit()
 
 	m_MapImages.SetTextureScale(g_Config.m_ClTextEntitiesSize);
 
-	// Agressively try to grab window again since some Windows users report
-	// window not being focussed after starting client.
+	// Aggressively try to grab window again since some Windows users report
+	// window not being focused after starting client.
 	Graphics()->SetWindowGrab(true);
 
 	CChecksumData *pChecksum = Client()->ChecksumData();
@@ -1188,7 +1188,7 @@ static CGameInfo GetGameInfo(const CNetObj_GameInfoEx *pInfoEx, int InfoExSize, 
 	}
 	if(Version >= 8)
 	{
-		Info.m_NoWeakHookAndBounce = Flags2 & GAMEINFOFLAG2_NO_WEAK_HOOK_AND_BOUNCE;
+		Info.m_NoWeakHookAndBounce = Flags2 & GAMEINFOFLAG2_NO_WEAK_HOOK;
 	}
 	return Info;
 }
@@ -1256,7 +1256,7 @@ void CGameClient::OnNewSnapshot()
 		Client.m_SpecCharPresent = false;
 	}
 
-	// go trough all the items in the snapshot and gather the info we want
+	// go through all the items in the snapshot and gather the info we want
 	{
 		m_Snap.m_aTeamSize[TEAM_RED] = m_Snap.m_aTeamSize[TEAM_BLUE] = 0;
 
@@ -2853,7 +2853,7 @@ void CGameClient::LoadGameSkin(const char *pPath, bool AsDir)
 	bool IsDefault = false;
 	if(str_comp(pPath, "default") == 0)
 	{
-		str_format(aPath, sizeof(aPath), "%s", g_pData->m_aImages[IMAGE_GAME].m_pFilename);
+		str_copy(aPath, g_pData->m_aImages[IMAGE_GAME].m_pFilename);
 		IsDefault = true;
 	}
 	else
@@ -3015,7 +3015,7 @@ void CGameClient::LoadEmoticonsSkin(const char *pPath, bool AsDir)
 	bool IsDefault = false;
 	if(str_comp(pPath, "default") == 0)
 	{
-		str_format(aPath, sizeof(aPath), "%s", g_pData->m_aImages[IMAGE_EMOTICONS].m_pFilename);
+		str_copy(aPath, g_pData->m_aImages[IMAGE_EMOTICONS].m_pFilename);
 		IsDefault = true;
 	}
 	else
@@ -3069,7 +3069,7 @@ void CGameClient::LoadParticlesSkin(const char *pPath, bool AsDir)
 	bool IsDefault = false;
 	if(str_comp(pPath, "default") == 0)
 	{
-		str_format(aPath, sizeof(aPath), "%s", g_pData->m_aImages[IMAGE_PARTICLES].m_pFilename);
+		str_copy(aPath, g_pData->m_aImages[IMAGE_PARTICLES].m_pFilename);
 		IsDefault = true;
 	}
 	else
@@ -3156,7 +3156,7 @@ void CGameClient::LoadHudSkin(const char *pPath, bool AsDir)
 	bool IsDefault = false;
 	if(str_comp(pPath, "default") == 0)
 	{
-		str_format(aPath, sizeof(aPath), "%s", g_pData->m_aImages[IMAGE_HUD].m_pFilename);
+		str_copy(aPath, g_pData->m_aImages[IMAGE_HUD].m_pFilename);
 		IsDefault = true;
 	}
 	else
@@ -3229,7 +3229,7 @@ void CGameClient::LoadExtrasSkin(const char *pPath, bool AsDir)
 	bool IsDefault = false;
 	if(str_comp(pPath, "default") == 0)
 	{
-		str_format(aPath, sizeof(aPath), "%s", g_pData->m_aImages[IMAGE_EXTRAS].m_pFilename);
+		str_copy(aPath, g_pData->m_aImages[IMAGE_EXTRAS].m_pFilename);
 		IsDefault = true;
 	}
 	else
@@ -3341,7 +3341,7 @@ void CGameClient::ConchainMenuMap(IConsole::IResult *pResult, void *pUserData, I
 	{
 		if(str_comp(g_Config.m_ClMenuMap, pResult->GetString(0)) != 0)
 		{
-			str_format(g_Config.m_ClMenuMap, sizeof(g_Config.m_ClMenuMap), "%s", pResult->GetString(0));
+			str_copy(g_Config.m_ClMenuMap, pResult->GetString(0));
 			pSelf->m_MenuBackground.LoadMenuBackground();
 		}
 	}

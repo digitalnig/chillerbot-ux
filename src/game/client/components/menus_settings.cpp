@@ -836,7 +836,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 						RenderFavIcon(FavIcon, IsFav);
 					}
 				}
-				if(UI()->DoButtonLogic(pSkinToBeDraw->GetName(), 0, &FavIcon))
+				if(UI()->DoButtonLogic(&pSkinToBeDraw->m_Metrics.m_Body, 0, &FavIcon))
 				{
 					if(IsFav)
 					{
@@ -1434,7 +1434,7 @@ int CMenus::RenderDropDown(int &CurDropDownState, CUIRect *pRect, int CurSelecti
 			CListboxItem Item = UiDoListboxNextItem(pIDs[i], CurSelection == i);
 			if(Item.m_Visible)
 			{
-				str_format(aBuf, sizeof(aBuf), "%s", pStr[i]);
+				str_copy(aBuf, pStr[i]);
 				UI()->DoLabel(&Item.m_Rect, aBuf, 16.0f, TEXTALIGN_CENTER);
 			}
 		}
@@ -1515,7 +1515,7 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 	int OldSelected = -1;
 	{
 		int G = std::gcd(g_Config.m_GfxScreenWidth, g_Config.m_GfxScreenHeight);
-		str_format(aBuf, sizeof(aBuf), "%s: %dx%d @%dhz %d bit (%d:%d)", Localize("Current"), int(g_Config.m_GfxScreenWidth * Graphics()->ScreenHiDPIScale()), int(g_Config.m_GfxScreenHeight * Graphics()->ScreenHiDPIScale()), g_Config.m_GfxScreenRefreshRate, g_Config.m_GfxColorDepth, g_Config.m_GfxScreenWidth / G, g_Config.m_GfxScreenHeight / G);
+		str_format(aBuf, sizeof(aBuf), "%s: %dx%d @%dhz %d bit (%d:%d)", Localize("Current"), (int)(g_Config.m_GfxScreenWidth * Graphics()->ScreenHiDPIScale()), (int)(g_Config.m_GfxScreenHeight * Graphics()->ScreenHiDPIScale()), g_Config.m_GfxScreenRefreshRate, g_Config.m_GfxColorDepth, g_Config.m_GfxScreenWidth / G, g_Config.m_GfxScreenHeight / G);
 	}
 
 	UI()->DoLabel(&ModeLabel, aBuf, sc_FontSizeResListHeader, TEXTALIGN_CENTER);

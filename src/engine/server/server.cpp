@@ -29,6 +29,7 @@
 #include <engine/shared/packer.h>
 #include <engine/shared/protocol.h>
 #include <engine/shared/protocol_ex.h>
+#include <engine/shared/rust_version.h>
 #include <engine/shared/snapshot.h>
 
 #include <game/version.h>
@@ -1544,7 +1545,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				}
 				else
 				{
-					CMsgPacker Msgp(4, true, true); //NETMSG_SERVERINFO //TODO: Import the shared protocol from 7 aswell
+					CMsgPacker Msgp(4, true, true); //NETMSG_SERVERINFO //TODO: Import the shared protocol from 7 as well
 					GetServerInfoSixup(&Msgp, -1, false);
 					SendMsg(&Msgp, MSGFLAG_VITAL | MSGFLAG_FLUSH, ClientID);
 				}
@@ -2237,7 +2238,10 @@ void CServer::UpdateRegisterServerInfo()
 			char aCName[32];
 			char aCClan[32];
 
-			char aClientInfo[256];
+			char aExtraPlayerInfo[512];
+			GameServer()->OnUpdatePlayerServerInfo(aExtraPlayerInfo, sizeof(aExtraPlayerInfo), i);
+
+			char aClientInfo[1024];
 			str_format(aClientInfo, sizeof(aClientInfo),
 				"%s{"
 				"\"name\":\"%s\","
@@ -2245,13 +2249,15 @@ void CServer::UpdateRegisterServerInfo()
 				"\"country\":%d,"
 				"\"score\":%d,"
 				"\"is_player\":%s"
+				"%s"
 				"}",
 				!FirstPlayer ? "," : "",
 				EscapeJson(aCName, sizeof(aCName), ClientName(i)),
 				EscapeJson(aCClan, sizeof(aCClan), ClientClan(i)),
 				m_aClients[i].m_Country,
 				m_aClients[i].m_Score,
-				JsonBool(GameServer()->IsClientPlayer(i)));
+				JsonBool(GameServer()->IsClientPlayer(i)),
+				aExtraPlayerInfo);
 			str_append(aInfo, aClientInfo, sizeof(aInfo));
 			FirstPlayer = false;
 		}
@@ -2286,7 +2292,7 @@ void CServer::UpdateServerInfo(bool Resend)
 					SendServerInfo(m_NetServer.ClientAddr(i), -1, SERVERINFO_INGAME, false);
 				else
 				{
-					CMsgPacker Msg(4, true, true); //NETMSG_SERVERINFO //TODO: Import the shared protocol from 7 aswell
+					CMsgPacker Msg(4, true, true); //NETMSG_SERVERINFO //TODO: Import the shared protocol from 7 as well
 					GetServerInfoSixup(&Msg, -1, false);
 					SendMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_FLUSH, i);
 				}
@@ -2535,7 +2541,9 @@ int CServer::Run()
 
 	if(Config()->m_SvSqliteFile[0] != '\0')
 	{
-		auto pSqliteConn = CreateSqliteConnection(Config()->m_SvSqliteFile, true);
+		char aFullPath[IO_MAX_PATH_LENGTH];
+		Storage()->GetCompletePath(IStorage::TYPE_SAVE_OR_ABSOLUTE, Config()->m_SvSqliteFile, aFullPath, sizeof(aFullPath));
+		auto pSqliteConn = CreateSqliteConnection(aFullPath, true);
 
 		if(Config()->m_SvUseSQL)
 		{
@@ -3665,6 +3673,8 @@ void CServer::RegisterCommands()
 	Console()->Register("name_ban", "s[name] ?i[distance] ?i[is_substring] ?r[reason]", CFGFLAG_SERVER, ConNameBan, this, "Ban a certain nickname");
 	Console()->Register("name_unban", "s[name]", CFGFLAG_SERVER, ConNameUnban, this, "Unban a certain nickname");
 	Console()->Register("name_bans", "", CFGFLAG_SERVER, ConNameBans, this, "List all name bans");
+
+	RustVersionRegister(*Console());
 
 	Console()->Chain("sv_name", ConchainSpecialInfoupdate, this);
 	Console()->Chain("loglevel", ConchainLoglevel, this);

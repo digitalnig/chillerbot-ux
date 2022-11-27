@@ -3,9 +3,7 @@
 #ifndef GAME_EDITOR_EDITOR_H
 #define GAME_EDITOR_EDITOR_H
 
-#include <string>
-#include <vector>
-
+#include <base/bezier.h>
 #include <base/system.h>
 
 #include <game/client/render.h>
@@ -21,6 +19,9 @@
 #include "chillerbot/chillereditor.h"
 
 #include <chrono>
+#include <set>
+#include <string>
+#include <vector>
 
 using namespace std::chrono_literals;
 
@@ -469,8 +470,8 @@ public:
 	void CreateDefault(IGraphics::CTextureHandle EntitiesTexture);
 
 	// io
-	int Save(class IStorage *pStorage, const char *pFilename);
-	int Load(class IStorage *pStorage, const char *pFilename, int StorageType);
+	bool Save(class IStorage *pStorage, const char *pFilename);
+	bool Load(class IStorage *pStorage, const char *pFilename, int StorageType);
 
 	// DDRace
 
@@ -512,10 +513,10 @@ enum
 
 enum
 {
-	DIRECTION_LEFT = 1,
-	DIRECTION_RIGHT = 2,
-	DIRECTION_UP = 4,
-	DIRECTION_DOWN = 8,
+	DIRECTION_LEFT = 0,
+	DIRECTION_RIGHT,
+	DIRECTION_UP,
+	DIRECTION_DOWN,
 };
 
 struct RECTi
@@ -533,32 +534,45 @@ protected:
 		switch(Direction)
 		{
 		case DIRECTION_LEFT:
+			ShiftBy = minimum(ShiftBy, m_Width);
 			for(int y = 0; y < m_Height; ++y)
 			{
-				mem_move(&pTiles[y * m_Width], &pTiles[y * m_Width + ShiftBy], (m_Width - ShiftBy) * sizeof(T));
+				if(ShiftBy < m_Width)
+					mem_move(&pTiles[y * m_Width], &pTiles[y * m_Width + ShiftBy], (m_Width - ShiftBy) * sizeof(T));
 				mem_zero(&pTiles[y * m_Width + (m_Width - ShiftBy)], ShiftBy * sizeof(T));
 			}
 			break;
 		case DIRECTION_RIGHT:
+			ShiftBy = minimum(ShiftBy, m_Width);
 			for(int y = 0; y < m_Height; ++y)
 			{
-				mem_move(&pTiles[y * m_Width + ShiftBy], &pTiles[y * m_Width], (m_Width - ShiftBy) * sizeof(T));
+				if(ShiftBy < m_Width)
+					mem_move(&pTiles[y * m_Width + ShiftBy], &pTiles[y * m_Width], (m_Width - ShiftBy) * sizeof(T));
 				mem_zero(&pTiles[y * m_Width], ShiftBy * sizeof(T));
 			}
 			break;
 		case DIRECTION_UP:
-			for(int y = 0; y < m_Height - ShiftBy; ++y)
+			ShiftBy = minimum(ShiftBy, m_Height);
+			for(int y = ShiftBy; y < m_Height; ++y)
 			{
-				mem_copy(&pTiles[y * m_Width], &pTiles[(y + ShiftBy) * m_Width], m_Width * sizeof(T));
-				mem_zero(&pTiles[(y + ShiftBy) * m_Width], m_Width * sizeof(T));
+				mem_copy(&pTiles[(y - ShiftBy) * m_Width], &pTiles[y * m_Width], m_Width * sizeof(T));
+			}
+			for(int y = m_Height - ShiftBy; y < m_Height; ++y)
+			{
+				mem_zero(&pTiles[y * m_Width], m_Width * sizeof(T));
 			}
 			break;
 		case DIRECTION_DOWN:
-			for(int y = m_Height - 1; y >= ShiftBy; --y)
+			ShiftBy = minimum(ShiftBy, m_Height);
+			for(int y = m_Height - ShiftBy - 1; y >= 0; --y)
 			{
-				mem_copy(&pTiles[y * m_Width], &pTiles[(y - ShiftBy) * m_Width], m_Width * sizeof(T));
-				mem_zero(&pTiles[(y - ShiftBy) * m_Width], m_Width * sizeof(T));
+				mem_copy(&pTiles[(y + ShiftBy) * m_Width], &pTiles[y * m_Width], m_Width * sizeof(T));
 			}
+			for(int y = 0; y < ShiftBy; ++y)
+			{
+				mem_zero(&pTiles[y * m_Width], m_Width * sizeof(T));
+			}
+			break;
 		}
 	}
 	template<typename T>
@@ -790,8 +804,10 @@ public:
 		m_EditorOffsetX = 0.0f;
 		m_EditorOffsetY = 0.0f;
 
+		m_Zoom = 200.0f;
+		m_Zooming = false;
 		m_WorldZoom = 1.0f;
-		m_ZoomLevel = 200;
+
 		m_LockMouse = false;
 		m_ShowMousePointer = true;
 		m_MouseDeltaX = 0;
@@ -838,6 +854,7 @@ public:
 		m_PreventUnusedTilesWasWarned = false;
 		m_AllowPlaceUnusedTiles = 1;
 		m_BrushDrawDestructive = true;
+		m_ShowTileHexInfo = false;
 		m_GotoX = 0;
 		m_GotoY = 0;
 
@@ -859,9 +876,9 @@ public:
 		void (*pfnFunc)(const char *pFilename, int StorageType, void *pUser), void *pUser);
 
 	void Reset(bool CreateDefault = true);
-	int Save(const char *pFilename) override;
-	int Load(const char *pFilename, int StorageType) override;
-	int Append(const char *pFilename, int StorageType);
+	bool Save(const char *pFilename) override;
+	bool Load(const char *pFilename, int StorageType) override;
+	bool Append(const char *pFilename, int StorageType);
 	void LoadCurrentMap();
 	void Render();
 
@@ -917,6 +934,7 @@ public:
 	bool m_PreventUnusedTilesWasWarned;
 	int m_AllowPlaceUnusedTiles;
 	bool m_BrushDrawDestructive;
+	bool m_ShowTileHexInfo;
 
 	int m_Mentions;
 
@@ -972,8 +990,16 @@ public:
 	float m_WorldOffsetY;
 	float m_EditorOffsetX;
 	float m_EditorOffsetY;
+
+	// Zooming
+	CCubicBezier m_ZoomSmoothing;
+	float m_ZoomSmoothingStart;
+	float m_ZoomSmoothingEnd;
+	bool m_Zooming;
+	float m_Zoom;
+	float m_ZoomSmoothingTarget;
 	float m_WorldZoom;
-	int m_ZoomLevel;
+
 	bool m_LockMouse;
 	bool m_ShowMousePointer;
 	bool m_GuiActive;
@@ -1052,6 +1078,7 @@ public:
 
 	int DoButton_Tab(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
 	int DoButton_Ex(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip, int Corners, float FontSize = 10.0f, int AlignVert = 1);
+	int DoButton_FontIcon(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip, int Corners, float FontSize = 10.0f, int AlignVert = 1);
 	int DoButton_ButtonDec(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
 	int DoButton_ButtonInc(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
 
@@ -1099,6 +1126,34 @@ public:
 	static int PopupSource(CEditor *pEditor, CUIRect View, void *pContext);
 	static int PopupColorPicker(CEditor *pEditor, CUIRect View, void *pContext);
 	static int PopupEntities(CEditor *pEditor, CUIRect View, void *pContext);
+
+	struct SMessagePopupContext
+	{
+		static constexpr float POPUP_MAX_WIDTH = 200.0f;
+		static constexpr float POPUP_FONT_SIZE = 10.0f;
+		char m_aMessage[256];
+		ColorRGBA m_TextColor;
+
+		void DefaultColor(class ITextRender *pTextRender);
+		void ErrorColor();
+	};
+	static int PopupMessage(CEditor *pEditor, CUIRect View, void *pContext);
+	void ShowPopupMessage(float X, float Y, SMessagePopupContext *pContext);
+
+	struct SSelectionPopupContext
+	{
+		static constexpr float POPUP_MAX_WIDTH = 300.0f;
+		static constexpr float POPUP_FONT_SIZE = 10.0f;
+		static constexpr float POPUP_ENTRY_HEIGHT = 12.0f;
+		static constexpr float POPUP_ENTRY_SPACING = 5.0f;
+		char m_aMessage[256];
+		std::set<std::string> m_Entries;
+		const std::string *m_pSelection;
+
+		SSelectionPopupContext();
+	};
+	static int PopupSelection(CEditor *pEditor, CUIRect View, void *pContext);
+	void ShowPopupSelection(float X, float Y, SSelectionPopupContext *pContext);
 
 	static void CallbackOpenMap(const char *pFileName, int StorageType, void *pUser);
 	static void CallbackAppendMap(const char *pFileName, int StorageType, void *pUser);
@@ -1233,7 +1288,15 @@ public:
 	static const char *Explain(int ExplanationID, int Tile, int Layer);
 
 	int GetLineDistance() const;
+
+	// Zooming
+	void SetZoom(float Target);
+	void ChangeZoom(float Amount);
 	void ZoomMouseTarget(float ZoomFactor);
+	void UpdateZoom();
+	float ZoomProgress(float CurrentTime) const;
+	float MinZoomLevel() const;
+	float MaxZoomLevel() const;
 
 	static ColorHSVA ms_PickerColor;
 	static int ms_SVPicker;

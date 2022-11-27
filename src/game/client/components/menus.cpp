@@ -529,7 +529,7 @@ int CMenus::DoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, bool 
 				{
 					float delta = UI()->MouseDeltaX();
 
-					if(Input()->KeyIsPressed(KEY_LSHIFT) || Input()->KeyIsPressed(KEY_RSHIFT))
+					if(Input()->ShiftIsPressed())
 						s_Value += delta * 0.05f;
 					else
 						s_Value += delta;
@@ -653,7 +653,7 @@ int CMenus::DoKeyReader(void *pID, const CUIRect *pRect, int Key, int ModifierCo
 			if(*pNewModifierCombination)
 				str_format(aBuf, sizeof(aBuf), "%s%s", CBinds::GetKeyBindModifiersName(*pNewModifierCombination), Input()->KeyName(Key));
 			else
-				str_format(aBuf, sizeof(aBuf), "%s", Input()->KeyName(Key));
+				str_copy(aBuf, Input()->KeyName(Key));
 
 			DoButton_KeySelect(pID, aBuf, 0, pRect);
 		}
@@ -2014,14 +2014,12 @@ int CMenus::Render()
 				// rename demo
 				if(m_DemolistSelectedIndex >= 0 && !m_DemolistSelectedIsDir)
 				{
-					char aBufOld[512];
+					char aBufOld[IO_MAX_PATH_LENGTH];
 					str_format(aBufOld, sizeof(aBufOld), "%s/%s", m_aCurrentDemoFolder, m_vDemos[m_DemolistSelectedIndex].m_aFilename);
-					int Length = str_length(m_aCurrentDemoFile);
-					char aBufNew[512];
-					if(Length <= 4 || m_aCurrentDemoFile[Length - 5] != '.' || str_comp_nocase(m_aCurrentDemoFile + Length - 4, "demo"))
-						str_format(aBufNew, sizeof(aBufNew), "%s/%s.demo", m_aCurrentDemoFolder, m_aCurrentDemoFile);
-					else
-						str_format(aBufNew, sizeof(aBufNew), "%s/%s", m_aCurrentDemoFolder, m_aCurrentDemoFile);
+					char aBufNew[IO_MAX_PATH_LENGTH];
+					str_format(aBufNew, sizeof(aBufNew), "%s/%s", m_aCurrentDemoFolder, m_aCurrentDemoFile);
+					if(!str_endswith(aBufNew, ".demo"))
+						str_append(aBufNew, ".demo", sizeof(aBufNew));
 					if(Storage()->RenameFile(aBufOld, aBufNew, m_vDemos[m_DemolistSelectedIndex].m_StorageType))
 					{
 						DemolistPopulate();
@@ -2073,27 +2071,20 @@ int CMenus::Render()
 				// name video
 				if(m_DemolistSelectedIndex >= 0 && !m_DemolistSelectedIsDir)
 				{
-					char aBufOld[512];
+					char aBufOld[IO_MAX_PATH_LENGTH];
 					str_format(aBufOld, sizeof(aBufOld), "%s/%s", m_aCurrentDemoFolder, m_vDemos[m_DemolistSelectedIndex].m_aFilename);
-					int Length = str_length(m_aCurrentDemoFile);
-					char aBufNew[512];
-					if(Length <= 3 || m_aCurrentDemoFile[Length - 4] != '.' || str_comp_nocase(m_aCurrentDemoFile + Length - 3, "mp4"))
-						str_format(aBufNew, sizeof(aBufNew), "%s.mp4", m_aCurrentDemoFile);
-					else
-						str_format(aBufNew, sizeof(aBufNew), "%s", m_aCurrentDemoFile);
-					char aWholePath[1024];
+					if(!str_endswith(m_aCurrentDemoFile, ".mp4"))
+						str_append(m_aCurrentDemoFile, ".mp4", sizeof(m_aCurrentDemoFile));
+					char aWholePath[IO_MAX_PATH_LENGTH];
 					// store new video filename to origin buffer
-					str_copy(m_aCurrentDemoFile, aBufNew);
 					if(Storage()->FindFile(m_aCurrentDemoFile, "videos", IStorage::TYPE_ALL, aWholePath, sizeof(aWholePath)))
 					{
-						PopupMessage(Localize("Error"), Localize("Destination file already exist"), Localize("Ok"));
 						m_Popup = POPUP_REPLACE_VIDEO;
 					}
 					else
 					{
 						const char *pError = Client()->DemoPlayer_Render(aBufOld, m_vDemos[m_DemolistSelectedIndex].m_StorageType, m_aCurrentDemoFile, m_Speed);
 						m_Speed = 4;
-						//Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "demo_render_path", aWholePath);
 						if(pError)
 							PopupMessage(Localize("Error"), str_comp(pError, "error loading demo") ? pError : Localize("Error loading demo"), Localize("Ok"));
 					}
@@ -2409,13 +2400,13 @@ void CMenus::RenderThemeSelection(CUIRect MainView, bool Header)
 		else if(str_comp(Theme.m_Name.c_str(), "rand") == 0)
 			str_copy(aName, "(random)");
 		else if(Theme.m_HasDay && Theme.m_HasNight)
-			str_format(aName, sizeof(aName), "%s", Theme.m_Name.c_str());
+			str_copy(aName, Theme.m_Name.c_str());
 		else if(Theme.m_HasDay && !Theme.m_HasNight)
 			str_format(aName, sizeof(aName), "%s (day)", Theme.m_Name.c_str());
 		else if(!Theme.m_HasDay && Theme.m_HasNight)
 			str_format(aName, sizeof(aName), "%s (night)", Theme.m_Name.c_str());
 		else // generic
-			str_format(aName, sizeof(aName), "%s", Theme.m_Name.c_str());
+			str_copy(aName, Theme.m_Name.c_str());
 
 		UI()->DoLabel(&Item.m_Rect, aName, 16 * CUI::ms_FontmodHeight, TEXTALIGN_LEFT);
 	}
@@ -2425,7 +2416,7 @@ void CMenus::RenderThemeSelection(CUIRect MainView, bool Header)
 
 	if(ItemActive && NewSelected != SelectedTheme)
 	{
-		str_format(g_Config.m_ClMenuMap, sizeof(g_Config.m_ClMenuMap), "%s", vThemesRef[NewSelected].m_Name.c_str());
+		str_copy(g_Config.m_ClMenuMap, vThemesRef[NewSelected].m_Name.c_str());
 		m_pBackground->LoadMenuBackground(vThemesRef[NewSelected].m_HasDay, vThemesRef[NewSelected].m_HasNight);
 	}
 }
@@ -2680,7 +2671,7 @@ void CMenus::RenderBackground()
 bool CMenus::CheckHotKey(int Key) const
 {
 	return m_Popup == POPUP_NONE &&
-	       !Input()->KeyIsPressed(KEY_LSHIFT) && !Input()->KeyIsPressed(KEY_RSHIFT) && !Input()->ModifierIsPressed() && // no modifier
+	       !Input()->ShiftIsPressed() && !Input()->ModifierIsPressed() && // no modifier
 	       Input()->KeyIsPressed(Key) && m_pClient->m_GameConsole.IsClosed();
 }
 
