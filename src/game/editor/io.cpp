@@ -888,8 +888,7 @@ bool CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Stora
 							pSounds->m_Sound = -1;
 
 						// load layer name
-						if(pSoundsItem->m_Version >= 1)
-							IntsToStr(pSoundsItem->m_aName, sizeof(pSounds->m_aName) / sizeof(int), pSounds->m_aName);
+						IntsToStr(pSoundsItem->m_aName, sizeof(pSounds->m_aName) / sizeof(int), pSounds->m_aName);
 
 						// load data
 						void *pData = DataFile.GetDataSwapped(pSoundsItem->m_Data);
@@ -915,8 +914,7 @@ bool CEditorMap::Load(class IStorage *pStorage, const char *pFileName, int Stora
 							pSounds->m_Sound = -1;
 
 						// load layer name
-						if(pSoundsItem->m_Version >= 1)
-							IntsToStr(pSoundsItem->m_aName, sizeof(pSounds->m_aName) / sizeof(int), pSounds->m_aName);
+						IntsToStr(pSoundsItem->m_aName, sizeof(pSounds->m_aName) / sizeof(int), pSounds->m_aName);
 
 						// load data
 						CSoundSource_DEPRECATED *pData = (CSoundSource_DEPRECATED *)DataFile.GetDataSwapped(pSoundsItem->m_Data);
