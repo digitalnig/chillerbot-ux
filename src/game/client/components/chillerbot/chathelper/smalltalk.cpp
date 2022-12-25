@@ -46,6 +46,23 @@ bool CReplyToPing::SmallTalk(int NameLen, int MsgLen)
 		str_format(m_pResponse, m_SizeOfResponse, "%s gut, und dir? :)", m_pMessageAuthor);
 		return true;
 	}
+	if(str_find_nocase(m_pMessage, "ca va") ||
+		str_find_nocase(m_pMessage, "Ça va") ||
+		str_find_nocase(m_pMessage, "ça va") ||
+		str_find_nocase(m_pMessage, "cv") && ((MsgLen - NameLen) < 6) ||
+		str_find_nocase(m_pMessage, "cv ") && ((MsgLen - NameLen) < 14) ||
+		str_find_nocase(m_pMessage, "cv?") && ((MsgLen - NameLen) < 14) ||
+		str_find_nocase(m_pMessage, "çv ") && ((MsgLen - NameLen) < 14) ||
+		str_find_nocase(m_pMessage, "çv?") && ((MsgLen - NameLen) < 14))
+	{
+		str_format(m_pResponse, m_SizeOfResponse, "je vais bien, et toi %s ?", m_pMessageAuthor);
+		return true;
+	}
+	if(str_find_nocase(m_pMessage, "et toi"))
+	{
+		str_format(m_pResponse, m_SizeOfResponse, "%s moi aussi, merci", m_pMessageAuthor);
+		return true;
+	}
 	if(str_find_nocase(m_pMessage, "about you") || str_find_nocase(m_pMessage, "and you") || str_find_nocase(m_pMessage, "and u") ||
 		(str_find_nocase(m_pMessage, "u?") && MsgLen < NameLen + 5) ||
 		(str_find_nocase(m_pMessage, "wbu") && MsgLen < NameLen + 8) ||
