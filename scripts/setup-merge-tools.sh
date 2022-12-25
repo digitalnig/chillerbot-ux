@@ -26,3 +26,8 @@ then
 	echo -e "\n$driver" >> .git/config
 fi
 
+# https://stackoverflow.com/a/14099431
+# in the .gitattributes we say README.md merge=ours
+# but the "ours" merge driver is off by default
+git config merge.ours.driver true
+git config merge.ours.ddnet-cmake true
