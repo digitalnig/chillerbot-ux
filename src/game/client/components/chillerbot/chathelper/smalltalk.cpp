@@ -49,11 +49,11 @@ bool CReplyToPing::SmallTalk(int NameLen, int MsgLen)
 	if(str_find_nocase(m_pMessage, "ca va") ||
 		str_find_nocase(m_pMessage, "Ça va") ||
 		str_find_nocase(m_pMessage, "ça va") ||
-		str_find_nocase(m_pMessage, "cv") && ((MsgLen - NameLen) < 6) ||
-		str_find_nocase(m_pMessage, "cv ") && ((MsgLen - NameLen) < 14) ||
-		str_find_nocase(m_pMessage, "cv?") && ((MsgLen - NameLen) < 14) ||
-		str_find_nocase(m_pMessage, "çv ") && ((MsgLen - NameLen) < 14) ||
-		str_find_nocase(m_pMessage, "çv?") && ((MsgLen - NameLen) < 14))
+		(str_find_nocase(m_pMessage, "cv") && ((MsgLen - NameLen) < 6)) ||
+		(str_find_nocase(m_pMessage, "cv ") && ((MsgLen - NameLen) < 14)) ||
+		(str_find_nocase(m_pMessage, "cv?") && ((MsgLen - NameLen) < 14)) ||
+		(str_find_nocase(m_pMessage, "çv ") && ((MsgLen - NameLen) < 14)) ||
+		(str_find_nocase(m_pMessage, "çv?") && ((MsgLen - NameLen) < 14)))
 	{
 		str_format(m_pResponse, m_SizeOfResponse, "je vais bien, et toi %s ?", m_pMessageAuthor);
 		return true;
