@@ -66,17 +66,6 @@ bool CReplyToPing::Reply()
 		str_format(m_pResponse, m_SizeOfResponse, "%s ?", m_pMessageAuthor);
 		return true;
 	}
-	// greetings
-	if(LangParser().IsGreeting(m_pMessage))
-	{
-		str_format(m_pResponse, m_SizeOfResponse, "hi %s", m_pMessageAuthor);
-		return true;
-	}
-	if(LangParser().IsBye(m_pMessage))
-	{
-		str_format(m_pResponse, m_SizeOfResponse, "bye %s", m_pMessageAuthor);
-		return true;
-	}
 	// can i join your clan?
 	if(str_find_nocase(m_pMessage, "clan") &&
 		(str_find_nocase(m_pMessage, "enter") ||
@@ -176,6 +165,17 @@ bool CReplyToPing::Reply()
 	}
 	if(SmallTalk(NameLen, MsgLen))
 		return true;
+	// greetings
+	if(LangParser().IsGreeting(m_pMessage))
+	{
+		str_format(m_pResponse, m_SizeOfResponse, "hi %s", m_pMessageAuthor);
+		return true;
+	}
+	if(LangParser().IsBye(m_pMessage))
+	{
+		str_format(m_pResponse, m_SizeOfResponse, "bye %s", m_pMessageAuthor);
+		return true;
+	}
 	// chillerbot-ux features
 	if(LangParser().IsQuestionHow(m_pMessage))
 	{
