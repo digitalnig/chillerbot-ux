@@ -94,6 +94,7 @@ void CChillerBotUX::OnRender()
 	TraceSpikes();
 	m_ForceDir = 0;
 	CampHackTick();
+	RenderDbgIntersect();
 	if(!m_ForceDir && m_LastForceDir)
 	{
 		m_pClient->m_Controls.m_aInputDirectionRight[g_Config.m_ClDummy] = 0;
@@ -320,6 +321,64 @@ bool CChillerBotUX::SetComponentNoteLong(const char *pComponent, const char *pNo
 		return true;
 	}
 	return false;
+}
+
+void CChillerBotUX::RenderDbgIntersect()
+{
+	if(!Config()->m_ClDbgIntersect)
+		return;
+
+	vec2 Position = m_pClient->m_aClients[m_pClient->m_Snap.m_LocalClientID].m_RenderPos;
+	float Angle = 0.0f;
+	if(Client()->State() != IClient::STATE_DEMOPLAYBACK)
+	{
+		// just use the direct input if it's the local player we are rendering
+		Angle = angle(m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy]);
+	}
+	vec2 Direction = direction(Angle);
+	vec2 ExDirection = Direction;
+
+	if(Client()->State() != IClient::STATE_DEMOPLAYBACK)
+	{
+		ExDirection = normalize(vec2((int)m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy].x, (int)m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy].y));
+
+		// fix direction if mouse is exactly in the center
+		if(!(int)m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy].x && !(int)m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy].y)
+			ExDirection = vec2(1, 0);
+	}
+	vec2 InitPos = Position;
+	vec2 FinishPos = InitPos + ExDirection * (m_pClient->m_aTuning[g_Config.m_ClDummy].m_HookLength - 42.0f);
+
+	vec2 outCol;
+	vec2 outBeforeCol;
+	vec4 Color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
+	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
+	RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), Layers()->GameGroupEx(), m_pClient->m_Camera.m_Zoom);
+
+	if(Collision()->IntersectLine(InitPos, FinishPos, &outCol, &outBeforeCol))
+	{
+		Graphics()->TextureClear();
+		Color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		Graphics()->SetColor(Color);
+		Graphics()->DrawRect(outCol.x, outCol.y, 10, 10, ColorRGBA(0.0f, 0.0f, 1.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+		Graphics()->DrawRect(outBeforeCol.x, outBeforeCol.y, 10, 10, ColorRGBA(0.0f, 1.0f, 0.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+	}
+	else
+	{
+		Graphics()->DrawRect(outCol.x, outCol.y, 10, 10, ColorRGBA(0.0f, 0.0f, 1.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+		Graphics()->DrawRect(outBeforeCol.x, outBeforeCol.y, 10, 10, ColorRGBA(0.0f, 1.0f, 0.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+	}
+
+	Graphics()->TextureClear();
+	Graphics()->LinesBegin();
+	Graphics()->SetColor(Color);
+	IGraphics::CLineItem LineItem(InitPos.x, InitPos.y, FinishPos.x, FinishPos.y);
+	Graphics()->LinesDraw(&LineItem, 1);
+	Graphics()->LinesEnd();
+
+	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
 
 void CChillerBotUX::CampHackTick()

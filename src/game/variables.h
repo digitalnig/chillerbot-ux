@@ -43,6 +43,7 @@ MACRO_CONFIG_INT(ClSpikeTracer, cl_spike_tracer, 0, 0, 512, CFGFLAG_CLIENT | CFG
 MACRO_CONFIG_INT(ClSpikeTracerWalls, cl_spike_tracer_walls, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Trace spikes through walls")
 MACRO_CONFIG_INT(ClPenTest, cl_pentest, 0, 0, 1, CFGFLAG_CLIENT, "penetrate servers to test stability")
 MACRO_CONFIG_STR(ClPenTestFile, cl_pentest_file, 128, "pentest.txt", CFGFLAG_CLIENT, "chat messages file for pentestmode")
+MACRO_CONFIG_INT(ClDbgIntersect, cl_dbg_intersect, 0, 0, 1, CFGFLAG_CLIENT, "Show graphical output for CCollsion::IntersectLine")
 
 // warlist
 MACRO_CONFIG_INT(ClWarList, cl_war_list, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Display nameplate color based on chillerbot/warlist directory")
