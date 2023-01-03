@@ -46,6 +46,30 @@ void CWarList::ReloadList()
 	m_pClient->m_ChillerBotUX.SetComponentNoteLong("war list", aBuf);
 }
 
+void CWarList::GetWarlistPathByNeedle(const char *pSearch, int Size, char *pPath)
+{
+	pPath[0] = '\0';
+	for(auto &Entry : m_vWarlist)
+		if(str_find(Entry.first.c_str(), pSearch))
+			str_copy(pPath, Entry.second.c_str(), Size);
+}
+
+void CWarList::GetTraitorlistPathByNeedle(const char *pSearch, int Size, char *pPath)
+{
+	pPath[0] = '\0';
+	for(auto &Entry : m_vTraitorlist)
+		if(str_find(Entry.first.c_str(), pSearch))
+			str_copy(pPath, Entry.second.c_str(), Size);
+}
+
+void CWarList::GetNeutrallistPathByNeedle(const char *pSearch, int Size, char *pPath)
+{
+	pPath[0] = '\0';
+	for(auto &Entry : m_vNeutrallist)
+		if(str_find(Entry.first.c_str(), pSearch))
+			str_copy(pPath, Entry.second.c_str(), Size);
+}
+
 void CWarList::GetWarlistPathByName(const char *pName, int Size, char *pPath)
 {
 	pPath[0] = '\0';
@@ -739,21 +763,30 @@ bool CWarList::AddWar(const char *pFolder, const char *pName)
 	return true;
 }
 
-bool CWarList::SearchName(const char *pName, bool Silent)
+bool CWarList::SearchName(const char *pName, bool AllowPartialMatch, bool Silent)
 {
 	char aBuf[512];
 	char aFilenames[3][128];
-	GetWarlistPathByName(pName, sizeof(aBuf), aBuf);
+	if(AllowPartialMatch)
+		GetWarlistPathByNeedle(pName, sizeof(aBuf), aBuf);
+	else
+		GetWarlistPathByName(pName, sizeof(aBuf), aBuf);
 	if(aBuf[0])
 		str_format(aFilenames[0], sizeof(aFilenames[0]), "%s/names.txt", aBuf);
 	else
 		aFilenames[0][0] = '\0';
-	GetTraitorlistPathByName(pName, sizeof(aBuf), aBuf);
+	if(AllowPartialMatch)
+		GetTraitorlistPathByNeedle(pName, sizeof(aBuf), aBuf);
+	else
+		GetTraitorlistPathByName(pName, sizeof(aBuf), aBuf);
 	if(aBuf[0])
 		str_format(aFilenames[1], sizeof(aFilenames[1]), "%s/names.txt", aBuf);
 	else
 		aFilenames[1][0] = '\0';
-	GetNeutrallistPathByName(pName, sizeof(aBuf), aBuf);
+	if(AllowPartialMatch)
+		GetNeutrallistPathByNeedle(pName, sizeof(aBuf), aBuf);
+	else
+		GetNeutrallistPathByName(pName, sizeof(aBuf), aBuf);
 	if(aBuf[0])
 		str_format(aFilenames[2], sizeof(aFilenames[2]), "%s/names.txt", aBuf);
 	else
@@ -811,7 +844,12 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 			return;
 		}
-		SearchName(ppArgs[0]);
+		m_pClient->m_Chat.AddLine(-2, 0, "[search] fullmatch:");
+		if(!SearchName(ppArgs[0], false))
+		{
+			m_pClient->m_Chat.AddLine(-2, 0, "[search] partial:");
+			SearchName(ppArgs[0], true);
+		}
 	}
 	else if(!str_comp(pCmd, "help"))
 	{
@@ -870,7 +908,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		}
 		if(aName[0])
 		{
-			if(SearchName(aName, true))
+			if(SearchName(aName, false, true))
 			{
 				str_format(aBuf, sizeof(aBuf), "Error: name '%s' is already used in different folder", aName);
 				m_pClient->m_Chat.AddLine(-2, 0, aBuf);

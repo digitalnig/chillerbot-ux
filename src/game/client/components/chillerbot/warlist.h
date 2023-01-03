@@ -57,6 +57,9 @@ class CWarList : public CComponent
 	std::vector<std::string> m_vWarClanlist;
 	std::vector<std::string> m_vTeamClanlist;
 	std::vector<std::string> m_vWarClanPrefixlist;
+	void GetWarlistPathByNeedle(const char *pSearch, int Size, char *pPath);
+	void GetTraitorlistPathByNeedle(const char *pSearch, int Size, char *pPath);
+	void GetNeutrallistPathByNeedle(const char *pSearch, int Size, char *pPath);
 	void GetWarlistPathByName(const char *pName, int Size, char *pPath);
 	void GetTeamlistPathByName(const char *pName, int Size, char *pPath);
 	void GetTraitorlistPathByName(const char *pName, int Size, char *pPath);
@@ -107,7 +110,7 @@ class CWarList : public CComponent
 
 		Return true if found and false otherwise
 	*/
-	bool SearchName(const char *pName, bool Silent = false);
+	bool SearchName(const char *pName, bool AllowPartialMatch = false, bool Silent = false);
 
 	void Print(const char *pMsg);
 	bool m_Verbose;
