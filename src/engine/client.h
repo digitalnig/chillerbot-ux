@@ -283,6 +283,11 @@ public:
 
 	virtual int UdpConnectivity(int NetType) = 0;
 
+#if defined(CONF_FAMILY_WINDOWS)
+	virtual void ShellRegister() = 0;
+	virtual void ShellUnregister() = 0;
+#endif
+
 	// chillerbot
 
 	virtual void ChillerBotLoadMap(const char *pMap) = 0;

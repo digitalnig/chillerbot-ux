@@ -4024,7 +4024,10 @@ void CClient::DemoRecorder_Stop(int Recorder, bool RemoveFile)
 	{
 		const char *pFilename = m_aDemoRecorder[Recorder].GetCurrentFilename();
 		if(pFilename[0] != '\0')
+		{
 			Storage()->RemoveFile(pFilename, IStorage::TYPE_SAVE);
+			m_aDemoRecorder[Recorder].ClearCurrentFilename();
+		}
 	}
 }
 
@@ -4747,6 +4750,11 @@ int main(int argc, const char **argv)
 		}
 	}
 
+	// Register protocol and file extensions
+#if defined(CONF_FAMILY_WINDOWS)
+	pClient->ShellRegister();
+#endif
+
 	// init SDL
 	if(SDL_Init(0) < 0)
 	{
@@ -4940,3 +4948,51 @@ int CClient::UdpConnectivity(int NetType)
 	}
 	return Connectivity;
 }
+
+#if defined(CONF_FAMILY_WINDOWS)
+void CClient::ShellRegister()
+{
+	char aFullPath[IO_MAX_PATH_LENGTH];
+	Storage()->GetBinaryPathAbsolute(PLAT_CLIENT_EXEC, aFullPath, sizeof(aFullPath));
+	if(!aFullPath[0])
+	{
+		dbg_msg("client", "Failed to register protocol and file extensions: could not determine absolute path");
+		return;
+	}
+
+	bool Updated = false;
+	if(!shell_register_protocol("ddnet", aFullPath, &Updated))
+		dbg_msg("client", "Failed to register ddnet protocol");
+	if(!shell_register_extension(".map", "Map File", GAME_NAME, aFullPath, &Updated))
+		dbg_msg("client", "Failed to register .map file extension");
+	if(!shell_register_extension(".demo", "Demo File", GAME_NAME, aFullPath, &Updated))
+		dbg_msg("client", "Failed to register .demo file extension");
+	if(!shell_register_application(GAME_NAME, aFullPath, &Updated))
+		dbg_msg("client", "Failed to register application");
+	if(Updated)
+		shell_update();
+}
+
+void CClient::ShellUnregister()
+{
+	char aFullPath[IO_MAX_PATH_LENGTH];
+	Storage()->GetBinaryPathAbsolute(PLAT_CLIENT_EXEC, aFullPath, sizeof(aFullPath));
+	if(!aFullPath[0])
+	{
+		dbg_msg("client", "Failed to unregister protocol and file extensions: could not determine absolute path");
+		return;
+	}
+
+	bool Updated = false;
+	if(!shell_unregister_class("ddnet", &Updated))
+		dbg_msg("client", "Failed to unregister ddnet protocol");
+	if(!shell_unregister_class(GAME_NAME ".map", &Updated))
+		dbg_msg("client", "Failed to unregister .map file extension");
+	if(!shell_unregister_class(GAME_NAME ".demo", &Updated))
+		dbg_msg("client", "Failed to unregister .demo file extension");
+	if(!shell_unregister_application(aFullPath, &Updated))
+		dbg_msg("client", "Failed to unregister application");
+	if(Updated)
+		shell_update();
+}
+#endif
