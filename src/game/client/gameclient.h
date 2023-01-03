@@ -56,6 +56,7 @@
 
 #include "components/chillerbot/chathelper.h"
 // #include "components/chillerbot/chillconsole.h"
+#include "components/chillerbot/chatcommand.h"
 #include "components/chillerbot/chillerbotux.h"
 #include "components/chillerbot/chillpw.h"
 #include "components/chillerbot/city.h"
@@ -176,6 +177,7 @@ public:
 	CRemoteControl m_RemoteControl;
 	CUnix m_Unix;
 	CWarList m_WarList;
+	CChatCommand m_ChatCommand;
 	CVibeBot m_VibeBot;
 	CCityHelper m_CityHelper;
 	CEditMap m_EditMap;

@@ -73,6 +73,7 @@
 
 #include "components/chillerbot/chathelper.h"
 // #include "components/chillerbot/chillconsole.h"
+#include "components/chillerbot/chatcommand.h"
 #include "components/chillerbot/chillerbotux.h"
 #include "components/chillerbot/chillpw.h"
 #include "components/chillerbot/city.h"
@@ -166,6 +167,7 @@ void CGameClient::OnConsoleInit()
 					      &m_ChillPw,
 					      &m_RemoteControl,
 					      &m_WarList,
+					      &m_ChatCommand,
 					      &m_VibeBot,
 					      &m_CityHelper,
 					      &m_EditMap,

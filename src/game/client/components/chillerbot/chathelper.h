@@ -16,14 +16,62 @@ class CChatHelper : public CComponent
 	class CChillerBotUX *m_pChillerBot;
 
 	CLangParser m_LangParser;
-	struct CCommand
+	class CCommand
 	{
-		const char *pName;
-		const char *pParams;
+	public:
+		CCommand(const char *pName, const char *pParams)
+		{
+			m_pName = pName;
+			m_pParams = pParams;
+			m_ROffset = -1;
+			m_OptOffset = -1;
+			bool IsBrace = false;
+			int k = 0;
+			for(int i = 0; pParams[i]; i++)
+			{
+				if(IsBrace)
+				{
+					if(pParams[i] == ']')
+						IsBrace = false;
+					continue;
+				}
+				if(pParams[i] == '[')
+				{
+					IsBrace = true;
+					continue;
+				}
+				if(pParams[i] == '?' && m_OptOffset == -1)
+				{
+					m_OptOffset = k;
+					continue;
+				}
+				if(pParams[i] == 'r' && m_ROffset == -1)
+					m_ROffset = k;
+				m_aParamsSlim[k++] = pParams[i];
+			}
+		}
+		const char *m_pName;
+		const char *m_pParams;
+		char m_aParamsSlim[16];
+		/*
+			Variable: m_ROffset
 
-		bool operator<(const CCommand &Other) const { return str_comp(pName, Other.pName) < 0; }
-		bool operator<=(const CCommand &Other) const { return str_comp(pName, Other.pName) <= 0; }
-		bool operator==(const CCommand &Other) const { return str_comp(pName, Other.pName) == 0; }
+			The index of the parameter of type r
+			if no parameter is r it is -1
+		*/
+		int m_ROffset;
+		/*
+			Variable: m_OptOffset
+
+			The index of the parameter of first
+			optional parameter (indicated by ?)
+			if no parameter is optional it is -1
+		*/
+		int m_OptOffset;
+
+		bool operator<(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) < 0; }
+		bool operator<=(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) <= 0; }
+		bool operator==(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) == 0; }
 	};
 
 	std::vector<CCommand> m_vCommands;
@@ -124,6 +172,29 @@ public:
 	void ClearLastAfkPingMessage() { m_aLastAfkPing[0] = '\0'; }
 	bool HowToJoinClan(const char *pClan, char *pResponse, int SizeOfResponse);
 	CLangParser &LangParser() { return m_LangParser; }
+	/*
+		Function: ChatCommandGetROffset
+
+		Parameters:
+			pCmd - name of the command without arguments
+
+		Returns:
+			Which parameter is a r parameter.
+			-1 if none is r.
+			r means it is the last parameter that can not be
+			split into words.
+
+			the argument format is defined in chatcommands.h
+			r is one of the following types:
+				s - string (split by spaces)
+				i - integer (split by spaces)
+				r - string (consume till end)
+
+		Example:
+			If the argument pattern of a chat command is
+			"ssr" we would return 2
+	*/
+	int ChatCommandGetROffset(const char *pCmd);
 	/*
 		Function: SayBuffer
 			Adds message to spam safe queue.

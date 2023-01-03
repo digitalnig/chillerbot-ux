@@ -1,0 +1,121 @@
+// ChillerDragon 2023 - chillerbot ux
+
+#include <game/client/components/chillerbot/chillerbotux.h>
+#include <game/client/gameclient.h>
+
+#include <cinttypes>
+#include <engine/shared/protocol.h>
+
+#include <game/client/components/chat.h>
+
+#include "chatcommand.h"
+
+void CChatCommand::OnServerMsg(const char *pMsg)
+{
+}
+
+void CChatCommand::OnChatMsg(int ClientID, int Team, const char *pMsg)
+{
+	if(!pMsg[1])
+		return;
+	if(pMsg[0] == '.' || pMsg[0] == ':' || pMsg[0] == '!' || pMsg[0] == '#' || pMsg[0] == '$' || pMsg[0] == '/')
+		ParseChatCmd(pMsg[0], ClientID, pMsg + 1);
+}
+
+void CChatCommand::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArgs, const char **ppArgs)
+{
+	// ux components
+
+	m_pClient->m_WarList.OnChatCmd(Prefix, ClientID, pCmd, NumArgs, ppArgs);
+
+	// zx components
+}
+
+void CChatCommand::ParseChatCmd(char Prefix, int ClientID, const char *pCmdWithArgs)
+{
+	char aCmd[128];
+	int i;
+	for(i = 0; pCmdWithArgs[i]; i++)
+	{
+		if(pCmdWithArgs[i] == ' ')
+			break;
+		aCmd[i] = pCmdWithArgs[i];
+	}
+	aCmd[i] = '\0';
+	int ROffset = m_pClient->m_ChatHelper.ChatCommandGetROffset(aCmd);
+
+	// max 8 args of 128 len each
+	char **ppArgs = new char *[8];
+	for(int x = 0; x < 8; ++x)
+	{
+		ppArgs[x] = new char[128];
+		ppArgs[x][0] = '\0';
+	}
+	int NumArgs = 0;
+	int k = 0;
+	while(pCmdWithArgs[i])
+	{
+		if(pCmdWithArgs[i] == ' ')
+		{
+			// do not delimit on space
+			// if we reached the r parameter
+			if(NumArgs == ROffset)
+			{
+				// strip spaces from the beggining
+				// add spaces in the middle and end
+				if(ppArgs[NumArgs][0])
+				{
+					ppArgs[NumArgs][k] = pCmdWithArgs[i];
+					k++;
+					i++;
+					continue;
+				}
+			}
+			else if(ppArgs[NumArgs][0])
+			{
+				ppArgs[NumArgs][k] = '\0';
+				k = 0;
+				NumArgs++;
+			}
+			i++;
+			continue;
+		}
+		ppArgs[NumArgs][k] = pCmdWithArgs[i];
+		k++;
+		i++;
+	}
+	if(ppArgs[NumArgs][0])
+	{
+		ppArgs[NumArgs][k] = '\0';
+		NumArgs++;
+	}
+
+	// char aArgsStr[128];
+	// aArgsStr[0] = '\0';
+	// for(i = 0; i < NumArgs; i++)
+	// {
+	// 	if(aArgsStr[0] != '\0')
+	// 		str_append(aArgsStr, ", ", sizeof(aArgsStr));
+	// 	str_append(aArgsStr, ppArgs[i], sizeof(aArgsStr));
+	// }
+
+	// char aBuf[512];
+	// str_format(aBuf, sizeof(aBuf), "got cmd '%s' with %d args: %s", aCmd, NumArgs, aArgsStr);
+	// Say(aBuf);
+	OnChatCmd(Prefix, ClientID, aCmd, NumArgs, (const char **)ppArgs);
+	for(int x = 0; x < 8; ++x)
+		delete[] ppArgs[x];
+	delete[] ppArgs;
+}
+
+void CChatCommand::OnMessage(int MsgType, void *pRawMsg)
+{
+	if(MsgType == NETMSGTYPE_SV_CHAT)
+	{
+		CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
+		if(pMsg->m_ClientID == -1 && pMsg->m_Team < 2)
+			OnServerMsg(pMsg->m_pMessage);
+		else
+			OnChatMsg(pMsg->m_ClientID, pMsg->m_Team, pMsg->m_pMessage);
+	}
+}

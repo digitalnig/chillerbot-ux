@@ -20,7 +20,18 @@ CChatHelper::CChatHelper()
 
 void CChatHelper::RegisterCommand(const char *pName, const char *pParams, int flags, const char *pHelp)
 {
-	m_vCommands.push_back(CCommand{pName, pParams});
+	m_vCommands.emplace_back(CCommand{pName, pParams});
+}
+
+int CChatHelper::ChatCommandGetROffset(const char *pCmd)
+{
+	for(const auto &Command : m_vCommands)
+	{
+		if(str_comp(Command.m_pName, pCmd))
+			continue;
+		return Command.m_ROffset;
+	}
+	return -1;
 }
 
 void CChatHelper::OnInit()
@@ -504,7 +515,7 @@ bool CChatHelper::OnAutocomplete(CLineInput *pInput, const char *pCompletionBuff
 
 		auto &Command = m_vCommands[Index];
 
-		if(str_comp_nocase_num(Command.pName, pCommandStart, str_length(pCommandStart)) == 0)
+		if(str_comp_nocase_num(Command.m_pName, pCommandStart, str_length(pCommandStart)) == 0)
 		{
 			pCompletionCommand = &Command;
 			*pCompletionChosen = Index + SearchType * NumCommands;
@@ -520,10 +531,10 @@ bool CChatHelper::OnAutocomplete(CLineInput *pInput, const char *pCompletionBuff
 
 	// add the command
 	str_append(aBuf, ".", sizeof(aBuf));
-	str_append(aBuf, pCompletionCommand->pName, sizeof(aBuf));
+	str_append(aBuf, pCompletionCommand->m_pName, sizeof(aBuf));
 
 	// add separator
-	const char *pSeparator = pCompletionCommand->pParams[0] == '\0' ? "" : " ";
+	const char *pSeparator = pCompletionCommand->m_pParams[0] == '\0' ? "" : " ";
 	str_append(aBuf, pSeparator, sizeof(aBuf));
 	if(*pSeparator)
 		str_append(aBuf, pSeparator, sizeof(aBuf));
@@ -531,7 +542,7 @@ bool CChatHelper::OnAutocomplete(CLineInput *pInput, const char *pCompletionBuff
 	// add part after the name
 	str_append(aBuf, pInput->GetString() + PlaceholderOffset + PlaceholderLength, sizeof(aBuf));
 
-	PlaceholderLength = str_length(pSeparator) + str_length(pCompletionCommand->pName) + 1;
+	PlaceholderLength = str_length(pSeparator) + str_length(pCompletionCommand->m_pName) + 1;
 	*pOldChatStringLength = pInput->GetLength();
 	pInput->Set(aBuf); // TODO: Use Add instead
 	pInput->SetCursorOffset(PlaceholderOffset + PlaceholderLength);
