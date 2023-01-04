@@ -63,7 +63,7 @@ void CTerminalUI::RenderHelpPage()
 		" d     - walk right",
 		" k     - selfkill"};
 
-	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, sizeof(aHelpLines) / 128 + 2);
+	g_LogWindow.DrawBorders(offX, offY - 1, width, sizeof(aHelpLines) / 128 + 2);
 
 	int i = 0;
 	for(auto &aLine : aHelpLines)
@@ -106,7 +106,7 @@ void CTerminalUI::RenderServerList()
 		return;
 	m_NumServers = ServerBrowser()->NumSortedServers();
 	int height = minimum(m_NumServers, my - (offY + 2));
-	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, height + 2);
+	g_LogWindow.DrawBorders(offX, offY - 1, width, height + 2);
 	mvwprintw(g_LogWindow.m_pCursesWin, offY - 1, offX + 3, "[ %s ]", aTab);
 	int From = 0;
 	int To = height;
@@ -179,7 +179,7 @@ void CTerminalUI::RenderPopup()
 	int height = minimum(3, my - 2);
 	if(height < 2)
 		return;
-	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, height + 2);
+	g_LogWindow.DrawBorders(offX, offY - 1, width, height + 2);
 
 	char aExtraText[1024];
 	aExtraText[0] = '\0';
@@ -234,7 +234,7 @@ void CTerminalUI::RenderConnecting()
 	if(my < 20)
 		offY = 2;
 	int width = minimum(128, mx - 3);
-	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, 3);
+	g_LogWindow.DrawBorders(offX, offY - 1, width, 3);
 
 	char aBuf[128];
 	str_format(aBuf, sizeof(aBuf), "Connecting to %s", g_Config.m_UiServerAddress);
@@ -266,8 +266,8 @@ bool CTerminalUI::RenderDownload()
 	// 	Download,
 	// 	Client()->MapDownloadAmount() / 1024, Client()->MapDownloadTotalsize() / 1024);
 
-	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, 3);
-	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY + 1, width, 3);
+	g_LogWindow.DrawBorders(offX, offY - 1, width, 3);
+	g_LogWindow.DrawBorders(offX, offY + 1, width, 3);
 
 	char aProgress[512];
 	for(auto &Progress : aProgress)

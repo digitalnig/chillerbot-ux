@@ -10,17 +10,20 @@
 #define CHILLER_LOGGER_WIDTH 1024 * 4
 #define CHILLER_LOGGER_HEIGHT 128
 
-class TermWindow
+class CTermWindow
 {
 public:
 	char m_aTextTop[128];
 	WINDOW *m_pCursesWin;
+
+	void DrawBorders();
+	void DrawBorders(int x, int y, int w, int h);
 };
 
-extern TermWindow g_LogWindow;
-extern TermWindow g_GameWindow;
-extern TermWindow g_InfoWin;
-extern TermWindow g_InputWin;
+extern CTermWindow g_LogWindow;
+extern CTermWindow g_GameWindow;
+extern CTermWindow g_InfoWin;
+extern CTermWindow g_InputWin;
 
 extern int g_ParentX;
 extern int g_ParentY;
@@ -59,7 +62,6 @@ public:
 void curses_init();
 void log_draw();
 void curses_refresh_windows();
-void draw_borders(WINDOW *screen);
 void curses_log_push(const char *pStr, const SLOG_COLOR *pColor = nullptr);
 // void curses_logf(const char *sys, const char *fmt, ...);
 

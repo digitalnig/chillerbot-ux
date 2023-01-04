@@ -10,10 +10,10 @@
 
 static CCursesLogMsg gs_aChillerLogger[CHILLER_LOGGER_HEIGHT];
 
-TermWindow g_LogWindow;
-TermWindow g_GameWindow;
-TermWindow g_InfoWin;
-TermWindow g_InputWin;
+CTermWindow g_LogWindow;
+CTermWindow g_GameWindow;
+CTermWindow g_InfoWin;
+CTermWindow g_InputWin;
 
 int g_ParentX;
 int g_ParentY;
@@ -38,7 +38,7 @@ void curses_refresh_windows()
 	{
 		wrefresh(g_LogWindow.m_pCursesWin);
 		wclear(g_LogWindow.m_pCursesWin);
-		draw_borders(g_LogWindow.m_pCursesWin);
+		g_LogWindow.DrawBorders();
 	}
 	wrefresh(g_InfoWin.m_pCursesWin);
 	wrefresh(g_InputWin.m_pCursesWin);
@@ -81,8 +81,33 @@ void log_draw()
 	}
 }
 
-void draw_borders(WINDOW *screen)
+void CTermWindow::DrawBorders(int x, int y, int w, int h)
 {
+	WINDOW *screen = m_pCursesWin;
+	// 4 corners
+	mvwprintw(screen, y, x, "+");
+	mvwprintw(screen, y + h - 1, x, "+");
+	mvwprintw(screen, y, x + w - 1, "+");
+	mvwprintw(screen, y + h - 1, x + w - 1, "+");
+
+	// sides
+	// for(int i = 1; i < ((y + h) - 1); i++)
+	// {
+	// 	mvwprintw(screen, i, y, "|");
+	// 	mvwprintw(screen, i, (x + w) - 1, "|");
+	// }
+
+	// top and bottom
+	for(int i = 1; i < (w - 1); i++)
+	{
+		mvwprintw(screen, y, x + i, "-");
+		mvwprintw(screen, (y + h) - 1, x + i, "-");
+	}
+}
+
+void CTermWindow::DrawBorders()
+{
+	WINDOW *screen = m_pCursesWin;
 	int x, y, i;
 
 	getmaxyx(screen, y, x);

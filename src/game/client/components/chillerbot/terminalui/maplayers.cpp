@@ -37,7 +37,7 @@ void CTerminalUI::RenderGame()
 	int height = minimum(32, my - 2);
 	if(height < 2)
 		return;
-	DrawBorders(g_GameWindow.m_pCursesWin, offX, offY - 1, width, height + 2);
+	g_GameWindow.DrawBorders(offX, offY - 1, width, height + 2);
 
 	for(int i = 0; i < height; i++)
 		mvwprintw(g_GameWindow.m_pCursesWin, offY + i, offX, "|%-*s|", width - 2, " loading ... ");

@@ -22,9 +22,7 @@ class CTerminalUI : public CComponent
 		KEY_HISTORY_LEN = 20
 	};
 
-	void DrawBorders(WINDOW *screen, int x, int y, int w, int h);
-	void DrawBorders(WINDOW *screen);
-	void RenderScoreboard(int Team, WINDOW *pWin);
+	void RenderScoreboard(int Team, class CTermWindow *pWin);
 	void RenderServerList();
 	void RenderHelpPage();
 	int m_aLastPressedKey[KEY_HISTORY_LEN];
