@@ -140,9 +140,11 @@ class CTerminalUI : public CComponent
 	}
 
 	virtual void OnInit() override;
+	virtual void OnReset() override;
 	virtual void OnRender() override;
 	virtual void OnShutdown() override;
 	virtual void OnStateChange(int NewState, int OldState) override;
+	virtual void OnMessage(int MsgType, void *pRawMsg) override;
 	void RenderConnecting();
 	bool RenderDownload();
 	bool RconAuthed() { return Client()->RconAuthed(); }
@@ -217,6 +219,7 @@ class CTerminalUI : public CComponent
 	};
 	int AimX;
 	int AimY;
+	int m_BroadcastTick;
 	bool m_ScoreboardActive;
 	bool m_RenderServerList;
 	bool m_RenderHelpPage;

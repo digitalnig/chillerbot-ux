@@ -12,12 +12,15 @@
 
 class CTermWindow
 {
-public:
 	char m_aTextTop[128];
-	WINDOW *m_pCursesWin;
 
+public:
+	CTermWindow();
+	void SetTextTop(const char *pText);
 	void DrawBorders();
 	void DrawBorders(int x, int y, int w, int h);
+
+	WINDOW *m_pCursesWin;
 };
 
 extern CTermWindow g_LogWindow;

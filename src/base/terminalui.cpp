@@ -81,6 +81,34 @@ void log_draw()
 	}
 }
 
+CTermWindow::CTermWindow()
+{
+	m_aTextTop[0] = '\0';
+	// str_copy(m_aTextTop, "gaming", sizeof(m_aTextTop));
+	m_pCursesWin = nullptr;
+}
+
+void CTermWindow::SetTextTop(const char *pText)
+{
+	unsigned int i = 0;
+	const char *pCursor = pText;
+	while(true)
+	{
+		if(*pCursor == 0)
+			break;
+		if(i + 1 >= sizeof(m_aTextTop))
+			break;
+		// TODO: think of something cool for multi line broadcast
+		if(*pCursor == '\n')
+			m_aTextTop[i++] = ' ';
+		else
+			m_aTextTop[i++] = *pCursor;
+		pCursor++;
+	}
+	m_aTextTop[i] = '\0';
+	// str_copy(m_aTextTop, pText, sizeof(m_aTextTop));
+}
+
 void CTermWindow::DrawBorders(int x, int y, int w, int h)
 {
 	WINDOW *screen = m_pCursesWin;
@@ -131,13 +159,13 @@ void CTermWindow::DrawBorders()
 		mvwprintw(screen, 0, i, "-");
 		mvwprintw(screen, y - 1, i, "-");
 	}
-	// if(m_aSrvBroadcast[0] != '\0' && screen == g_LogWindow.m_pCursesWin)
-	// {
-	// 	char aBuf[1024*4];
-	// 	str_format(aBuf, sizeof(aBuf), "-[ %s ]", m_aSrvBroadcast);
-	// 	aBuf[x-2] = '\0';
-	// 	mvwprintw(screen, 0, 1, aBuf);
-	// }
+	if(m_aTextTop[0] != '\0')
+	{
+		char aBuf[1024 * 4];
+		str_format(aBuf, sizeof(aBuf), "-[ %s ]", m_aTextTop);
+		aBuf[x - 2] = '\0';
+		mvwprintw(screen, 0, 1, aBuf);
+	}
 }
 
 void curses_log_push(const char *pStr, const SLOG_COLOR *pColor)

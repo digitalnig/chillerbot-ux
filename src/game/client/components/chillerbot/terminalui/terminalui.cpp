@@ -27,7 +27,6 @@ void HandleSigIntTerm(int Param)
 
 void CTerminalUI::DrawAllBorders()
 {
-	// TODO: call in broadcast.cpp
 	g_LogWindow.DrawBorders();
 	g_InfoWin.DrawBorders();
 	g_InputWin.DrawBorders();
@@ -287,9 +286,26 @@ void CTerminalUI::OnInit()
 	// }
 }
 
+void CTerminalUI::OnReset()
+{
+	m_BroadcastTick = 0;
+}
+
 void CTerminalUI::OnShutdown()
 {
 	endwin();
+}
+
+void CTerminalUI::OnMessage(int MsgType, void *pRawMsg)
+{
+	if(MsgType == NETMSGTYPE_SV_BROADCAST)
+	{
+		if(!g_Config.m_ClShowBroadcasts)
+			return;
+		CNetMsg_Sv_Broadcast *pMsg = (CNetMsg_Sv_Broadcast *)pRawMsg;
+		g_LogWindow.SetTextTop(pMsg->m_pMessage);
+		m_BroadcastTick = Client()->GameTick(g_Config.m_ClDummy) + Client()->GameTickSpeed() * 10;
+	}
 }
 
 void CTerminalUI::OnRender()
@@ -297,6 +313,14 @@ void CTerminalUI::OnRender()
 	m_SendData[0] = false;
 	m_SendData[1] = false;
 	CursesTick();
+
+	if(m_BroadcastTick && Client()->GameTick(g_Config.m_ClDummy) > m_BroadcastTick)
+	{
+		g_LogWindow.SetTextTop("");
+		gs_NeedLogDraw = true;
+		m_NewInput = true;
+		m_BroadcastTick = 0;
+	}
 
 	if(cl_InterruptSignaled)
 		Console()->ExecuteLine("quit");
