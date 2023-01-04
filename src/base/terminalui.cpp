@@ -10,10 +10,10 @@
 
 static CCursesLogMsg gs_aChillerLogger[CHILLER_LOGGER_HEIGHT];
 
-WINDOW *g_pLogWindow = NULL;
-WINDOW *g_pGameWindow = NULL;
-WINDOW *g_pInfoWin = NULL;
-WINDOW *g_pInputWin = NULL;
+TermWindow g_LogWindow;
+TermWindow g_GameWindow;
+TermWindow g_InfoWin;
+TermWindow g_InputWin;
 
 int g_ParentX;
 int g_ParentY;
@@ -36,12 +36,12 @@ void curses_refresh_windows()
 {
 	if(gs_NeedLogDraw)
 	{
-		wrefresh(g_pLogWindow);
-		wclear(g_pLogWindow);
-		draw_borders(g_pLogWindow);
+		wrefresh(g_LogWindow.m_pCursesWin);
+		wclear(g_LogWindow.m_pCursesWin);
+		draw_borders(g_LogWindow.m_pCursesWin);
 	}
-	wrefresh(g_pInfoWin);
-	wrefresh(g_pInputWin);
+	wrefresh(g_InfoWin.m_pCursesWin);
+	wrefresh(g_InputWin.m_pCursesWin);
 	gs_NeedLogDraw = false;
 }
 
@@ -50,7 +50,7 @@ void log_draw()
 	if(!gs_NeedLogDraw)
 		return;
 	int x, y;
-	getmaxyx(g_pLogWindow, y, x);
+	getmaxyx(g_LogWindow.m_pCursesWin, y, x);
 	int Max = CHILLER_LOGGER_HEIGHT > y ? y : CHILLER_LOGGER_HEIGHT;
 	Max -= 3;
 	// int Top = CHILLER_LOGGER_HEIGHT - 2;
@@ -67,15 +67,15 @@ void log_draw()
 		if(gs_aChillerLogger[i].m_HaveColor)
 		{
 			int ColorPair = rgb_to_text_color_pair(gs_aChillerLogger[i].m_Color.r, gs_aChillerLogger[i].m_Color.g, gs_aChillerLogger[i].m_Color.b);
-			wattron(g_pLogWindow, COLOR_PAIR(ColorPair));
+			wattron(g_LogWindow.m_pCursesWin, COLOR_PAIR(ColorPair));
 			// refresh();
 		}
 
-		mvwprintw(g_pLogWindow, Max - k-- + 1, 1, "%s", aBuf);
+		mvwprintw(g_LogWindow.m_pCursesWin, Max - k-- + 1, 1, "%s", aBuf);
 
 		if(gs_aChillerLogger[i].m_HaveColor)
 		{
-			wattron(g_pLogWindow, COLOR_PAIR(WHITE_ON_BLACK));
+			wattron(g_LogWindow.m_pCursesWin, COLOR_PAIR(WHITE_ON_BLACK));
 			// refresh();
 		}
 	}
@@ -106,7 +106,7 @@ void draw_borders(WINDOW *screen)
 		mvwprintw(screen, 0, i, "-");
 		mvwprintw(screen, y - 1, i, "-");
 	}
-	// if(m_aSrvBroadcast[0] != '\0' && screen == g_pLogWindow)
+	// if(m_aSrvBroadcast[0] != '\0' && screen == g_LogWindow.m_pCursesWin)
 	// {
 	// 	char aBuf[1024*4];
 	// 	str_format(aBuf, sizeof(aBuf), "-[ %s ]", m_aSrvBroadcast);
@@ -118,7 +118,7 @@ void draw_borders(WINDOW *screen)
 void curses_log_push(const char *pStr, const SLOG_COLOR *pColor)
 {
 	// if ncurses is not intialized yet (terminalui.OnInit()) just print to stdout
-	if(!g_pLogWindow)
+	if(!g_LogWindow.m_pCursesWin)
 	{
 		puts(pStr);
 		return;

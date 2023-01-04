@@ -30,8 +30,8 @@ void CTerminalUI::RenderHelpPage()
 {
 	if(!m_RenderHelpPage)
 		return;
-	int mx = getmaxx(g_pLogWindow);
-	int my = getmaxy(g_pLogWindow);
+	int mx = getmaxx(g_LogWindow.m_pCursesWin);
+	int my = getmaxy(g_LogWindow.m_pCursesWin);
 	int offY = 5;
 	int offX = 40;
 	int width = minimum(128, mx - 3);
@@ -63,7 +63,7 @@ void CTerminalUI::RenderHelpPage()
 		" d     - walk right",
 		" k     - selfkill"};
 
-	DrawBorders(g_pLogWindow, offX, offY - 1, width, sizeof(aHelpLines) / 128 + 2);
+	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, sizeof(aHelpLines) / 128 + 2);
 
 	int i = 0;
 	for(auto &aLine : aHelpLines)
@@ -72,7 +72,7 @@ void CTerminalUI::RenderHelpPage()
 		str_format(aBuf, sizeof(aBuf), "|%-*s|", width - 2, aLine);
 		if(sizeof(aBuf) > (unsigned long)(mx - 2))
 			aBuf[mx - 2] = '\0'; // ensure no line wrapping
-		mvwprintw(g_pLogWindow, offY + i++, offX, "%s", aBuf);
+		mvwprintw(g_LogWindow.m_pCursesWin, offY + i++, offX, "%s", aBuf);
 	}
 }
 
@@ -93,8 +93,8 @@ void CTerminalUI::RenderServerList()
 		str_copy(aTab, "ddnet", sizeof(aTab));
 	else if(g_Config.m_UiPage == CMenus::PAGE_KOG)
 		str_copy(aTab, "KoG", sizeof(aTab));
-	int mx = getmaxx(g_pLogWindow);
-	int my = getmaxy(g_pLogWindow);
+	int mx = getmaxx(g_LogWindow.m_pCursesWin);
+	int my = getmaxy(g_LogWindow.m_pCursesWin);
 	int offY = 5;
 	int offX = 40;
 	if(my < 60)
@@ -106,8 +106,8 @@ void CTerminalUI::RenderServerList()
 		return;
 	m_NumServers = ServerBrowser()->NumSortedServers();
 	int height = minimum(m_NumServers, my - (offY + 2));
-	DrawBorders(g_pLogWindow, offX, offY - 1, width, height + 2);
-	mvwprintw(g_pLogWindow, offY - 1, offX + 3, "[ %s ]", aTab);
+	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, height + 2);
+	mvwprintw(g_LogWindow.m_pCursesWin, offY - 1, offX + 3, "[ %s ]", aTab);
 	int From = 0;
 	int To = height;
 	if(To > 1 && m_SelectedServer >= To - 1)
@@ -152,15 +152,15 @@ void CTerminalUI::RenderServerList()
 		aBuf[width - 1] = '\0'; // ensure no line wrapping
 		if(m_SelectedServer == i)
 		{
-			wattron(g_pLogWindow, A_BOLD);
+			wattron(g_LogWindow.m_pCursesWin, A_BOLD);
 			str_format(aLine, sizeof(aLine), "<%-*s>", (width - 2) + ((NameSize - NameCount) / 2), aBuf);
 		}
 		else
 		{
-			wattroff(g_pLogWindow, A_BOLD);
+			wattroff(g_LogWindow.m_pCursesWin, A_BOLD);
 			str_format(aLine, sizeof(aLine), "|%-*s|", (width - 2) + ((NameSize - NameCount) / 2), aBuf);
 		}
-		mvwprintw(g_pLogWindow, offY + k, offX, "%s", aLine);
+		mvwprintw(g_LogWindow.m_pCursesWin, offY + k, offX, "%s", aLine);
 	}
 }
 
@@ -169,8 +169,8 @@ void CTerminalUI::RenderPopup()
 	if(m_Popup == POPUP_NONE)
 		return;
 
-	int mx = getmaxx(g_pLogWindow);
-	int my = getmaxy(g_pLogWindow);
+	int mx = getmaxx(g_LogWindow.m_pCursesWin);
+	int my = getmaxy(g_LogWindow.m_pCursesWin);
 	int offY = 5;
 	int offX = 2;
 	if(my < 20)
@@ -179,7 +179,7 @@ void CTerminalUI::RenderPopup()
 	int height = minimum(3, my - 2);
 	if(height < 2)
 		return;
-	DrawBorders(g_pLogWindow, offX, offY - 1, width, height + 2);
+	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, height + 2);
 
 	char aExtraText[1024];
 	aExtraText[0] = '\0';
@@ -210,14 +210,14 @@ void CTerminalUI::RenderPopup()
 	int ExtraTextMid = ExtraTextLen / 2;
 	char aBuf[1024];
 	str_format(aBuf, sizeof(aBuf), "%*s", (width - TitleLen) < 1 ? 0 : ((width - TitleMid) / 2), m_aPopupTitle);
-	mvwprintw(g_pLogWindow, offY++, offX, "|%-*s|", width - 2, aBuf);
+	mvwprintw(g_LogWindow.m_pCursesWin, offY++, offX, "|%-*s|", width - 2, aBuf);
 	str_format(aBuf, sizeof(aBuf), "%*s", (width - ExtraTextLen) < 1 ? 0 : ((width - ExtraTextMid) / 2), aExtraText);
-	mvwprintw(g_pLogWindow, offY++, offX, "|%-*s|", width - 2, aBuf);
+	mvwprintw(g_LogWindow.m_pCursesWin, offY++, offX, "|%-*s|", width - 2, aBuf);
 	if(m_Popup == POPUP_DISCONNECTED)
 		str_format(aBuf, sizeof(aBuf), "%*s", (width - 9) < 1 ? 0 : ((width - 9) / 2), "[ ABORT ]");
 	else
 		str_format(aBuf, sizeof(aBuf), "%*s", (width - 6) < 1 ? 0 : ((width - 6) / 2), "[ OK ]");
-	mvwprintw(g_pLogWindow, offY++, offX, "|%-*s|", width - 2, aBuf);
+	mvwprintw(g_LogWindow.m_pCursesWin, offY++, offX, "|%-*s|", width - 2, aBuf);
 }
 
 void CTerminalUI::RenderConnecting()
@@ -227,20 +227,20 @@ void CTerminalUI::RenderConnecting()
 	if(Client()->State() != IClient::STATE_CONNECTING)
 		return;
 
-	int mx = getmaxx(g_pLogWindow);
-	int my = getmaxy(g_pLogWindow);
+	int mx = getmaxx(g_LogWindow.m_pCursesWin);
+	int my = getmaxy(g_LogWindow.m_pCursesWin);
 	int offY = 5;
 	int offX = 2;
 	if(my < 20)
 		offY = 2;
 	int width = minimum(128, mx - 3);
-	DrawBorders(g_pLogWindow, offX, offY - 1, width, 3);
+	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, 3);
 
 	char aBuf[128];
 	str_format(aBuf, sizeof(aBuf), "Connecting to %s", g_Config.m_UiServerAddress);
 	if(sizeof(aBuf) > (unsigned long)(mx - 2))
 		aBuf[mx - 2] = '\0'; // ensure no line wrapping
-	mvwprintw(g_pLogWindow, offY, offX, "|%-*s|", width - 2, aBuf);
+	mvwprintw(g_LogWindow.m_pCursesWin, offY, offX, "|%-*s|", width - 2, aBuf);
 }
 
 bool CTerminalUI::RenderDownload()
@@ -252,8 +252,8 @@ bool CTerminalUI::RenderDownload()
 	if(Client()->MapDownloadTotalsize() < 1)
 		return false;
 
-	int mx = getmaxx(g_pLogWindow);
-	int my = getmaxy(g_pLogWindow);
+	int mx = getmaxx(g_LogWindow.m_pCursesWin);
+	int my = getmaxy(g_LogWindow.m_pCursesWin);
 	int offY = 5;
 	int offX = 2;
 	if(my < 20)
@@ -266,8 +266,8 @@ bool CTerminalUI::RenderDownload()
 	// 	Download,
 	// 	Client()->MapDownloadAmount() / 1024, Client()->MapDownloadTotalsize() / 1024);
 
-	DrawBorders(g_pLogWindow, offX, offY - 1, width, 3);
-	DrawBorders(g_pLogWindow, offX, offY + 1, width, 3);
+	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY - 1, width, 3);
+	DrawBorders(g_LogWindow.m_pCursesWin, offX, offY + 1, width, 3);
 
 	char aProgress[512];
 	for(auto &Progress : aProgress)
@@ -279,7 +279,7 @@ bool CTerminalUI::RenderDownload()
 	str_format(aBuf, sizeof(aBuf), "|%-*s|", width - 2, aProgress);
 	if(sizeof(aBuf) > (unsigned long)(mx - 2))
 		aBuf[mx - 2] = '\0'; // ensure no line wrapping
-	mvwprintw(g_pLogWindow, offY, offX, "%s", aBuf);
+	mvwprintw(g_LogWindow.m_pCursesWin, offY, offX, "%s", aBuf);
 	char aMapName[128];
 	str_format(aMapName, sizeof(aMapName), "Downloading map %s ", Client()->MapDownloadName());
 	if(str_length(aMapName) + 24 < width)
@@ -296,7 +296,7 @@ bool CTerminalUI::RenderDownload()
 	str_format(aBuf, sizeof(aBuf), "|%-*s|", width - 2, aMapName);
 	if(sizeof(aBuf) > (unsigned long)(mx - 2))
 		aBuf[mx - 2] = '\0'; // ensure no line wrapping
-	mvwprintw(g_pLogWindow, offY + 2, offX, "%s", aBuf);
+	mvwprintw(g_LogWindow.m_pCursesWin, offY + 2, offX, "%s", aBuf);
 	static int LastDownload = Download;
 	if(LastDownload != Download)
 	{

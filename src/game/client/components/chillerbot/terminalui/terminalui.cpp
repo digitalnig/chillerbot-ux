@@ -58,9 +58,9 @@ void CTerminalUI::DrawBorders(WINDOW *screen)
 void CTerminalUI::DrawAllBorders()
 {
 	// TODO: call in broadcast.cpp
-	DrawBorders(g_pLogWindow);
-	DrawBorders(g_pInfoWin);
-	DrawBorders(g_pInputWin);
+	DrawBorders(g_LogWindow.m_pCursesWin);
+	DrawBorders(g_InfoWin.m_pCursesWin);
+	DrawBorders(g_InputWin.m_pCursesWin);
 }
 
 void CTerminalUI::LogDraw()
@@ -70,11 +70,11 @@ void CTerminalUI::LogDraw()
 
 void CTerminalUI::InfoDraw()
 {
-	int x = getmaxx(g_pInfoWin);
+	int x = getmaxx(g_InfoWin.m_pCursesWin);
 	char aBuf[1024 * 4 + 16];
 	str_format(aBuf, sizeof(aBuf), "%s | %s | %s", GetInputMode(), g_aInfoStr, g_aInfoStr2);
 	aBuf[x - 2] = '\0'; // prevent line wrapping and cut on screen border
-	mvwprintw(g_pInfoWin, 1, 1, "%s", aBuf);
+	mvwprintw(g_InfoWin.m_pCursesWin, 1, 1, "%s", aBuf);
 }
 
 void CTerminalUI::InputDraw()
@@ -89,15 +89,15 @@ void CTerminalUI::InputDraw()
 	}
 	else
 		str_copy(aBuf, g_aInputStr, sizeof(aBuf));
-	int x = getmaxx(g_pInfoWin);
+	int x = getmaxx(g_InfoWin.m_pCursesWin);
 	if(x < (int)sizeof(aBuf))
 		aBuf[x - 2] = '\0'; // prevent line wrapping and cut on screen border
-	wattron(g_pInputWin, COLOR_PAIR(WHITE_ON_BLACK));
-	wattron(g_pInputWin, A_BOLD);
-	mvwprintw(g_pInputWin, 1, 1, "%s", aBuf);
+	wattron(g_InputWin.m_pCursesWin, COLOR_PAIR(WHITE_ON_BLACK));
+	wattron(g_InputWin.m_pCursesWin, A_BOLD);
+	mvwprintw(g_InputWin.m_pCursesWin, 1, 1, "%s", aBuf);
 	refresh();
-	wattroff(g_pInputWin, A_BOLD);
-	wattroff(g_pInputWin, COLOR_PAIR(CYAN_ON_BLACK));
+	wattroff(g_InputWin.m_pCursesWin, A_BOLD);
+	wattroff(g_InputWin.m_pCursesWin, COLOR_PAIR(CYAN_ON_BLACK));
 	if(m_aCompletionPreview[0])
 	{
 		int Offset = str_length(aBuf) + 1;
@@ -105,7 +105,7 @@ void CTerminalUI::InputDraw()
 		if(LineWrap > 0)
 		{
 			m_aCompletionPreview[LineWrap] = '\0';
-			mvwprintw(g_pInputWin, 1, Offset, " %s", m_aCompletionPreview);
+			mvwprintw(g_InputWin.m_pCursesWin, 1, Offset, " %s", m_aCompletionPreview);
 		}
 	}
 	refresh();
@@ -121,25 +121,25 @@ int CTerminalUI::CursesTick()
 		g_ParentX = g_NewX;
 		g_ParentY = g_NewY;
 
-		wresize(g_pLogWindow, g_NewY - NC_INFO_SIZE * 2, g_NewX);
-		wresize(g_pInfoWin, NC_INFO_SIZE, g_NewX);
-		wresize(g_pInputWin, NC_INFO_SIZE, g_NewX);
-		mvwin(g_pInfoWin, g_NewY - NC_INFO_SIZE * 2, 0);
-		mvwin(g_pInputWin, g_NewY - NC_INFO_SIZE, 0);
+		wresize(g_LogWindow.m_pCursesWin, g_NewY - NC_INFO_SIZE * 2, g_NewX);
+		wresize(g_InfoWin.m_pCursesWin, NC_INFO_SIZE, g_NewX);
+		wresize(g_InputWin.m_pCursesWin, NC_INFO_SIZE, g_NewX);
+		mvwin(g_InfoWin.m_pCursesWin, g_NewY - NC_INFO_SIZE * 2, 0);
+		mvwin(g_InputWin.m_pCursesWin, g_NewY - NC_INFO_SIZE, 0);
 
 		wclear(stdscr);
-		wclear(g_pInfoWin);
-		wclear(g_pInputWin);
+		wclear(g_InfoWin.m_pCursesWin);
+		wclear(g_InputWin.m_pCursesWin);
 
-		DrawBorders(g_pLogWindow);
-		DrawBorders(g_pInfoWin);
-		DrawBorders(g_pInputWin);
+		DrawBorders(g_LogWindow.m_pCursesWin);
+		DrawBorders(g_InfoWin.m_pCursesWin);
+		DrawBorders(g_InputWin.m_pCursesWin);
 
 		if(m_pClient->m_Snap.m_pLocalCharacter && m_RenderGame)
 		{
-			wresize(g_pGameWindow, g_NewY - NC_INFO_SIZE * 2, g_NewX); // TODO: fix this size
-			wclear(g_pLogWindow);
-			DrawBorders(g_pGameWindow);
+			wresize(g_GameWindow.m_pCursesWin, g_NewY - NC_INFO_SIZE * 2, g_NewX); // TODO: fix this size
+			wclear(g_LogWindow.m_pCursesWin);
+			DrawBorders(g_GameWindow.m_pCursesWin);
 		}
 
 		gs_NeedLogDraw = true;
@@ -155,7 +155,7 @@ int CTerminalUI::CursesTick()
 	RenderPopup();
 	RenderHelpPage();
 	if(m_pClient->m_Snap.m_pLocalCharacter)
-		RenderScoreboard(0, g_pLogWindow);
+		RenderScoreboard(0, g_LogWindow.m_pCursesWin);
 
 	int input = GetInput(); // calls InputDraw()
 
@@ -298,14 +298,14 @@ void CTerminalUI::OnInit()
 	// set up initial windows
 	getmaxyx(stdscr, g_ParentY, g_ParentX);
 
-	g_pLogWindow = newwin(g_ParentY - NC_INFO_SIZE * 2, g_ParentX, 0, 0);
-	g_pGameWindow = newwin(g_ParentY - NC_INFO_SIZE * 2, g_ParentX, 0, 0); // TODO: fix this size
-	g_pInfoWin = newwin(NC_INFO_SIZE, g_ParentX, g_ParentY - NC_INFO_SIZE * 2, 0);
-	g_pInputWin = newwin(NC_INFO_SIZE, g_ParentX, g_ParentY - NC_INFO_SIZE, 0);
+	g_LogWindow.m_pCursesWin = newwin(g_ParentY - NC_INFO_SIZE * 2, g_ParentX, 0, 0);
+	g_GameWindow.m_pCursesWin = newwin(g_ParentY - NC_INFO_SIZE * 2, g_ParentX, 0, 0); // TODO: fix this size
+	g_InfoWin.m_pCursesWin = newwin(NC_INFO_SIZE, g_ParentX, g_ParentY - NC_INFO_SIZE * 2, 0);
+	g_InputWin.m_pCursesWin = newwin(NC_INFO_SIZE, g_ParentX, g_ParentY - NC_INFO_SIZE, 0);
 
-	DrawBorders(g_pLogWindow);
-	DrawBorders(g_pInfoWin);
-	DrawBorders(g_pInputWin);
+	DrawBorders(g_LogWindow.m_pCursesWin);
+	DrawBorders(g_InfoWin.m_pCursesWin);
+	DrawBorders(g_InputWin.m_pCursesWin);
 
 	signal(SIGINT, HandleSigIntTerm);
 	signal(SIGTERM, HandleSigIntTerm);
@@ -354,9 +354,9 @@ void CTerminalUI::OnInputModeChange(int Old, int New)
 	g_aInputStr[0] = '\0';
 	m_InputCursor = 0;
 	m_aCompletionPreview[0] = '\0';
-	wclear(g_pInputWin);
+	wclear(g_InputWin.m_pCursesWin);
 	InputDraw();
-	DrawBorders(g_pInputWin);
+	DrawBorders(g_InputWin.m_pCursesWin);
 	UpdateCursor();
 }
 
@@ -382,7 +382,7 @@ int CTerminalUI::GetInput()
 		else
 		{
 			InputDraw();
-			OnKeyPress(c, g_pLogWindow);
+			OnKeyPress(c, g_LogWindow.m_pCursesWin);
 		}
 	}
 	else if(
@@ -436,23 +436,23 @@ int CTerminalUI::GetInput()
 					m_InputMode = INPUT_NORMAL;
 			}
 			m_InputCursor = 0;
-			wclear(g_pInputWin);
+			wclear(g_InputWin.m_pCursesWin);
 			InputDraw();
-			DrawBorders(g_pInputWin);
+			DrawBorders(g_InputWin.m_pCursesWin);
 			return 0;
 		}
 		else if(c == KEY_F(1)) // f1 hard toggle local console
 		{
 			g_aInputStr[0] = '\0';
-			wclear(g_pInputWin);
-			DrawBorders(g_pInputWin);
+			wclear(g_InputWin.m_pCursesWin);
+			DrawBorders(g_InputWin.m_pCursesWin);
 			m_InputMode = m_InputMode == INPUT_LOCAL_CONSOLE ? INPUT_NORMAL : INPUT_LOCAL_CONSOLE;
 		}
 		else if(c == KEY_F(2)) // f2 hard toggle local console
 		{
 			g_aInputStr[0] = '\0';
-			wclear(g_pInputWin);
-			DrawBorders(g_pInputWin);
+			wclear(g_InputWin.m_pCursesWin);
+			DrawBorders(g_InputWin.m_pCursesWin);
 			m_InputMode = m_InputMode == INPUT_REMOTE_CONSOLE ? INPUT_NORMAL : INPUT_REMOTE_CONSOLE;
 		}
 		else if(c == KEY_BTAB)
@@ -579,9 +579,9 @@ int CTerminalUI::GetInput()
 				str_format(g_aInputStr, sizeof(g_aInputStr), "%s%s", aLeft, aRight);
 			}
 			m_InputCursor = clamp(m_InputCursor - 1, 0, str_length(g_aInputStr));
-			wclear(g_pInputWin);
+			wclear(g_InputWin.m_pCursesWin);
 			InputDraw();
-			DrawBorders(g_pInputWin);
+			DrawBorders(g_InputWin.m_pCursesWin);
 			UpdateCursor();
 			return 0;
 		}
@@ -615,9 +615,9 @@ int CTerminalUI::GetInput()
 				{
 					str_copy(aRight, g_aInputStr + m_InputCursor, sizeof(aRight));
 					str_copy(g_aInputStr, aRight, sizeof(g_aInputStr));
-					wclear(g_pInputWin);
+					wclear(g_InputWin.m_pCursesWin);
 					InputDraw();
-					DrawBorders(g_pInputWin);
+					DrawBorders(g_InputWin.m_pCursesWin);
 				}
 				m_InputCursor = 0;
 				UpdateCursor();
@@ -633,9 +633,9 @@ int CTerminalUI::GetInput()
 				else
 				{
 					g_aInputStr[m_InputCursor] = '\0';
-					wclear(g_pInputWin);
+					wclear(g_InputWin.m_pCursesWin);
 					InputDraw();
-					DrawBorders(g_pInputWin);
+					DrawBorders(g_InputWin.m_pCursesWin);
 				}
 				UpdateCursor();
 			}
@@ -644,9 +644,9 @@ int CTerminalUI::GetInput()
 				m_InputMode += NUM_INPUTS - 1;
 				m_aInputSearch[0] = '\0';
 				str_copy(g_aInputStr, "(reverse-i-search)`': ", sizeof(g_aInputStr));
-				wclear(g_pInputWin);
+				wclear(g_InputWin.m_pCursesWin);
 				InputDraw();
-				DrawBorders(g_pInputWin);
+				DrawBorders(g_InputWin.m_pCursesWin);
 				UpdateCursor();
 			}
 			else if(keyname(c)[1] == 'E') // ctrl+e
@@ -669,9 +669,9 @@ int CTerminalUI::GetInput()
 		{
 			ResetCompletion();
 			str_copy(g_aInputStr, m_aaInputHistory[m_InputMode][m_InputHistory[m_InputMode]], sizeof(g_aInputStr));
-			wclear(g_pInputWin);
+			wclear(g_InputWin.m_pCursesWin);
 			InputDraw();
-			DrawBorders(g_pInputWin);
+			DrawBorders(g_InputWin.m_pCursesWin);
 			// update history index after using it because index 0 is already the last item
 			int OldHistory = m_InputHistory[m_InputMode];
 			if(c == 258) // down arrow
@@ -743,9 +743,9 @@ void CTerminalUI::CompleteCommands(bool IsReverse)
 		Console()->PossibleCommands(m_aCompletionBuffer, CompletionFlagmask, m_InputMode != INPUT_LOCAL_CONSOLE && Client()->RconAuthed() && Client()->UseTempRconCommands(), PossibleCommandsCompleteCallback, this);
 	}
 
-	wclear(g_pInputWin);
+	wclear(g_InputWin.m_pCursesWin);
 	InputDraw();
-	DrawBorders(g_pInputWin);
+	DrawBorders(g_InputWin.m_pCursesWin);
 	UpdateCursor();
 }
 
@@ -842,9 +842,9 @@ void CTerminalUI::CompleteNames(bool IsReverse)
 		Count += m_LastCompletionLength;
 	aBuf[BufLen - Count] = '\0';
 	str_format(g_aInputStr, sizeof(g_aInputStr), "%s%s", aBuf, pMatch);
-	wclear(g_pInputWin);
+	wclear(g_InputWin.m_pCursesWin);
 	InputDraw();
-	DrawBorders(g_pInputWin);
+	DrawBorders(g_InputWin.m_pCursesWin);
 	int MatchLen = str_length(pMatch);
 	m_LastCompletionLength = MatchLen;
 	m_InputCursor += MatchLen - Count;
@@ -869,7 +869,7 @@ void CTerminalUI::UpdateCursor()
 	int Offset = 0;
 	if(IsSearchInputMode())
 		Offset = str_length("(reverse-i-search)`");
-	wmove(g_pInputWin, 1, m_InputCursor + 1 + Offset);
+	wmove(g_InputWin.m_pCursesWin, 1, m_InputCursor + 1 + Offset);
 }
 
 void CTerminalUI::_UpdateInputSearch()
@@ -896,9 +896,9 @@ void CTerminalUI::RenderInputSearch()
 {
 	_UpdateInputSearch();
 	str_format(g_aInputStr, sizeof(g_aInputStr), "(reverse-i-search)`%s': %s", m_aInputSearch, m_aInputSearchMatch);
-	wclear(g_pInputWin);
+	wclear(g_InputWin.m_pCursesWin);
 	InputDraw();
-	DrawBorders(g_pInputWin);
+	DrawBorders(g_InputWin.m_pCursesWin);
 }
 
 int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)

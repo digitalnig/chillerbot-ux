@@ -10,10 +10,17 @@
 #define CHILLER_LOGGER_WIDTH 1024 * 4
 #define CHILLER_LOGGER_HEIGHT 128
 
-extern WINDOW *g_pLogWindow;
-extern WINDOW *g_pGameWindow;
-extern WINDOW *g_pInfoWin;
-extern WINDOW *g_pInputWin;
+class TermWindow
+{
+public:
+	char m_aTextTop[128];
+	WINDOW *m_pCursesWin;
+};
+
+extern TermWindow g_LogWindow;
+extern TermWindow g_GameWindow;
+extern TermWindow g_InfoWin;
+extern TermWindow g_InputWin;
 
 extern int g_ParentX;
 extern int g_ParentY;

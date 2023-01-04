@@ -27,8 +27,8 @@ void CTerminalUI::RenderGame()
 	if(m_NextRender > 0)
 		return;
 	m_NextRender = 60; // render every 60 what every this isy
-	int mx = getmaxx(g_pGameWindow);
-	int my = getmaxy(g_pGameWindow);
+	int mx = getmaxx(g_GameWindow.m_pCursesWin);
+	int my = getmaxy(g_GameWindow.m_pCursesWin);
 	int offY = 5;
 	int offX = 2;
 	if(my < 20)
@@ -37,10 +37,10 @@ void CTerminalUI::RenderGame()
 	int height = minimum(32, my - 2);
 	if(height < 2)
 		return;
-	DrawBorders(g_pGameWindow, offX, offY - 1, width, height + 2);
+	DrawBorders(g_GameWindow.m_pCursesWin, offX, offY - 1, width, height + 2);
 
 	for(int i = 0; i < height; i++)
-		mvwprintw(g_pGameWindow, offY + i, offX, "|%-*s|", width - 2, " loading ... ");
+		mvwprintw(g_GameWindow.m_pCursesWin, offY + i, offX, "|%-*s|", width - 2, " loading ... ");
 
 	CMapItemLayer *pLayer = (CMapItemLayer *)Layers()->GameLayer();
 	if(!pLayer)
@@ -55,7 +55,7 @@ void CTerminalUI::RenderGame()
 		RenderTilemap(pTiles, offX, offY, width, height, pTMap->m_Width, pTMap->m_Height, 32.0f, Color, 0,
 			pTMap->m_ColorEnv, pTMap->m_ColorEnvOffset);
 		RenderPlayers(offX, offY, pTMap->m_Width, pTMap->m_Height);
-		wrefresh(g_pGameWindow);
+		wrefresh(g_GameWindow.m_pCursesWin);
 	}
 }
 
@@ -125,7 +125,7 @@ void CTerminalUI::RenderPlayers(int offX, int offY, int w, int h)
 					pPlayerSkin = "ø";
 				if(PlayerX > mx - 16 && PlayerX < mx + 16)
 					if(PlayerY > my - 16 && PlayerY < my + 16)
-						mvwprintw(g_pGameWindow, offY + renderY, offX + renderX, "%s", pPlayerSkin);
+						mvwprintw(g_GameWindow.m_pCursesWin, offY + renderY, offX + renderX, "%s", pPlayerSkin);
 			}
 		}
 	}
@@ -282,7 +282,7 @@ void CTerminalUI::RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth,
 		// printf("%s\n", aFrame[y]);
 		if(WinWidth < (int)sizeof(WinWidth))
 			aFrame[y][WinWidth - 2] = '\0';
-		mvwprintw(g_pGameWindow, offY + y, offX, "|%-*s|", (WinWidth - 2) + (aFrameByteCount[y] - aFrameLetterCount[y]), aFrame[y]);
+		mvwprintw(g_GameWindow.m_pCursesWin, offY + y, offX, "|%-*s|", (WinWidth - 2) + (aFrameByteCount[y] - aFrameLetterCount[y]), aFrame[y]);
 	}
 	// printf("------------- tiles: %d \n\n", rendered_tiles);
 	// printf("%s\n-------------\n", aFrame[15]);
