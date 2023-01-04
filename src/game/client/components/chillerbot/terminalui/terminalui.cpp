@@ -305,6 +305,8 @@ void CTerminalUI::OnMessage(int MsgType, void *pRawMsg)
 		CNetMsg_Sv_Broadcast *pMsg = (CNetMsg_Sv_Broadcast *)pRawMsg;
 		g_LogWindow.SetTextTop(pMsg->m_pMessage);
 		m_BroadcastTick = Client()->GameTick(g_Config.m_ClDummy) + Client()->GameTickSpeed() * 10;
+		gs_NeedLogDraw = true;
+		m_NewInput = true;
 	}
 }
 

@@ -164,7 +164,7 @@ void CTermWindow::DrawBorders()
 		char aBuf[1024 * 4];
 		str_format(aBuf, sizeof(aBuf), "-[ %s ]", m_aTextTop);
 		aBuf[x - 2] = '\0';
-		mvwprintw(screen, 0, 1, aBuf);
+		mvwprintw(screen, 0, 1, "%s", aBuf);
 	}
 }
 
