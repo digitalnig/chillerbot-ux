@@ -235,7 +235,9 @@ bool CReplyToPing::Reply()
 		str_find_nocase(m_pMessage, "happy") ||
 		str_find_nocase(m_pMessage, "congrats") ||
 		str_find_nocase(m_pMessage, "nice") ||
-		str_find_nocase(m_pMessage, "pro"))
+		str_find_nocase(m_pMessage, "pro ") ||
+		str_find_nocase(m_pMessage, "pro!") ||
+		str_endswith_nocase(m_pMessage, "pro"))
 	{
 		str_format(m_pResponse, m_SizeOfResponse, "%s thanks", m_pMessageAuthor);
 		return true;
