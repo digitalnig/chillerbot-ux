@@ -60,6 +60,35 @@ bool CLangParser::IsAskToAsk(const char *pMessage, const char *pMessageAuthor, c
 {
 	if(pResponse)
 		pResponse[0] = '\0';
+	// i have a question
+	if(!str_find(pMessage, "?"))
+	{
+		const char *pHave = str_find_nocase(pMessage, "have ");
+		if(!pHave)
+			pHave = str_find_nocase(pMessage, "has ");
+		if(!pHave)
+			pHave = str_find_nocase(pMessage, "i ");
+		if(!pHave)
+			pHave = str_find_nocase(pMessage, "ich ");
+		if(!pHave)
+			pHave = str_find_nocase(pMessage, "hab");
+		if(pHave)
+		{
+			if(str_find_nocase(pHave, "questio") || str_find_nocase(pHave, "qustion"))
+			{
+				if(pResponse)
+					str_format(pResponse, SizeOfResponse, "%s If you have a question just ask.", pMessageAuthor ? pMessageAuthor : "");
+				return true;
+			}
+			if(str_find_nocase(pHave, "frage"))
+			{
+				if(pResponse)
+					str_format(pResponse, SizeOfResponse, "%s frag einfach wenn du eine frage hast.", pMessageAuthor ? pMessageAuthor : "");
+				return true;
+			}
+		}
+	}
+	// can i ask a question
 	const char *pCanAsk = StrFindOrder(pMessage, 2, "can", "ask");
 	if(!pCanAsk)
 		return IsAskToAskGerman(pMessage, pMessageAuthor, pResponse, SizeOfResponse);
