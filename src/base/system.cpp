@@ -83,8 +83,6 @@
 #include <sys/filio.h>
 #endif
 
-extern "C" {
-
 IOHANDLE io_stdin()
 {
 	return (IOHANDLE)stdin;
@@ -4291,7 +4289,6 @@ void set_exception_handler_log_file(const char *log_file_path)
 #endif
 }
 #endif
-}
 
 std::chrono::nanoseconds time_get_nanoseconds()
 {
