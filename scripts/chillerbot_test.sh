@@ -180,6 +180,10 @@ sleep 1
 
 ins=()
 outs=()
+# should not crash on chat cmd parse too many args
+ins+=('!a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a');outs+=('')
+# should not crash on chat cmd parse too long arg
+ins+=('!a aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');outs+=('')
 ins+=('I HAVE A QUESTION client2');outs+=('client1 If you have a question just ask.')
 ins+=('client2: how many jumpos do you have');outs+=('client1 I currently have 1 out of 1 jumps')
 ins+=('client2: what is your problem');outs+=('client1 has war because: bullied me in school')

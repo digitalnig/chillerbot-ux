@@ -45,16 +45,28 @@ void CChatCommand::ParseChatCmd(char Prefix, int ClientID, const char *pCmdWithA
 	int ROffset = m_pClient->m_ChatHelper.ChatCommandGetROffset(aCmd);
 
 	// max 8 args of 128 len each
-	char **ppArgs = new char *[8];
-	for(int x = 0; x < 8; ++x)
+	const int MAX_ARGS = 16;
+	const int MAX_ARG_LEN = 256;
+	char **ppArgs = new char *[MAX_ARGS];
+	for(int x = 0; x < MAX_ARGS; ++x)
 	{
-		ppArgs[x] = new char[128];
+		ppArgs[x] = new char[MAX_ARG_LEN];
 		ppArgs[x][0] = '\0';
 	}
 	int NumArgs = 0;
 	int k = 0;
 	while(pCmdWithArgs[i])
 	{
+		if(k + 1 >= MAX_ARG_LEN)
+		{
+			dbg_msg("chillerbot", "error: chat command has too long arg");
+			break;
+		}
+		if(NumArgs + 1 >= MAX_ARGS)
+		{
+			dbg_msg("chillerbot", "error: chat command has too many args");
+			break;
+		}
 		if(pCmdWithArgs[i] == ' ')
 		{
 			// do not delimit on space
