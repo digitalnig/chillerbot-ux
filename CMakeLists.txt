@@ -2770,6 +2770,7 @@ if(GTEST_FOUND OR DOWNLOAD_GTEST)
     jobs.cpp
     json.cpp
     langparser.cpp
+    linereader.cpp
     mapbugs.cpp
     name_ban.cpp
     net.cpp
