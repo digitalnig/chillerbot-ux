@@ -42,6 +42,22 @@ bool CLangParser::IsAskToAskGerman(const char *pMessage, const char *pMessageAut
 {
 	if(pResponse)
 		pResponse[0] = '\0';
+	// ich habe eine frage
+	if(!str_find(pMessage, "?"))
+	{
+		const char *pHave = str_find_nocase(pMessage, "hab ");
+		if(!pHave)
+			pHave = str_find_nocase(pMessage, "habe ");
+		if(pHave)
+		{
+			if(str_find_nocase(pHave, "frage"))
+			{
+				if(pResponse)
+					str_format(pResponse, SizeOfResponse, "%s frag einfach wenn du eine frage hast.", pMessageAuthor ? pMessageAuthor : "");
+				return true;
+			}
+		}
+	}
 	// kann ich dich etwas
 	// kan i di was
 	const char *pCanSomething = StrFindOrder(pMessage, 2, "kan", "was");
@@ -68,22 +84,12 @@ bool CLangParser::IsAskToAsk(const char *pMessage, const char *pMessageAuthor, c
 			pHave = str_find_nocase(pMessage, "has ");
 		if(!pHave)
 			pHave = str_find_nocase(pMessage, "i ");
-		if(!pHave)
-			pHave = str_find_nocase(pMessage, "ich ");
-		if(!pHave)
-			pHave = str_find_nocase(pMessage, "hab");
 		if(pHave)
 		{
 			if(str_find_nocase(pHave, "questio") || str_find_nocase(pHave, "qustion"))
 			{
 				if(pResponse)
 					str_format(pResponse, SizeOfResponse, "%s If you have a question just ask.", pMessageAuthor ? pMessageAuthor : "");
-				return true;
-			}
-			if(str_find_nocase(pHave, "frage"))
-			{
-				if(pResponse)
-					str_format(pResponse, SizeOfResponse, "%s frag einfach wenn du eine frage hast.", pMessageAuthor ? pMessageAuthor : "");
 				return true;
 			}
 		}

@@ -2758,6 +2758,7 @@ if(GTEST_FOUND OR DOWNLOAD_GTEST)
     bezier.cpp
     blocklist_driver.cpp
     bytes_be.cpp
+    chillerbot.cpp
     color.cpp
     compression.cpp
     csv.cpp
