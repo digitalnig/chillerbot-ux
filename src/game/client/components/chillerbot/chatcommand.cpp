@@ -59,12 +59,12 @@ void CChatCommand::ParseChatCmd(char Prefix, int ClientID, const char *pCmdWithA
 	{
 		if(k + 1 >= MAX_ARG_LEN)
 		{
-			dbg_msg("chillerbot", "error: chat command has too long arg");
+			dbg_msg("chillerbot", "ERROR: chat command has too long arg");
 			break;
 		}
 		if(NumArgs + 1 >= MAX_ARGS)
 		{
-			dbg_msg("chillerbot", "error: chat command has too many args");
+			dbg_msg("chillerbot", "ERROR: chat command has too many args");
 			break;
 		}
 		if(pCmdWithArgs[i] == ' ')
