@@ -76,7 +76,7 @@ void CChillPw::ConChillpw(IConsole::IResult *pResult, void *pUserData)
 		else
 			foundDummy++;
 	}
-	str_format(aBuf, sizeof(aBuf), "curret host: %s", pSelf->m_aCurrentServerAddr);
+	str_format(aBuf, sizeof(aBuf), "curret host: '%s'", pSelf->m_aCurrentServerAddr);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
 	// main
 	str_format(aBuf, sizeof(aBuf), "  [main] known passwords: %d", found);
