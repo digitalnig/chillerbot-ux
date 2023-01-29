@@ -27,6 +27,69 @@ void CChillPw::OnMapLoad()
 	}
 }
 
+void CChillPw::OnConsoleInit()
+{
+	Console()->Register("chillpw", "?s[status]", CFGFLAG_CLIENT, ConChillpw, this, "");
+}
+
+void CChillPw::ConChillpw(IConsole::IResult *pResult, void *pUserData)
+{
+	CChillPw *pSelf = (CChillPw *)pUserData;
+
+	char aBuf[512];
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", "~~~ chillpw status ~~~");
+	str_format(aBuf, sizeof(aBuf), "file: %s", g_Config.m_ClPasswordFile);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	str_format(aBuf, sizeof(aBuf), "loaded passwords: %d", pSelf->m_NumLoadedPasswords);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+
+	int found = 0;
+	int foundDummy = 0;
+	for(int i = 0; i < MAX_PASSWORDS; i++)
+	{
+		if(pSelf->m_aaHostnames[i][0] == '\0')
+			continue;
+		if(!str_find(pSelf->m_aaHostnames[i], ":") || str_find(pSelf->m_aaHostnames[i], ":*"))
+		{
+			if(str_comp(pSelf->m_aCurrentServerAddrNoPort, pSelf->m_aaHostnames[i]))
+				continue;
+		}
+		else
+		{
+			if(str_comp(pSelf->m_aCurrentServerAddr, pSelf->m_aaHostnames[i]))
+			{
+				// if it has a port and it does not match skip to next entry
+				if(str_find(pSelf->m_aCurrentServerAddr, ":"))
+					continue;
+
+				// skip all non default port entrys
+				if(!str_endswith(pSelf->m_aaHostnames[i], ":8303"))
+					continue;
+
+				// if hostname without port does not match skip
+				if(!str_startswith(pSelf->m_aaHostnames[i], pSelf->m_aCurrentServerAddr) || pSelf->m_aaHostnames[i][str_length(pSelf->m_aCurrentServerAddr)] != ':')
+					continue;
+			}
+		}
+		if(pSelf->m_aDummy[i] == 0)
+			found++;
+		else
+			foundDummy++;
+	}
+	str_format(aBuf, sizeof(aBuf), "curret host: %s", pSelf->m_aCurrentServerAddr);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	// main
+	str_format(aBuf, sizeof(aBuf), "  [main] known passwords: %d", found);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	str_format(aBuf, sizeof(aBuf), "  [main] attempted passwords: %d", pSelf->m_LoginOffset[0]);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	// dummy
+	str_format(aBuf, sizeof(aBuf), "  [dummy] known passwords: %d", foundDummy);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	str_format(aBuf, sizeof(aBuf), "  [dummy] attempted passwords: %d", pSelf->m_LoginOffset[1]);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+}
+
 void CChillPw::OnRender()
 {
 	if(Client()->State() == IClient::STATE_DEMOPLAYBACK)
@@ -56,6 +119,7 @@ void CChillPw::OnRender()
 
 void CChillPw::OnInit()
 {
+	m_NumLoadedPasswords = 0;
 	IOHANDLE File = Storage()->OpenFile(g_Config.m_ClPasswordFile, IOFLAG_READ, IStorage::TYPE_ALL);
 	char aBuf[128];
 	int Line = 0;
@@ -91,7 +155,8 @@ void CChillPw::OnInit()
 				m_aaHostnames[Line][i] = '\0';
 		Line++;
 	}
-	str_format(aBuf, sizeof(aBuf), "loaded %d passwords from '%s'", Line, g_Config.m_ClPasswordFile);
+	m_NumLoadedPasswords = Line;
+	str_format(aBuf, sizeof(aBuf), "loaded %d passwords from '%s'", m_NumLoadedPasswords, g_Config.m_ClPasswordFile);
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
 
 	io_close(File);

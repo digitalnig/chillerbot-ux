@@ -16,6 +16,9 @@ private:
 	virtual void OnMapLoad() override;
 	virtual void OnRender() override;
 	virtual void OnInit() override;
+	virtual void OnConsoleInit() override;
+
+	static void ConChillpw(IConsole::IResult *pResult, void *pUserData);
 
 	bool AuthChatAccount(int Dummy, int Offset);
 	void SavePassword(const char *pServer, const char *pPassword);
@@ -42,6 +45,7 @@ private:
 	char m_aCurrentServerAddrNoPort[64];
 	int64_t m_ChatDelay[NUM_DUMMIES];
 	int m_LoginOffset[NUM_DUMMIES];
+	int m_NumLoadedPasswords;
 };
 
 #endif
