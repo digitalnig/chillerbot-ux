@@ -2041,9 +2041,7 @@ void CClient::ProcessServerPacket(CNetChunk *pPacket, int Conn, bool Dummy)
 							// to compress this snapshot. force the server to resync
 							if(g_Config.m_Debug)
 							{
-								char aBuf[256];
-								str_format(aBuf, sizeof(aBuf), "error, couldn't find the delta snapshot");
-								m_pConsole->Print(IConsole::OUTPUT_LEVEL_DEBUG, "client", aBuf);
+								m_pConsole->Print(IConsole::OUTPUT_LEVEL_DEBUG, "client", "error, couldn't find the delta snapshot");
 							}
 
 							// ack snapshot
@@ -2329,8 +2327,18 @@ void CClient::FinishMapDownload()
 	m_MapdownloadTotalsize = -1;
 	SHA256_DIGEST *pSha256 = m_MapdownloadSha256Present ? &m_MapdownloadSha256 : 0;
 
-	Storage()->RemoveFile(m_aMapdownloadFilename, IStorage::TYPE_SAVE);
-	Storage()->RenameFile(m_aMapdownloadFilenameTemp, m_aMapdownloadFilename, IStorage::TYPE_SAVE);
+	bool FileSuccess = true;
+	if(Storage()->FileExists(m_aMapdownloadFilename, IStorage::TYPE_SAVE))
+		FileSuccess &= Storage()->RemoveFile(m_aMapdownloadFilename, IStorage::TYPE_SAVE);
+	FileSuccess &= Storage()->RenameFile(m_aMapdownloadFilenameTemp, m_aMapdownloadFilename, IStorage::TYPE_SAVE);
+	if(!FileSuccess)
+	{
+		ResetMapDownload();
+		char aError[128 + IO_MAX_PATH_LENGTH];
+		str_format(aError, sizeof(aError), Localize("Could not save downloaded map. Try manually deleting this file: %s"), m_aMapdownloadFilename);
+		DisconnectWithReason(aError);
+		return;
+	}
 
 	// load map
 	const char *pError = LoadMap(m_aMapdownloadName, m_aMapdownloadFilename, pSha256, m_MapdownloadCrc);
@@ -3123,9 +3131,7 @@ void CClient::Run()
 	// process pending commands
 	m_pConsole->StoreCommands(false);
 
-#if defined(CONF_FAMILY_UNIX)
 	m_Fifo.Init(m_pConsole, g_Config.m_ClInputFifo, CFGFLAG_CLIENT);
-#endif
 
 	InitChecksum();
 	m_pConsole->InitChecksum(ChecksumData());
@@ -3351,13 +3357,6 @@ void CClient::Run()
 				// if the client does not render, it should reset its render time to a time where it would render the first frame, when it wakes up again
 				LastRenderTime = g_Config.m_GfxRefreshRate ? (Now - (time_freq() / (int64_t)g_Config.m_GfxRefreshRate)) : Now;
 			}
-
-			if(Input()->VideoRestartNeeded())
-			{
-				m_pGraphics->Init();
-				LoadData();
-				GameClient()->OnInit();
-			}
 		}
 
 		AutoScreenshot_Cleanup();
@@ -3372,7 +3371,7 @@ void CClient::Run()
 			{
 				// write down the config and quit
 				if(!m_pConfigManager->Save())
-					m_vWarnings.emplace_back(SWarning(Localize("Saving ddnet-settings.cfg failed")));
+					m_vWarnings.emplace_back(Localize("Saving ddnet-settings.cfg failed"));
 				s_SavedConfig = true;
 			}
 
@@ -3387,9 +3386,7 @@ void CClient::Run()
 				break;
 		}
 
-#if defined(CONF_FAMILY_UNIX)
 		m_Fifo.Update();
-#endif
 
 		// beNice
 		auto Now = time_get_nanoseconds();
@@ -3441,9 +3438,7 @@ void CClient::Run()
 		m_GlobalTime = (time_get() - m_GlobalStartTime) / (float)time_freq();
 	}
 
-#if defined(CONF_FAMILY_UNIX)
 	m_Fifo.Shutdown();
-#endif
 
 	GameClient()->OnShutdown();
 	Disconnect();

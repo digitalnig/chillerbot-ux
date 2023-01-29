@@ -930,7 +930,7 @@ void CGameContext::OnTick()
 						continue;
 
 					// connecting clients with spoofed ips can clog slots without being ingame
-					if(((CServer *)Server())->m_aClients[i].m_State != CServer::CClient::STATE_INGAME)
+					if(!Server()->ClientIngame(i))
 						continue;
 
 					// don't count votes by blacklisted clients
@@ -1021,18 +1021,14 @@ void CGameContext::OnTick()
 			}
 			else if(m_VoteEnforce == VOTE_ENFORCE_YES_ADMIN)
 			{
-				char aBuf[64];
-				str_format(aBuf, sizeof(aBuf), "Vote passed enforced by authorized player");
 				Console()->ExecuteLine(m_aVoteCommand, m_VoteEnforcer);
-				SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX);
+				SendChat(-1, CGameContext::CHAT_ALL, "Vote passed enforced by authorized player", -1, CHAT_SIX);
 				EndVote();
 			}
 			else if(m_VoteEnforce == VOTE_ENFORCE_NO_ADMIN)
 			{
-				char aBuf[64];
-				str_format(aBuf, sizeof(aBuf), "Vote failed enforced by authorized player");
 				EndVote();
-				SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX);
+				SendChat(-1, CGameContext::CHAT_ALL, "Vote failed enforced by authorized player", -1, CHAT_SIX);
 			}
 			//else if(m_VoteEnforce == VOTE_ENFORCE_NO || time_get() > m_VoteCloseTime)
 			else if(m_VoteEnforce == VOTE_ENFORCE_NO || (time_get() > m_VoteCloseTime && g_Config.m_SvVoteMajority))
@@ -1507,7 +1503,8 @@ void CGameContext::OnClientConnected(int ClientID, void *pData)
 		bool Empty = true;
 		for(auto &pPlayer : m_apPlayers)
 		{
-			if(pPlayer)
+			// connecting clients with spoofed ips can clog slots without being ingame
+			if(pPlayer && Server()->ClientIngame(pPlayer->GetCID()))
 			{
 				Empty = false;
 				break;
@@ -4016,24 +4013,21 @@ void CGameContext::Whisper(int ClientID, char *pStr)
 	*pStr = 0;
 	pStr++;
 
-	char *pMessage = pStr;
-	char aBuf[256];
-
 	if(Error)
 	{
-		str_format(aBuf, sizeof(aBuf), "Invalid whisper");
-		SendChatTarget(ClientID, aBuf);
+		SendChatTarget(ClientID, "Invalid whisper");
 		return;
 	}
 
 	if(Victim >= MAX_CLIENTS || !CheckClientID2(Victim))
 	{
+		char aBuf[256];
 		str_format(aBuf, sizeof(aBuf), "No player with name \"%s\" found", pName);
 		SendChatTarget(ClientID, aBuf);
 		return;
 	}
 
-	WhisperID(ClientID, Victim, pMessage);
+	WhisperID(ClientID, Victim, pStr);
 }
 
 void CGameContext::WhisperID(int ClientID, int VictimID, const char *pMessage)
@@ -4140,7 +4134,7 @@ void CGameContext::List(int ClientID, const char *pFilter)
 	if(pFilter[0])
 		str_format(aBuf, sizeof(aBuf), "Listing players with \"%s\" in name:", pFilter);
 	else
-		str_format(aBuf, sizeof(aBuf), "Listing all players:");
+		str_copy(aBuf, "Listing all players:");
 	SendChatTarget(ClientID, aBuf);
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
