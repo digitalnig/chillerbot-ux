@@ -64,6 +64,10 @@ bool CReplyToPing::ListWars()
 			pEnemy = pEnemy + str_length("enemi");
 		else if((pEnemy = str_find_nocase(pWho, "enemy")))
 			pEnemy = pEnemy + str_length("enemy");
+		else if((pEnemy = str_find_nocase(pWho, "ennemy")))
+			pEnemy = pEnemy + str_length("ennemy");
+		else if((pEnemy = str_find_nocase(pWho, "ennemi")))
+			pEnemy = pEnemy + str_length("ennemi");
 		else if((pEnemy = str_find_nocase(pWho, "gegner")))
 			pEnemy = pEnemy + str_length("gegner");
 		else if((pEnemy = str_find_nocase(pWho, "against")))
