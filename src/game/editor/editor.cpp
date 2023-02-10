@@ -4388,15 +4388,13 @@ void CEditor::RenderFileDialog()
 		{
 			if(str_endswith(m_vpFilteredFileList[m_FilesSelectedIndex]->m_aFilename, ".png"))
 			{
-				char aBuffer[1024];
+				char aBuffer[IO_MAX_PATH_LENGTH];
 				str_format(aBuffer, sizeof(aBuffer), "%s/%s", m_pFileDialogPath, m_vpFilteredFileList[m_FilesSelectedIndex]->m_aFilename);
-
 				if(Graphics()->LoadPNG(&m_FilePreviewImageInfo, aBuffer, IStorage::TYPE_ALL))
 				{
+					Graphics()->UnloadTexture(&m_FilePreviewImage);
 					m_FilePreviewImage = Graphics()->LoadTextureRaw(m_FilePreviewImageInfo.m_Width, m_FilePreviewImageInfo.m_Height, m_FilePreviewImageInfo.m_Format, m_FilePreviewImageInfo.m_pData, m_FilePreviewImageInfo.m_Format, 0);
-					CImageInfo DummyInfo = m_FilePreviewImageInfo;
-					m_FilePreviewImageInfo.m_pData = nullptr;
-					Graphics()->FreePNG(&DummyInfo);
+					Graphics()->FreePNG(&m_FilePreviewImageInfo);
 					m_PreviewImageIsLoaded = true;
 				}
 			}
@@ -4487,6 +4485,7 @@ void CEditor::RenderFileDialog()
 	// the buttons
 	static int s_OkButton = 0;
 	static int s_CancelButton = 0;
+	static int s_RefreshButton = 0;
 	static int s_NewFolderButton = 0;
 	static int s_MapInfoButton = 0;
 
@@ -4562,6 +4561,11 @@ void CEditor::RenderFileDialog()
 		}
 	}
 
+	ButtonBar.VSplitRight(40.0f, &ButtonBar, &Button);
+	ButtonBar.VSplitRight(50.0f, &ButtonBar, &Button);
+	if(DoButton_Editor(&s_RefreshButton, "Refresh", 0, &Button, 0, nullptr) || Input()->KeyIsPressed(KEY_F5) || (Input()->ModifierIsPressed() && Input()->KeyIsPressed(KEY_R)))
+		FilelistPopulate(m_FileDialogLastPopulatedStorageType, true);
+
 	if(g_Config.m_ClSaveMapInfo && m_FileDialogStorageType == IStorage::TYPE_SAVE)
 	{
 		ButtonBar.VSplitLeft(40.0f, nullptr, &ButtonBar);
@@ -4612,8 +4616,9 @@ void CEditor::RefreshFilteredFileList()
 	}
 }
 
-void CEditor::FilelistPopulate(int StorageType)
+void CEditor::FilelistPopulate(int StorageType, bool KeepSelection)
 {
+	m_FileDialogLastPopulatedStorageType = StorageType;
 	m_vCompleteFileList.clear();
 	if(m_FileDialogStorageType != IStorage::TYPE_SAVE && !str_comp(m_pFileDialogPath, "maps"))
 	{
@@ -4628,11 +4633,14 @@ void CEditor::FilelistPopulate(int StorageType)
 	Storage()->ListDirectory(StorageType, m_pFileDialogPath, EditorListdirCallback, this);
 	std::sort(m_vCompleteFileList.begin(), m_vCompleteFileList.end());
 	RefreshFilteredFileList();
-	m_FilesSelectedIndex = m_vpFilteredFileList.empty() ? -1 : 0;
-	if(m_FilesSelectedIndex >= 0)
-		str_copy(m_aFilesSelectedName, m_vpFilteredFileList[m_FilesSelectedIndex]->m_aName);
-	else
-		m_aFilesSelectedName[0] = '\0';
+	if(!KeepSelection)
+	{
+		m_FilesSelectedIndex = m_vpFilteredFileList.empty() ? -1 : 0;
+		if(m_FilesSelectedIndex >= 0)
+			str_copy(m_aFilesSelectedName, m_vpFilteredFileList[m_FilesSelectedIndex]->m_aName);
+		else
+			m_aFilesSelectedName[0] = '\0';
+	}
 	m_PreviewImageIsLoaded = false;
 }
 
