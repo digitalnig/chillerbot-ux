@@ -2159,7 +2159,7 @@ void CGameClient::SendFinishName()
 	Msg.m_UseCustomColor = g_Config.m_ClPlayerUseCustomColor;
 	Msg.m_ColorBody = g_Config.m_ClPlayerColorBody;
 	Msg.m_ColorFeet = g_Config.m_ClPlayerColorFeet;
-	CMsgPacker Packer(Msg.MsgID(), false);
+	CMsgPacker Packer(&Msg);
 	Msg.Pack(&Packer);
 	Client()->SendMsg(0, &Packer, MSGFLAG_VITAL);
 	m_aCheckInfo[0] = Client()->GameTickSpeed();
