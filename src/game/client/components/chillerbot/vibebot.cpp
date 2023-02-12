@@ -104,9 +104,9 @@ void CVibeBot::UpdateComponents()
 
 void CVibeBot::OnConsoleInit()
 {
-	Console()->Register("vibe", "s[sleepy|wtf|happy|music]?i[dummy]", CFGFLAG_CLIENT, ConVibe, this, "Set vibebot mode ('vibebots' for list)");
-	Console()->Register("vibes", "", CFGFLAG_CLIENT, ConVibes, this, "Shows all vibebots (set via vibebot <name>)");
-	Console()->Register("unvibe", "", CFGFLAG_CLIENT, ConUnVibe, this, "Turn off vibebot");
+	// Console()->Register("vibe", "s[sleepy|wtf|happy|music]?i[dummy]", CFGFLAG_CLIENT, ConVibe, this, "Set vibebot mode ('vibebots' for list)");
+	// Console()->Register("vibes", "", CFGFLAG_CLIENT, ConVibes, this, "Shows all vibebots (set via vibebot <name>)");
+	// Console()->Register("unvibe", "", CFGFLAG_CLIENT, ConUnVibe, this, "Turn off vibebot");
 	Console()->Register("emotebot", "s[sleepy|wtf|happy|music]?i[delay]?i[dummy]", CFGFLAG_CLIENT, ConEmoteBot, this, "Automatically send emotes");
 }
 
