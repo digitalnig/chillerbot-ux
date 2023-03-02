@@ -1,11 +1,11 @@
 // ChillerDragon 2020 - chillerbot ux
 
-#include <engine/shared/protocol.h>
 #include <engine/client/notifications.h>
 #include <engine/config.h>
 #include <engine/console.h>
 #include <engine/graphics.h>
 #include <engine/keys.h>
+#include <engine/shared/protocol.h>
 #include <engine/textrender.h>
 #include <game/client/animstate.h>
 #include <game/client/components/camera.h>
