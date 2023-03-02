@@ -175,7 +175,7 @@ void CPlayerPics::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 				Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
 				RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), Layers()->GameGroupEx(), m_pClient->m_Camera.m_Zoom);
 
-				m_aNamePlates[ClientID].m_WarReasonTextWidth = TextRender()->TextWidth(0, FontSizeClan, aWarReason, -1, -1.0f);
+				m_aNamePlates[ClientID].m_WarReasonTextWidth = TextRender()->TextWidth(FontSizeClan, aWarReason, -1, -1.0f);
 
 				TextRender()->CreateTextContainer(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex, &Cursor, aWarReason);
 				Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);

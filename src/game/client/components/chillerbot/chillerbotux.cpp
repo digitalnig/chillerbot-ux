@@ -199,7 +199,7 @@ void CChillerBotUX::RenderSpeedHud()
 
 	float x = Width - 100.0f, y = 50.0f;
 	for(int i = 0; i < Num; ++i)
-		TextRender()->Text(0, x, y + i * LineHeight, Fontsize, paStrings[i], -1.0f);
+		TextRender()->Text(x, y + i * LineHeight, Fontsize, paStrings[i], -1.0f);
 
 	x = Width - 10.0f;
 	char aBuf[128];
@@ -210,8 +210,8 @@ void CChillerBotUX::RenderSpeedHud()
 		TextRender()->TextColor(1.0f, 0.0f, 0.0f, 1.0f);
 
 	str_format(aBuf, sizeof(aBuf), "%.0f", m_pClient->m_Snap.m_pLocalCharacter->m_VelX / 32.f);
-	float w = TextRender()->TextWidth(0, Fontsize, aBuf, -1, -1.0f);
-	TextRender()->Text(0, x - w, y, Fontsize, aBuf, -1.0f);
+	float w = TextRender()->TextWidth(Fontsize, aBuf, -1, -1.0f);
+	TextRender()->Text(x - w, y, Fontsize, aBuf, -1.0f);
 	y += LineHeight;
 
 	if(LastVelYChange == 1)
@@ -220,8 +220,8 @@ void CChillerBotUX::RenderSpeedHud()
 		TextRender()->TextColor(1.0f, 0.0f, 0.0f, 1.0f);
 
 	str_format(aBuf, sizeof(aBuf), "%.0f", m_pClient->m_Snap.m_pLocalCharacter->m_VelY / 32.f);
-	w = TextRender()->TextWidth(0, Fontsize, aBuf, -1, -1.0f);
-	TextRender()->Text(0, x - w, y, Fontsize, aBuf, -1.0f);
+	w = TextRender()->TextWidth(Fontsize, aBuf, -1, -1.0f);
+	TextRender()->Text(x - w, y, Fontsize, aBuf, -1.0f);
 	TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
@@ -240,15 +240,15 @@ void CChillerBotUX::RenderEnabledComponents()
 	{
 		if(m_aEnabledComponent.m_aName[0] == '\0')
 			continue;
-		float TwName = TextRender()->TextWidth(0, 10.0f, m_aEnabledComponent.m_aName, -1, -1);
+		float TwName = TextRender()->TextWidth(10.0f, m_aEnabledComponent.m_aName, -1, -1);
 		float TwNoteShort = 2.f;
 		if(m_aEnabledComponent.m_aNoteShort[0])
-			TwNoteShort += TextRender()->TextWidth(0, 10.0f, m_aEnabledComponent.m_aNoteShort, -1, -1);
+			TwNoteShort += TextRender()->TextWidth(10.0f, m_aEnabledComponent.m_aNoteShort, -1, -1);
 		Graphics()->DrawRect(4.0f, 60.f + offset * 15, TwName + TwNoteShort, 14.0f, ColorRGBA(0, 0, 0, 0.5f), IGraphics::CORNER_ALL, 3.0f);
 
-		TextRender()->Text(0, 5.0f, 60.f + offset * 15, 10.0f, m_aEnabledComponent.m_aName, -1);
-		TextRender()->Text(0, 5.0f + TwName + 2.f, 60.f + offset * 15, 10.0f, m_aEnabledComponent.m_aNoteShort, -1);
-		TextRender()->Text(0, 5.0f, 60.f + offset * 15 + 10, 4.0f, m_aEnabledComponent.m_aNoteLong, -1);
+		TextRender()->Text(5.0f, 60.f + offset * 15, 10.0f, m_aEnabledComponent.m_aName, -1);
+		TextRender()->Text(5.0f + TwName + 2.f, 60.f + offset * 15, 10.0f, m_aEnabledComponent.m_aNoteShort, -1);
+		TextRender()->Text(5.0f, 60.f + offset * 15 + 10, 4.0f, m_aEnabledComponent.m_aNoteLong, -1);
 		offset++;
 	}
 }
@@ -401,8 +401,8 @@ void CChillerBotUX::CampHackTick()
 			else
 				Graphics()->DrawRect(m_CampHackX1, m_CampHackY1, m_CampHackX2 - m_CampHackX1, m_CampHackY2 - m_CampHackY1, ColorRGBA(1, 0, 0, 0.2f), IGraphics::CORNER_ALL, 3.0f);
 		}
-		TextRender()->Text(0, m_CampHackX1, m_CampHackY1, 10.0f, "1", -1);
-		TextRender()->Text(0, m_CampHackX2, m_CampHackY2, 10.0f, "2", -1);
+		TextRender()->Text(m_CampHackX1, m_CampHackY1, 10.0f, "1", -1);
+		TextRender()->Text(m_CampHackX2, m_CampHackY2, 10.0f, "2", -1);
 		Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 	}
 	if(!m_CampHackX1 || !m_CampHackX2 || !m_CampHackY1 || !m_CampHackY2)
@@ -514,8 +514,8 @@ void CChillerBotUX::FinishRenameTick()
 		if(Client()->State() == IClient::STATE_ONLINE && !m_pClient->m_Menus.IsActive() && g_Config.m_ClEditor == 0)
 		{
 			Graphics()->DrawRect(10.0f, 30.0f, 150.0f, 50.0f, ColorRGBA(0, 0, 0, 0.5f), IGraphics::CORNER_ALL, 10.0f);
-			TextRender()->Text(0, 20.0f, 30.f, 20.0f, "chillerbot-ux", -1);
-			TextRender()->Text(0, 50.0f, 60.f, 10.0f, "finish rename", -1);
+			TextRender()->Text(20.0f, 30.f, 20.0f, "chillerbot-ux", -1);
+			TextRender()->Text(50.0f, 60.f, 10.0f, "finish rename", -1);
 		}
 		if(!m_IsNearFinish)
 		{
