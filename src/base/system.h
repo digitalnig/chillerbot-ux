@@ -14,9 +14,9 @@
 #define __USE_GNU
 #endif
 
-#include <inttypes.h>
-#include <stdint.h>
-#include <time.h>
+#include <cinttypes>
+#include <cstdint>
+#include <ctime>
 
 #ifdef __MINGW32__
 #undef PRId64
@@ -62,7 +62,7 @@
 void dbg_assert_imp(const char *filename, int line, int test, const char *msg);
 
 #ifdef __clang_analyzer__
-#include <assert.h>
+#include <cassert>
 #undef dbg_assert
 #define dbg_assert(test, msg) assert(test)
 #endif
@@ -131,7 +131,7 @@ void dbg_msg(const char *sys, const char *fmt, ...)
  *
  * @see mem_move
  */
-void mem_copy(void *dest, const void *source, unsigned size);
+void mem_copy(void *dest, const void *source, size_t size);
 
 /**
  * Copies a a memory block.
@@ -146,7 +146,7 @@ void mem_copy(void *dest, const void *source, unsigned size);
  *
  * @see mem_copy
  */
-void mem_move(void *dest, const void *source, unsigned size);
+void mem_move(void *dest, const void *source, size_t size);
 
 /**
  * Sets a complete memory block to 0.
@@ -156,7 +156,7 @@ void mem_move(void *dest, const void *source, unsigned size);
  * @param block Pointer to the block to zero out.
  * @param size Size of the block.
  */
-void mem_zero(void *block, unsigned size);
+void mem_zero(void *block, size_t size);
 
 /**
  * Compares two blocks of memory
@@ -171,7 +171,7 @@ void mem_zero(void *block, unsigned size);
  * @return 0 - Block a is equal to block b.
  * @return > 0 - Block a is greater than block b.
  */
-int mem_comp(const void *a, const void *b, int size);
+int mem_comp(const void *a, const void *b, size_t size);
 
 /**
  * Checks whether a block of memory contains null bytes.
@@ -181,10 +181,9 @@ int mem_comp(const void *a, const void *b, int size);
  * @param block Pointer to the block to check for nulls.
  * @param size Size of the block.
  *
- * @return 1 - The block has a null byte.
- * @return 0 - The block does not have a null byte.
+ * @return true if the block has a null byte, false otherwise.
  */
-int mem_has_null(const void *block, unsigned size);
+bool mem_has_null(const void *block, size_t size);
 
 /**
  * @defgroup File-IO
@@ -296,15 +295,15 @@ unsigned io_skip(IOHANDLE io, int size);
 unsigned io_write(IOHANDLE io, const void *buffer, unsigned size);
 
 /**
- * Writes newline to file.
+ * Writes a platform dependent newline to file.
  *
  * @ingroup File-IO
  *
  * @param io Handle to the file.
  *
- * @return Number of bytes written.
+ * @return true on success, false on failure.
  */
-unsigned io_write_newline(IOHANDLE io);
+bool io_write_newline(IOHANDLE io);
 
 /**
  * Seeks to a specified offset in the file.
@@ -2386,50 +2385,31 @@ const char *str_next_token(const char *str, const char *delim, char *buffer, int
 */
 int str_in_list(const char *list, const char *delim, const char *needle);
 
-/*
-	Function: bytes_be_to_int
-		Packs 4 big endian bytes into an int
-
-	Returns:
-		The packed int
-
-	Remarks:
-		- Assumes the passed array is 4 bytes
-		- Assumes int is 4 bytes
-*/
-int bytes_be_to_int(const unsigned char *bytes);
-
-/*
-	Function: int_to_bytes_be
-		Packs an int into 4 big endian bytes
-
-	Remarks:
-		- Assumes the passed array is 4 bytes
-		- Assumes int is 4 bytes
-*/
-void int_to_bytes_be(unsigned char *bytes, int value);
-
-/*
-	Function: bytes_be_to_uint
-		Packs 4 big endian bytes into an unsigned
-
-	Returns:
-		The packed unsigned
-
-	Remarks:
-		- Assumes the passed array is 4 bytes
-		- Assumes unsigned is 4 bytes
-*/
+/**
+ * Packs 4 big endian bytes into an unsigned.
+ *
+ * @param bytes Pointer to an array of bytes that will be packed.
+ *
+ * @return The packed unsigned.
+ *
+ * @remark Assumes the passed array is least 4 bytes in size.
+ * @remark Assumes unsigned is 4 bytes in size.
+ *
+ * @see uint_to_bytes_be
+ */
 unsigned bytes_be_to_uint(const unsigned char *bytes);
 
-/*
-	Function: uint_to_bytes_be
-		Packs an unsigned into 4 big endian bytes
-
-	Remarks:
-		- Assumes the passed array is 4 bytes
-		- Assumes unsigned is 4 bytes
-*/
+/**
+ * Packs an unsigned into 4 big endian bytes.
+ *
+ * @param bytes Pointer to an array where the bytes will be stored.
+ * @param value The values that will be packed into the array.
+ *
+ * @remark Assumes the passed array is least 4 bytes in size.
+ * @remark Assumes unsigned is 4 bytes in size.
+ *
+ * @see bytes_be_to_uint
+ */
 void uint_to_bytes_be(unsigned char *bytes, unsigned value);
 
 /*
