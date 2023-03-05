@@ -605,7 +605,7 @@ int CWarList::LoadWarClanNames(const char *pFilename)
 	{
 		if(!str_skip_whitespaces(pLine)[0])
 			continue;
-		m_vWarClanlist.emplace_back(std::string(pLine));
+		m_vWarClanlist.emplace_back(pLine);
 	}
 
 	io_close(File);
@@ -638,7 +638,7 @@ int CWarList::LoadTeamClanNames(const char *pFilename)
 	{
 		if(!str_skip_whitespaces(pLine)[0])
 			continue;
-		m_vTeamClanlist.emplace_back(std::string(pLine));
+		m_vTeamClanlist.emplace_back(pLine);
 	}
 
 	io_close(File);
@@ -671,7 +671,7 @@ int CWarList::LoadWarClanPrefixNames(const char *pFilename)
 	{
 		if(!str_skip_whitespaces(pLine)[0])
 			continue;
-		m_vWarClanPrefixlist.emplace_back(std::string(pLine));
+		m_vWarClanPrefixlist.emplace_back(pLine);
 	}
 
 	io_close(File);
