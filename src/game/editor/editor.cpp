@@ -4291,6 +4291,8 @@ void CEditor::RenderFileDialog()
 
 	// filebox
 	static CListBox s_ListBox;
+	static bool s_ListBoxUsed = false;
+	s_ListBoxUsed = !UiPopupOpen();
 
 	if(m_FileDialogStorageType == IStorage::TYPE_SAVE)
 	{
@@ -4376,6 +4378,10 @@ void CEditor::RenderFileDialog()
 				str_copy(m_aFilesSelectedName, m_vpFilteredFileList[m_FilesSelectedIndex]->m_aName);
 			else
 				m_aFilesSelectedName[0] = '\0';
+			if(m_FilesSelectedIndex >= 0 && !m_vpFilteredFileList[m_FilesSelectedIndex]->m_IsDir)
+				str_copy(m_aFileDialogFileName, m_vpFilteredFileList[m_FilesSelectedIndex]->m_aFilename);
+			else
+				m_aFileDialogFileName[0] = '\0';
 			s_ListBox.ScrollToSelected();
 		}
 	}
@@ -4423,11 +4429,11 @@ void CEditor::RenderFileDialog()
 		}
 	}
 
-	s_ListBox.DoStart(15.0f, m_vpFilteredFileList.size(), 1, 5, m_FilesSelectedIndex, &View, false);
+	s_ListBox.DoStart(15.0f, m_vpFilteredFileList.size(), 1, 5, m_FilesSelectedIndex, &View, false, &s_ListBoxUsed);
 
 	for(size_t i = 0; i < m_vpFilteredFileList.size(); i++)
 	{
-		const CListboxItem Item = s_ListBox.DoNextItem(m_vpFilteredFileList[i], m_FilesSelectedIndex >= 0 && (size_t)m_FilesSelectedIndex == i);
+		const CListboxItem Item = s_ListBox.DoNextItem(m_vpFilteredFileList[i], m_FilesSelectedIndex >= 0 && (size_t)m_FilesSelectedIndex == i, &s_ListBoxUsed);
 		if(!Item.m_Visible)
 			continue;
 
@@ -4492,7 +4498,7 @@ void CEditor::RenderFileDialog()
 	CUIRect Button;
 	ButtonBar.VSplitRight(50.0f, &ButtonBar, &Button);
 	bool IsDir = m_FilesSelectedIndex >= 0 && m_vpFilteredFileList[m_FilesSelectedIndex]->m_IsDir;
-	if(DoButton_Editor(&s_OkButton, IsDir ? "Open" : m_pFileDialogButtonText, 0, &Button, 0, nullptr) || s_ListBox.WasItemActivated() || UI()->ConsumeHotkey(CUI::HOTKEY_ENTER))
+	if(DoButton_Editor(&s_OkButton, IsDir ? "Open" : m_pFileDialogButtonText, 0, &Button, 0, nullptr) || s_ListBox.WasItemActivated())
 	{
 		if(IsDir) // folder
 		{
@@ -4545,7 +4551,7 @@ void CEditor::RenderFileDialog()
 
 	ButtonBar.VSplitRight(40.0f, &ButtonBar, &Button);
 	ButtonBar.VSplitRight(50.0f, &ButtonBar, &Button);
-	if(DoButton_Editor(&s_CancelButton, "Cancel", 0, &Button, 0, nullptr) || Input()->KeyIsPressed(KEY_ESCAPE))
+	if(DoButton_Editor(&s_CancelButton, "Cancel", 0, &Button, 0, nullptr) || (s_ListBoxUsed && UI()->ConsumeHotkey(CUI::HOTKEY_ESCAPE)))
 		m_Dialog = DIALOG_NONE;
 
 	if(m_FileDialogStorageType == IStorage::TYPE_SAVE)
@@ -4563,7 +4569,7 @@ void CEditor::RenderFileDialog()
 
 	ButtonBar.VSplitRight(40.0f, &ButtonBar, &Button);
 	ButtonBar.VSplitRight(50.0f, &ButtonBar, &Button);
-	if(DoButton_Editor(&s_RefreshButton, "Refresh", 0, &Button, 0, nullptr) || Input()->KeyIsPressed(KEY_F5) || (Input()->ModifierIsPressed() && Input()->KeyIsPressed(KEY_R)))
+	if(DoButton_Editor(&s_RefreshButton, "Refresh", 0, &Button, 0, nullptr) || (s_ListBoxUsed && (Input()->KeyIsPressed(KEY_F5) || (Input()->ModifierIsPressed() && Input()->KeyIsPressed(KEY_R)))))
 		FilelistPopulate(m_FileDialogLastPopulatedStorageType, true);
 
 	if(g_Config.m_ClSaveMapInfo && m_FileDialogStorageType == IStorage::TYPE_SAVE)
