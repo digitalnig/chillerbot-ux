@@ -1853,7 +1853,7 @@ void CClient::ProcessServerPacket(CNetChunk *pPacket, int Conn, bool Dummy)
 		else if(Msg == NETMSG_PING)
 		{
 			CMsgPacker MsgP(NETMSG_PING_REPLY, true);
-			SendMsg(Conn, &MsgP, 0);
+			SendMsg(Conn, &MsgP, MSGFLAG_FLUSH);
 		}
 		else if(Msg == NETMSG_PINGEX)
 		{
@@ -3509,7 +3509,7 @@ void CClient::Con_Ping(IConsole::IResult *pResult, void *pUserData)
 	CClient *pSelf = (CClient *)pUserData;
 
 	CMsgPacker Msg(NETMSG_PING, true);
-	pSelf->SendMsg(CONN_MAIN, &Msg, 0);
+	pSelf->SendMsg(CONN_MAIN, &Msg, MSGFLAG_FLUSH);
 	pSelf->m_PingStartTime = time_get();
 }
 

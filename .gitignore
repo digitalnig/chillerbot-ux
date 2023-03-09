@@ -95,6 +95,7 @@ target
 .cache
 .cproject
 .cmake
+.gdb_history
 .idea
 .project
 .settings

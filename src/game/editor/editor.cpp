@@ -104,6 +104,7 @@ CLayerGroup::CLayerGroup()
 	m_OffsetY = 0;
 	m_ParallaxX = 100;
 	m_ParallaxY = 100;
+	m_CustomParallaxZoom = 0;
 	m_ParallaxZoom = 100;
 
 	m_UseClipping = 0;
@@ -5967,8 +5968,7 @@ void CEditor::Render()
 		m_PopupEventWasActivated = true;
 	}
 
-	if(m_GuiActive)
-		UiDoPopupMenu();
+	UiDoPopupMenu();
 
 	if(m_Dialog == DIALOG_NONE && !m_MouseInsidePopup && UI()->MouseInside(&View))
 	{
@@ -6498,11 +6498,7 @@ void CEditor::OnRender()
 {
 	// toggle gui
 	if(m_Dialog == DIALOG_NONE && m_EditBoxActive == 0 && Input()->KeyPress(KEY_TAB))
-	{
 		m_GuiActive = !m_GuiActive;
-		if(!m_GuiActive)
-			m_LockMouse = false;
-	}
 
 	if(Input()->KeyPress(KEY_F10))
 		m_ShowMousePointer = false;
