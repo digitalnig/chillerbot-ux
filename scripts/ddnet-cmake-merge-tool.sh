@@ -30,6 +30,7 @@ then
 	if [ "$critical_diff" != "" ]
 	then
 		echo "Error: unfixable CMakeLists.txt conflict"
+		echo "       try 'git merge --abort' and then './scripts/setup-merge-tools.sh off'"
 		color "$RED"
 		echo "$critical_diff"
 		color "$RESET"
