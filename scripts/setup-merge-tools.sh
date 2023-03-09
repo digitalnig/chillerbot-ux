@@ -26,8 +26,27 @@ then
 	echo -e "\n$driver" >> .git/config
 fi
 
+activate_driver=true
+
+arg="$1"
+if [ "$arg" == "--help" ] || [ "$arg" == "help" ] || [ "$arg" == "-h" ]
+then
+	echo "usage: ./scripts/setup-merge-tools.sh [ARG]"
+	echo "arguments:"
+	echo "  off | uninstall | deactivate     revert the activation of the merge driver"
+	exit 0
+elif [ "$arg" == "off" ] || [ "$arg" == "uninstall" ] || [ "$arg" == "deactivate" ]
+then
+	echo "[*] turning custom merge driver off ..."
+	activate_driver=false
+else
+	echo "Error: unknown argument '$arg' see --help"
+	exit 1
+fi
+
 # https://stackoverflow.com/a/14099431
 # in the .gitattributes we say README.md merge=ours
 # but the "ours" merge driver is off by default
-git config merge.ours.driver true
-git config merge.ours.ddnet-cmake true
+git config merge.ours.driver "$activate_driver" 
+git config merge.ours.ddnet-cmake "$activate_driver" 
+
