@@ -94,6 +94,7 @@ public:
 			CreateFolder("teehistorian", TYPE_SAVE);
 
 			CreateFolder("chillerbot", TYPE_SAVE);
+			CreateFolder("chillerbot/warlist", TYPE_SAVE);
 		}
 
 		return m_NumPaths ? 0 : 1;
