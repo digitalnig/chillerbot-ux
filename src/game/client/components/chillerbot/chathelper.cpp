@@ -20,7 +20,7 @@ CChatHelper::CChatHelper()
 
 void CChatHelper::RegisterCommand(const char *pName, const char *pParams, int flags, const char *pHelp)
 {
-	m_vCommands.emplace_back(CCommand{pName, pParams});
+	m_vCommands.emplace_back(pName, pParams);
 }
 
 int CChatHelper::ChatCommandGetROffset(const char *pCmd)

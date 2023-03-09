@@ -19,10 +19,32 @@ class CChatHelper : public CComponent
 	class CCommand
 	{
 	public:
-		CCommand(const char *pName, const char *pParams)
+		const char *m_pName;
+		const char *m_pParams;
+		char m_aParamsSlim[16];
+		/*
+			Variable: m_ROffset
+
+			The index of the parameter of type r
+			if no parameter is r it is -1
+		*/
+		int m_ROffset;
+		/*
+			Variable: m_OptOffset
+
+			The index of the parameter of first
+			optional parameter (indicated by ?)
+			if no parameter is optional it is -1
+		*/
+		int m_OptOffset;
+
+		bool operator<(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) < 0; }
+		bool operator<=(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) <= 0; }
+		bool operator==(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) == 0; }
+
+		CCommand(const char *pName, const char *pParams) :
+			m_pName(pName), m_pParams(pParams)
 		{
-			m_pName = pName;
-			m_pParams = pParams;
 			m_ROffset = -1;
 			m_OptOffset = -1;
 			bool IsBrace = false;
@@ -50,28 +72,6 @@ class CChatHelper : public CComponent
 				m_aParamsSlim[k++] = pParams[i];
 			}
 		}
-		const char *m_pName;
-		const char *m_pParams;
-		char m_aParamsSlim[16];
-		/*
-			Variable: m_ROffset
-
-			The index of the parameter of type r
-			if no parameter is r it is -1
-		*/
-		int m_ROffset;
-		/*
-			Variable: m_OptOffset
-
-			The index of the parameter of first
-			optional parameter (indicated by ?)
-			if no parameter is optional it is -1
-		*/
-		int m_OptOffset;
-
-		bool operator<(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) < 0; }
-		bool operator<=(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) <= 0; }
-		bool operator==(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) == 0; }
 	};
 
 	std::vector<CCommand> m_vCommands;
