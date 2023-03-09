@@ -85,12 +85,13 @@ void CTerminalUI::InputDraw()
 int CTerminalUI::CursesTick()
 {
 	// getmaxyx does not work with gdb see https://github.com/chillerbot/chillerbot-ux/issues/128
-	// getmaxyx(stdscr, g_NewY, g_NewX);
+	getmaxyx(stdscr, g_NewY, g_NewX);
 
-	struct winsize w;
-	ioctl(0, TIOCGWINSZ, &w);
-	g_NewX = w.ws_col;
-	g_NewY = w.ws_row;
+	// Works better with gdb but breaks the github pipeline
+	// struct winsize w;
+	// ioctl(0, TIOCGWINSZ, &w);
+	// g_NewX = w.ws_col;
+	// g_NewY = w.ws_row;
 
 	if(g_NewY != g_ParentY || g_NewX != g_ParentX)
 	{
