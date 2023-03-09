@@ -7,12 +7,13 @@
 #include <base/chillerbot/curses_colors.h>
 #include <base/terminalui.h>
 
-#include <csignal>
-#include <sys/ioctl.h>
 
 #include "terminalui.h"
 
 #if defined(CONF_CURSES_CLIENT)
+
+#include <csignal>
+#include <sys/ioctl.h>
 
 CGameClient *g_pClient;
 volatile sig_atomic_t cl_InterruptSignaled = 0;
