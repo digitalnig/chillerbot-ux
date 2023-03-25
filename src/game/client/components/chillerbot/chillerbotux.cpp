@@ -76,6 +76,7 @@ void CChillerBotUX::OnRender()
 			}
 		}
 		CheckEmptyTick();
+		SkinStealTick();
 		// if tabbing into tw and going afk set to inactive again over time
 		if(m_AfkActivity && time_get() % 100 == 0)
 			m_AfkActivity--;
@@ -106,6 +107,49 @@ void CChillerBotUX::OnRender()
 		}
 	}
 	m_LastForceDir = m_ForceDir;
+}
+
+inline bool CChillerBotUX::IsPlayerInfoAvailable(int ClientID) const
+{
+	const void *pPrevInfo = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_PLAYERINFO, ClientID);
+	const void *pInfo = Client()->SnapFindItem(IClient::SNAP_CURRENT, NETOBJTYPE_PLAYERINFO, ClientID);
+	return pPrevInfo && pInfo;
+}
+
+void CChillerBotUX::SkinStealTick()
+{
+	if(!g_Config.m_ClSkinStealer)
+		return;
+	if(m_NextSkinSteal > time_get())
+		return;
+	if(!GameClient()->m_Snap.m_pLocalCharacter)
+		return;
+
+	int LocalClientID = m_pClient->m_Snap.m_LocalClientID;
+	for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
+	{
+		if(ClientID == LocalClientID || !m_pClient->m_Snap.m_aCharacters[ClientID].m_Active || !IsPlayerInfoAvailable(ClientID))
+			continue;
+
+		// only steal close by
+		vec2 *pRenderPos = &m_pClient->m_aClients[ClientID].m_RenderPos;
+		vec2 Current = vec2(GameClient()->m_Snap.m_pLocalCharacter->m_X, GameClient()->m_Snap.m_pLocalCharacter->m_Y);
+		float dist = distance(*pRenderPos, Current);
+		if(dist > 32 * g_Config.m_ClSkinStealRadius)
+			continue;
+
+		str_copy(g_Config.m_ClPlayerSkin, GameClient()->m_aClients[ClientID].m_aSkinName, sizeof(g_Config.m_ClPlayerSkin));
+		if(g_Config.m_ClSkinStealColor)
+		{
+			g_Config.m_ClPlayerUseCustomColor = GameClient()->m_aClients[ClientID].m_UseCustomColor;
+			g_Config.m_ClPlayerColorBody = GameClient()->m_aClients[ClientID].m_ColorBody;
+			g_Config.m_ClPlayerColorFeet = GameClient()->m_aClients[ClientID].m_ColorFeet;
+		}
+		m_pClient->SendInfo(false);
+		// only steal skin every 10 seconds to not get ratelimited
+		m_NextSkinSteal = time_get() + time_freq() * 10;
+		dbg_msg("chillerbot", "sv_skin_stealer yoinked skin '%s'", g_Config.m_ClPlayerSkin);
+	}
 }
 
 void CChillerBotUX::CheckEmptyTick()
@@ -561,6 +605,12 @@ void CChillerBotUX::OnInit()
 	// TODO: replace this with priv pub key pairs otherwise account ownership claims are trash
 	if(!g_Config.m_ClChillerbotId[0])
 		secure_random_password(g_Config.m_ClChillerbotId, sizeof(g_Config.m_ClChillerbotId), 16);
+	m_NextSkinSteal = 0;
+}
+
+void CChillerBotUX::OnShutdown()
+{
+	RestoreSkins();
 }
 
 void CChillerBotUX::UpdateComponents()
@@ -602,6 +652,10 @@ void CChillerBotUX::UpdateComponents()
 		EnableComponent("weapon hud");
 	else
 		DisableComponent("weapon hud");
+	if(g_Config.m_ClSkinStealer)
+		EnableComponent("skin stealer");
+	else
+		DisableComponent("skin stealer");
 }
 
 void CChillerBotUX::OnConsoleInit()
@@ -623,6 +677,7 @@ void CChillerBotUX::OnConsoleInit()
 	Console()->Chain("cl_finish_rename", ConchainFinishRename, this);
 	Console()->Chain("cl_show_last_killer", ConchainShowLastKiller, this);
 	Console()->Chain("cl_show_last_ping", ConchainShowLastPing, this);
+	Console()->Chain("cl_skin_stealer", ConchainSkinStealer, this);
 }
 
 void CChillerBotUX::ConForceQuit(IConsole::IResult *pResult, void *pUserData)
@@ -706,6 +761,60 @@ void CChillerBotUX::ConchainShowLastPing(IConsole::IResult *pResult, void *pUser
 		pSelf->EnableComponent("last ping");
 	else
 		pSelf->DisableComponent("last ping");
+}
+
+void CChillerBotUX::ConchainSkinStealer(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
+{
+	if(pResult->GetInteger(0) == g_Config.m_ClSkinStealer)
+	{
+		dbg_msg("chillerbot", "skin stealer is already %s", g_Config.m_ClSkinStealer ? "on" : "off");
+		return;
+	}
+	CChillerBotUX *pSelf = (CChillerBotUX *)pUserData;
+	pfnCallback(pResult, pCallbackUserData);
+	if(pResult->NumArguments() == 0)
+		return;
+	if(pResult->GetInteger(0))
+	{
+		pSelf->SaveSkins();
+		pSelf->EnableComponent("skin stealer");
+	}
+	else
+	{
+		pSelf->RestoreSkins();
+		pSelf->m_pClient->SendInfo(false);
+		pSelf->DisableComponent("skin stealer");
+	}
+}
+
+void CChillerBotUX::SaveSkins()
+{
+	dbg_msg("chillerbot", "saved player skin '%s'", g_Config.m_ClPlayerSkin);
+	str_copy(g_Config.m_ClSavedPlayerSkin, g_Config.m_ClPlayerSkin, sizeof(g_Config.m_ClSavedPlayerSkin));
+	g_Config.m_ClSavedPlayerUseCustomColor = g_Config.m_ClPlayerUseCustomColor;
+	g_Config.m_ClSavedPlayerColorBody = g_Config.m_ClPlayerColorBody;
+	g_Config.m_ClSavedPlayerColorFeet = g_Config.m_ClPlayerColorFeet;
+
+	dbg_msg("chillerbot", "saved dummy skin '%s'", g_Config.m_ClDummySkin);
+	str_copy(g_Config.m_ClSavedDummySkin, g_Config.m_ClDummySkin, sizeof(g_Config.m_ClSavedDummySkin));
+	g_Config.m_ClSavedDummyUseCustomColor = g_Config.m_ClDummyUseCustomColor;
+	g_Config.m_ClSavedDummyColorBody = g_Config.m_ClDummyColorBody;
+	g_Config.m_ClSavedDummyColorFeet = g_Config.m_ClDummyColorFeet;
+}
+
+void CChillerBotUX::RestoreSkins()
+{
+	dbg_msg("chillerbot", "restored player skin '%s'", g_Config.m_ClSavedPlayerSkin);
+	str_copy(g_Config.m_ClPlayerSkin, g_Config.m_ClSavedPlayerSkin, sizeof(g_Config.m_ClPlayerSkin));
+	g_Config.m_ClPlayerUseCustomColor = g_Config.m_ClSavedPlayerUseCustomColor;
+	g_Config.m_ClPlayerColorBody = g_Config.m_ClSavedPlayerColorBody;
+	g_Config.m_ClPlayerColorFeet = g_Config.m_ClSavedPlayerColorFeet;
+
+	dbg_msg("chillerbot", "restored dummy skin '%s'", g_Config.m_ClSavedDummySkin);
+	str_copy(g_Config.m_ClDummySkin, g_Config.m_ClSavedDummySkin, sizeof(g_Config.m_ClDummySkin));
+	g_Config.m_ClDummyUseCustomColor = g_Config.m_ClSavedDummyUseCustomColor;
+	g_Config.m_ClDummyColorBody = g_Config.m_ClSavedDummyColorBody;
+	g_Config.m_ClDummyColorFeet = g_Config.m_ClSavedDummyColorFeet;
 }
 
 void CChillerBotUX::ConAfk(IConsole::IResult *pResult, void *pUserData)

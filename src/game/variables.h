@@ -45,6 +45,19 @@ MACRO_CONFIG_INT(ClPenTest, cl_pentest, 0, 0, 1, CFGFLAG_CLIENT, "penetrate serv
 MACRO_CONFIG_STR(ClPenTestFile, cl_pentest_file, 128, "pentest.txt", CFGFLAG_CLIENT, "chat messages file for pentestmode")
 MACRO_CONFIG_INT(ClDbgIntersect, cl_dbg_intersect, 0, 0, 1, CFGFLAG_CLIENT, "Show graphical output for CCollsion::IntersectLine")
 
+// skin stealer
+MACRO_CONFIG_INT(ClSkinStealer, cl_skin_stealer, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Automatically adapt skin of close by tees (see also cl_skin_steal_radius)")
+MACRO_CONFIG_INT(ClSkinStealRadius, cl_skin_steal_radius, 5, 1, 16, CFGFLAG_CLIENT | CFGFLAG_SAVE, "How many tiles away can a tee be to get skin stolen (needs cl_skin_stealer 1)")
+MACRO_CONFIG_INT(ClSkinStealColor, cl_skin_steal_color, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Also steal skin color settings (needs cl_skin_stealer 1)")
+MACRO_CONFIG_INT(ClSavedPlayerUseCustomColor, saved_player_use_custom_color, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_INSENSITIVE, "Saved to restore for cl_skin_stealer")
+MACRO_CONFIG_COL(ClSavedPlayerColorBody, saved_player_color_body, 65408, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_COLLIGHT | CFGFLAG_INSENSITIVE, "Saved to restore for cl_skin_stealer")
+MACRO_CONFIG_COL(ClSavedPlayerColorFeet, saved_player_color_feet, 65408, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_COLLIGHT | CFGFLAG_INSENSITIVE, "Saved to restore for cl_skin_stealer")
+MACRO_CONFIG_STR(ClSavedPlayerSkin, saved_player_skin, 24, "default", CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_INSENSITIVE, "Saved to restore for cl_skin_stealer")
+MACRO_CONFIG_INT(ClSavedDummyUseCustomColor, saved_dummy_use_custom_color, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_INSENSITIVE, "Saved to restore for cl_skin_stealer")
+MACRO_CONFIG_COL(ClSavedDummyColorBody, saved_dummy_color_body, 65408, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_COLLIGHT | CFGFLAG_INSENSITIVE, "Saved to restore for cl_skin_stealer")
+MACRO_CONFIG_COL(ClSavedDummyColorFeet, saved_dummy_color_feet, 65408, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_COLLIGHT | CFGFLAG_INSENSITIVE, "Saved to restore for cl_skin_stealer")
+MACRO_CONFIG_STR(ClSavedDummySkin, saved_dummy_skin, 24, "default", CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_INSENSITIVE, "Saved to restore for cl_skin_stealer")
+
 // warlist
 MACRO_CONFIG_INT(ClWarList, cl_war_list, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Display nameplate color based on chillerbot/warlist directory")
 MACRO_CONFIG_INT(ClNameplatesWarReason, cl_nameplates_war_reason, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show war reason in name plates")

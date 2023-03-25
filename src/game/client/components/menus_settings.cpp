@@ -3528,4 +3528,14 @@ void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 		if(DoButton_CheckBox(&g_Config.m_ClRenderLaserHead, "Render laser heads (bobbles)", g_Config.m_ClRenderLaserHead, &Checkbox))
 			g_Config.m_ClRenderLaserHead ^= 1;
 	}
+	// skin stealer
+	{
+		CUIRect Checkbox;
+		MainView.HSplitTop(20.0f, &Checkbox, &MainView);
+		if(DoButton_CheckBox(&g_Config.m_ClSkinStealer, "Skin stealer", g_Config.m_ClSkinStealer, &Checkbox))
+		{
+			str_format(aBuf, sizeof(aBuf), "cl_skin_stealer %d", !g_Config.m_ClSkinStealer);
+			Console()->ExecuteLine(aBuf);
+		}
+	}
 }

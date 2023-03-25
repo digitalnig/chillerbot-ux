@@ -1,6 +1,7 @@
 #ifndef GAME_CLIENT_COMPONENTS_CHILLERBOT_CHILLERBOTUX_H
 #define GAME_CLIENT_COMPONENTS_CHILLERBOT_CHILLERBOTUX_H
 
+#include <engine/client.h>
 #include <game/client/component.h>
 #include <game/client/render.h>
 #include <game/mapitems.h>
@@ -77,14 +78,21 @@ class CChillerBotUX : public CComponent
 	int m_GotoTeleLastX;
 	int m_GotoTeleLastY;
 	int64_t m_LastNotification;
+	int64_t m_NextSkinSteal;
+
+	void SaveSkins();
+	void RestoreSkins();
 
 	// broadcasts
 	char m_aBroadcastText[1024];
 	int m_BroadcastTick;
 	bool m_IsLeftSidedBroadcast;
 
+	bool IsPlayerInfoAvailable(int ClientID) const;
+
 	void OnChatMessage(int ClientID, int Team, const char *pMsg);
 	void GoAfk(int Minutes, const char *pMsg = 0);
+	void SkinStealTick();
 	void ChangeTileNotifyTick();
 	void FinishRenameTick();
 	void CampHackTick();
@@ -107,6 +115,7 @@ class CChillerBotUX : public CComponent
 	virtual void OnMessage(int MsgType, void *pRawMsg) override;
 	virtual void OnConsoleInit() override;
 	virtual void OnInit() override;
+	virtual void OnShutdown() override;
 	virtual bool OnCursorMove(float x, float y, IInput::ECursorType CursorType) override;
 	virtual bool OnInput(IInput::CEvent e) override;
 
@@ -127,6 +136,7 @@ class CChillerBotUX : public CComponent
 	static void ConchainFinishRename(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainShowLastKiller(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainShowLastPing(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
+	static void ConchainSkinStealer(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 public:
 	virtual int Sizeof() const override { return sizeof(*this); }
