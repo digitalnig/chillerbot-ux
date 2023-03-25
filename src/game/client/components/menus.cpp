@@ -84,8 +84,7 @@ CMenus::CMenus()
 	m_DemoPlayerState = DEMOPLAYER_NONE;
 	m_Dummy = false;
 
-	m_ServerProcess.Process = 0;
-	m_ServerProcess.Initialized = false;
+	m_ServerProcess.m_Process = INVALID_PROCESS;
 
 	for(SUIAnimator &animator : m_aAnimatorsSettingsTab)
 	{
@@ -2351,6 +2350,9 @@ void CMenus::OnStateChange(int NewState, int OldState)
 	// reset active item
 	UI()->SetActiveItem(nullptr);
 
+	if(OldState == IClient::STATE_ONLINE || OldState == IClient::STATE_OFFLINE)
+		TextRender()->DeleteTextContainer(m_MotdTextContainerIndex);
+
 	if(NewState == IClient::STATE_OFFLINE)
 	{
 		if(OldState >= IClient::STATE_ONLINE && NewState < IClient::STATE_QUITTING)
@@ -2387,6 +2389,11 @@ void CMenus::OnStateChange(int NewState, int OldState)
 			SetActive(false);
 		}
 	}
+}
+
+void CMenus::OnWindowResize()
+{
+	TextRender()->DeleteTextContainer(m_MotdTextContainerIndex);
 }
 
 void CMenus::OnRender()
