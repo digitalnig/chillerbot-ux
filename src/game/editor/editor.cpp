@@ -21,6 +21,7 @@
 #include <engine/textrender.h>
 
 #include <game/client/components/camera.h>
+#include <game/client/components/menu_background.h>
 #include <game/client/gameclient.h>
 #include <game/client/render.h>
 #include <game/client/ui.h>
@@ -942,7 +943,17 @@ void CEditor::DoToolbar(CUIRect ToolBar)
 		if(DoButton_Editor(&s_ProofButton, "Proof", m_ProofBorders, &Button, 0, "[ctrl+p] Toggles proof borders. These borders represent what a player maximum can see.") ||
 			(m_Dialog == DIALOG_NONE && m_EditBoxActive == 0 && Input()->KeyPress(KEY_P) && ModPressed))
 		{
-			m_ProofBorders = !m_ProofBorders;
+			m_ProofBorders = !m_ProofBorders && !m_MenuProofBorders;
+		}
+
+		TB_Top.VSplitLeft(5.0f, nullptr, &TB_Top);
+
+		// menu proof button
+		TB_Top.VSplitLeft(60.0f, &Button, &TB_Top);
+		static int s_MenuProofButton = 0;
+		if(DoButton_Editor(&s_MenuProofButton, "Proof Menu", m_MenuProofBorders, &Button, 0, "Toggles menu proof borders. These borders represent what will be shown in the menu."))
+		{
+			m_MenuProofBorders = !m_MenuProofBorders && !m_ProofBorders;
 		}
 
 		TB_Top.VSplitLeft(5.0f, nullptr, &TB_Top);
@@ -1154,10 +1165,33 @@ void CEditor::DoToolbar(CUIRect ToolBar)
 		{
 			TB_Bottom.VSplitLeft(45.0f, &Button, &TB_Bottom);
 			static int s_RefocusButton = 0;
-			if(DoButton_Editor(&s_RefocusButton, "Refocus", m_WorldOffsetX && m_WorldOffsetY ? 0 : -1, &Button, 0, "[HOME] Restore map focus") || (m_Dialog == DIALOG_NONE && m_EditBoxActive == 0 && Input()->KeyPress(KEY_HOME)))
+			int FocusButtonChecked;
+			if(m_MenuProofBorders)
 			{
-				m_WorldOffsetX = 0;
-				m_WorldOffsetY = 0;
+				if(distance(m_vMenuBackgroundPositions[m_CurrentMenuProofIndex], vec2(m_WorldOffsetX, m_WorldOffsetY)) < 0.0001f)
+					FocusButtonChecked = -1;
+				else
+					FocusButtonChecked = 1;
+			}
+			else
+			{
+				if(m_WorldOffsetX == 0 && m_WorldOffsetY == 0)
+					FocusButtonChecked = -1;
+				else
+					FocusButtonChecked = 1;
+			}
+			if(DoButton_Editor(&s_RefocusButton, "Refocus", FocusButtonChecked, &Button, 0, "[HOME] Restore map focus") || (m_Dialog == DIALOG_NONE && m_EditBoxActive == 0 && Input()->KeyPress(KEY_HOME)))
+			{
+				if(m_MenuProofBorders)
+				{
+					m_WorldOffsetX = m_vMenuBackgroundPositions[m_CurrentMenuProofIndex].x;
+					m_WorldOffsetY = m_vMenuBackgroundPositions[m_CurrentMenuProofIndex].y;
+				}
+				else
+				{
+					m_WorldOffsetX = 0;
+					m_WorldOffsetY = 0;
+				}
 			}
 			TB_Bottom.VSplitLeft(5.0f, nullptr, &TB_Bottom);
 		}
@@ -2813,6 +2847,79 @@ void CEditor::DoMapEditor(CUIRect View)
 			}
 		}
 
+		// menu proof selection
+		if(m_MenuProofBorders && !m_ShowPicker)
+		{
+			ResetMenuBackgroundPositions();
+			for(int i = 0; i < (int)m_vMenuBackgroundPositions.size(); i++)
+			{
+				vec2 Pos = m_vMenuBackgroundPositions[i];
+				Pos += vec2(m_WorldOffsetX, m_WorldOffsetY) - m_vMenuBackgroundPositions[m_CurrentMenuProofIndex];
+				Pos.y -= 3.0f;
+
+				vec2 MousePos(m_MouseWorldNoParaX, m_MouseWorldNoParaY);
+				if(distance(Pos, MousePos) <= 20.0f)
+				{
+					UI()->SetHotItem(&m_vMenuBackgroundPositions[i]);
+
+					if(i != m_CurrentMenuProofIndex && UI()->CheckActiveItem(&m_vMenuBackgroundPositions[i]))
+					{
+						if(!UI()->MouseButton(0))
+						{
+							m_CurrentMenuProofIndex = i;
+							m_WorldOffsetX = m_vMenuBackgroundPositions[i].x;
+							m_WorldOffsetY = m_vMenuBackgroundPositions[i].y;
+							UI()->SetActiveItem(nullptr);
+						}
+					}
+					else if(UI()->HotItem() == &m_vMenuBackgroundPositions[i])
+					{
+						char aTooltipPrefix[32] = "Switch proof position to";
+						if(i == m_CurrentMenuProofIndex)
+							str_copy(aTooltipPrefix, "Current proof position at");
+
+						char aNumBuf[8];
+						if(i < (TILE_TIME_CHECKPOINT_LAST - TILE_TIME_CHECKPOINT_FIRST))
+							str_format(aNumBuf, sizeof(aNumBuf), "#%d", i + 1);
+						else
+							aNumBuf[0] = '\0';
+
+						char aTooltipPositions[128];
+						str_format(aTooltipPositions, sizeof(aTooltipPositions), "%s %s", m_vpMenuBackgroundPositionNames[i], aNumBuf);
+
+						for(int k : m_vMenuBackgroundCollisions.at(i))
+						{
+							if(k == m_CurrentMenuProofIndex)
+								str_copy(aTooltipPrefix, "Current proof position at");
+
+							Pos = m_vMenuBackgroundPositions[k];
+							Pos += vec2(m_WorldOffsetX, m_WorldOffsetY) - m_vMenuBackgroundPositions[m_CurrentMenuProofIndex];
+							Pos.y -= 3.0f;
+
+							MousePos = vec2(m_MouseWorldNoParaX, m_MouseWorldNoParaY);
+							if(distance(Pos, MousePos) > 20.0f)
+								continue;
+
+							if(i < (TILE_TIME_CHECKPOINT_LAST - TILE_TIME_CHECKPOINT_FIRST))
+								str_format(aNumBuf, sizeof(aNumBuf), "#%d", k + 1);
+							else
+								aNumBuf[0] = '\0';
+
+							char aTooltipPositionsCopy[128];
+							str_copy(aTooltipPositionsCopy, aTooltipPositions);
+							str_format(aTooltipPositions, sizeof(aTooltipPositions), "%s, %s %s", aTooltipPositionsCopy, m_vpMenuBackgroundPositionNames[k], aNumBuf);
+						}
+						str_format(m_aMenuBackgroundTooltip, sizeof(m_aMenuBackgroundTooltip), "%s %s", aTooltipPrefix, aTooltipPositions);
+
+						m_pTooltip = m_aMenuBackgroundTooltip;
+						if(UI()->MouseButton(0))
+							UI()->SetActiveItem(&m_vMenuBackgroundPositions[i]);
+					}
+					break;
+				}
+			}
+		}
+
 		// do panning
 		if(UI()->CheckActiveItem(s_pEditorID))
 		{
@@ -2883,7 +2990,7 @@ void CEditor::DoMapEditor(CUIRect View)
 	}
 
 	// render screen sizes
-	if(m_ProofBorders && !m_ShowPicker)
+	if((m_ProofBorders || m_MenuProofBorders) && !m_ShowPicker)
 	{
 		CLayerGroup *pGameGroup = m_Map.m_pGameGroup;
 		pGameGroup->MapScreen();
@@ -2901,9 +3008,10 @@ void CEditor::DoMapEditor(CUIRect View)
 			float aPoints[4];
 			float Aspect = Start + (End - Start) * (i / (float)NumSteps);
 
+			float Zoom = m_MenuProofBorders ? 0.7f : 1.0f;
 			RenderTools()->MapScreenToWorld(
 				m_WorldOffsetX, m_WorldOffsetY,
-				100.0f, 100.0f, 100.0f, 0.0f, 0.0f, Aspect, 1.0f, aPoints);
+				100.0f, 100.0f, 100.0f, 0.0f, 0.0f, Aspect, Zoom, aPoints);
 
 			if(i == 0)
 			{
@@ -2943,9 +3051,10 @@ void CEditor::DoMapEditor(CUIRect View)
 				const float aAspects[] = {4.0f / 3.0f, 16.0f / 10.0f, 5.0f / 4.0f, 16.0f / 9.0f};
 				float Aspect = aAspects[i];
 
+				float Zoom = m_MenuProofBorders ? 0.7f : 1.0f;
 				RenderTools()->MapScreenToWorld(
 					m_WorldOffsetX, m_WorldOffsetY,
-					100.0f, 100.0f, 100.0f, 0.0f, 0.0f, Aspect, 1.0f, aPoints);
+					100.0f, 100.0f, 100.0f, 0.0f, 0.0f, Aspect, Zoom, aPoints);
 
 				CUIRect r;
 				r.x = aPoints[0];
@@ -2964,12 +3073,38 @@ void CEditor::DoMapEditor(CUIRect View)
 		}
 		Graphics()->LinesEnd();
 
-		// tee position (blue circle)
+		// tee position (blue circle) and other screen positions
 		{
 			Graphics()->TextureClear();
 			Graphics()->QuadsBegin();
 			Graphics()->SetColor(0, 0, 1, 0.3f);
 			Graphics()->DrawCircle(m_WorldOffsetX, m_WorldOffsetY - 3.0f, 20.0f, 32);
+
+			if(m_MenuProofBorders)
+			{
+				Graphics()->SetColor(0, 1, 0, 0.3f);
+
+				std::set<int> indices;
+				for(int i = 0; i < (int)m_vMenuBackgroundPositions.size(); i++)
+					indices.insert(i);
+
+				while(!indices.empty())
+				{
+					int i = *indices.begin();
+					indices.erase(i);
+					for(int k : m_vMenuBackgroundCollisions.at(i))
+						indices.erase(k);
+
+					vec2 Pos = m_vMenuBackgroundPositions[i];
+					Pos += vec2(m_WorldOffsetX, m_WorldOffsetY) - m_vMenuBackgroundPositions[m_CurrentMenuProofIndex];
+
+					if(distance(Pos, vec2(m_WorldOffsetX, m_WorldOffsetY)) < 0.001f)
+						continue;
+
+					Graphics()->DrawCircle(Pos.x, Pos.y - 3.0f, 20.0f, 32);
+				}
+			}
+
 			Graphics()->QuadsEnd();
 		}
 	}
@@ -3752,7 +3887,7 @@ void CEditor::RenderLayers(CUIRect LayersBox)
 		auto InsertPosition = std::find(m_Map.m_vpGroups.begin(), m_Map.m_vpGroups.end(), pNextGroup);
 		m_Map.m_vpGroups.insert(InsertPosition, pSelectedGroup);
 
-		m_SelectedGroup = GroupAfterDraggedLayer == 0 ? 0 : GroupAfterDraggedLayer - 1;
+		m_SelectedGroup = InsertPosition - m_Map.m_vpGroups.begin();
 		m_Map.m_Modified = true;
 	}
 
@@ -4982,9 +5117,10 @@ void CEditor::RenderFileDialog()
 	static int s_OkButton = 0;
 	static int s_CancelButton = 0;
 	static int s_RefreshButton = 0;
+	static int s_ShowDirectoryButton = 0;
+	static int s_DeleteButton = 0;
 	static int s_NewFolderButton = 0;
 	static int s_MapInfoButton = 0;
-	static int s_ShowDirectoryButton = 0;
 
 	CUIRect Button;
 	ButtonBar.VSplitRight(50.0f, &ButtonBar, &Button);
@@ -5045,18 +5181,6 @@ void CEditor::RenderFileDialog()
 	if(DoButton_Editor(&s_CancelButton, "Cancel", 0, &Button, 0, nullptr) || (s_ListBoxUsed && UI()->ConsumeHotkey(CUI::HOTKEY_ESCAPE)))
 		m_Dialog = DIALOG_NONE;
 
-	if(m_FileDialogStorageType == IStorage::TYPE_SAVE)
-	{
-		ButtonBar.VSplitLeft(70.0f, &Button, &ButtonBar);
-		if(DoButton_Editor(&s_NewFolderButton, "New folder", 0, &Button, 0, nullptr))
-		{
-			m_aFileDialogNewFolderName[0] = 0;
-			static int s_NewFolderPopupID = 0;
-			UiInvokePopupMenu(&s_NewFolderPopupID, 0, Width / 2.0f - 200.0f, Height / 2.0f - 100.0f, 400.0f, 200.0f, PopupNewFolder);
-			UI()->SetActiveItem(nullptr);
-		}
-	}
-
 	ButtonBar.VSplitRight(40.0f, &ButtonBar, &Button);
 	ButtonBar.VSplitRight(50.0f, &ButtonBar, &Button);
 	if(DoButton_Editor(&s_RefreshButton, "Refresh", 0, &Button, 0, nullptr) || (s_ListBoxUsed && (Input()->KeyIsPressed(KEY_F5) || (Input()->ModifierIsPressed() && Input()->KeyIsPressed(KEY_R)))))
@@ -5072,8 +5196,53 @@ void CEditor::RenderFileDialog()
 		}
 	}
 
+	ButtonBar.VSplitRight(40.0f, &ButtonBar, &Button);
+	ButtonBar.VSplitRight(50.0f, &ButtonBar, &Button);
+	static SConfirmPopupContext s_ConfirmDeletePopupContext;
+	if(m_FilesSelectedIndex >= 0 && m_vpFilteredFileList[m_FilesSelectedIndex]->m_StorageType == IStorage::TYPE_SAVE && !m_vpFilteredFileList[m_FilesSelectedIndex]->m_IsLink && str_comp(m_vpFilteredFileList[m_FilesSelectedIndex]->m_aFilename, "..") != 0)
+	{
+		if(DoButton_Editor(&s_DeleteButton, "Delete", 0, &Button, 0, nullptr) || (s_ListBoxUsed && UI()->ConsumeHotkey(CUI::HOTKEY_DELETE)))
+		{
+			s_ConfirmDeletePopupContext.Reset();
+			str_format(s_ConfirmDeletePopupContext.m_aMessage, sizeof(s_ConfirmDeletePopupContext.m_aMessage), "Are you sure that you want to delete the %s '%s/%s'?", IsDir ? "folder" : "file", m_pFileDialogPath, m_vpFilteredFileList[m_FilesSelectedIndex]->m_aFilename);
+			ShowPopupConfirm(UI()->MouseX(), UI()->MouseY(), &s_ConfirmDeletePopupContext);
+		}
+		if(s_ConfirmDeletePopupContext.m_Result == SConfirmPopupContext::CONFIRMED)
+		{
+			char aDeleteFilePath[IO_MAX_PATH_LENGTH];
+			str_format(aDeleteFilePath, sizeof(aDeleteFilePath), "%s/%s", m_pFileDialogPath, m_vpFilteredFileList[m_FilesSelectedIndex]->m_aFilename);
+			if(IsDir)
+			{
+				if(Storage()->RemoveFolder(aDeleteFilePath, IStorage::TYPE_SAVE))
+					FilelistPopulate(m_FileDialogLastPopulatedStorageType, true);
+				else
+					ShowFileDialogError("Failed to delete folder '%s'. Make sure it's empty first.", aDeleteFilePath);
+			}
+			else
+			{
+				if(Storage()->RemoveFile(aDeleteFilePath, IStorage::TYPE_SAVE))
+					FilelistPopulate(m_FileDialogLastPopulatedStorageType, true);
+				else
+					ShowFileDialogError("Failed to delete file '%s'.", aDeleteFilePath);
+			}
+		}
+		if(s_ConfirmDeletePopupContext.m_Result != SConfirmPopupContext::UNSET)
+			s_ConfirmDeletePopupContext.Reset();
+	}
+	else
+		s_ConfirmDeletePopupContext.Reset();
+
 	if(g_Config.m_ClSaveMapInfo && m_FileDialogStorageType == IStorage::TYPE_SAVE)
 	{
+		ButtonBar.VSplitLeft(70.0f, &Button, &ButtonBar);
+		if(DoButton_Editor(&s_NewFolderButton, "New folder", 0, &Button, 0, nullptr))
+		{
+			m_aFileDialogNewFolderName[0] = 0;
+			static int s_NewFolderPopupID = 0;
+			UiInvokePopupMenu(&s_NewFolderPopupID, 0, Width / 2.0f - 200.0f, Height / 2.0f - 100.0f, 400.0f, 200.0f, PopupNewFolder);
+			UI()->SetActiveItem(nullptr);
+		}
+
 		ButtonBar.VSplitLeft(40.0f, nullptr, &ButtonBar);
 		ButtonBar.VSplitLeft(70.0f, &Button, &ButtonBar);
 		if(DoButton_Editor(&s_MapInfoButton, "Map details", 0, &Button, 0, nullptr))
@@ -6928,6 +7097,34 @@ void CEditor::Init()
 	ms_PickerColor = ColorHSVA(1.0f, 0.0f, 0.0f);
 
 	m_ChillerEditor.Init(this);
+
+	ResetMenuBackgroundPositions();
+	m_vpMenuBackgroundPositionNames.resize(CMenuBackground::NUM_POS);
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_START] = "start";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_BROWSER_INTERNET] = "browser(internet)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_BROWSER_LAN] = "browser(lan)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_DEMOS] = "demos";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_NEWS] = "news";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_BROWSER_FAVORITES] = "favorites";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_LANGUAGE] = "settings(language)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_GENERAL] = "settings(general)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_PLAYER] = "settings(player)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_TEE] = "settings(tee)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_APPEARANCE] = "settings(appearance)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_CONTROLS] = "settings(controls)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_GRAPHICS] = "settings(graphics)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_SOUND] = "settings(sound)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_DDNET] = "settings(ddnet)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_ASSETS] = "settings(assets)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_BROWSER_CUSTOM0] = "custom(ddnet)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_BROWSER_CUSTOM1] = "custom(kog)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_BROWSER_CUSTOM2] = "custom(3)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_BROWSER_CUSTOM3] = "custom(4)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_RESERVED0] = "reserved settings(1)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_SETTINGS_RESERVED1] = "reserved settings(2)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_RESERVED0] = "reserved(1)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_RESERVED1] = "reserved(2)";
+	m_vpMenuBackgroundPositionNames[CMenuBackground::POS_RESERVED2] = "reserved(3)";
 }
 
 void CEditor::PlaceBorderTiles()
@@ -7005,6 +7202,21 @@ void CEditor::OnUpdate()
 			m_MouseWorldX = 0.0f;
 			m_MouseWorldY = 0.0f;
 		}
+
+		for(CLayerGroup *pGameGroup : m_Map.m_vpGroups)
+		{
+			if(!pGameGroup->m_GameGroup)
+				continue;
+
+			float aPoints[4];
+			pGameGroup->Mapping(aPoints);
+
+			float WorldWidth = aPoints[2] - aPoints[0];
+			float WorldHeight = aPoints[3] - aPoints[1];
+
+			m_MouseWorldNoParaX = aPoints[0] + WorldWidth * (s_MouseX / Graphics()->WindowWidth());
+			m_MouseWorldNoParaY = aPoints[1] + WorldHeight * (s_MouseY / Graphics()->WindowHeight());
+		}
 	}
 }
 
@@ -7060,6 +7272,42 @@ void CEditor::LoadCurrentMap()
 }
 
 IEditor *CreateEditor() { return new CEditor; }
+
+void CEditor::ResetMenuBackgroundPositions()
+{
+	std::array<vec2, CMenuBackground::NUM_POS> aBackgroundPositions = GenerateMenuBackgroundPositions();
+	m_vMenuBackgroundPositions.assign(aBackgroundPositions.begin(), aBackgroundPositions.end());
+
+	CLayerGame *pLayer = m_Map.m_pGameLayer;
+	if(pLayer)
+	{
+		for(int y = 0; y < pLayer->m_Height; ++y)
+		{
+			for(int x = 0; x < pLayer->m_Width; ++x)
+			{
+				CTile Tile = pLayer->GetTile(x, y);
+				if(Tile.m_Index >= TILE_TIME_CHECKPOINT_FIRST && Tile.m_Index <= TILE_TIME_CHECKPOINT_LAST)
+				{
+					int ArrayIndex = clamp<int>((Tile.m_Index - TILE_TIME_CHECKPOINT_FIRST), 0, CMenuBackground::NUM_POS);
+					m_vMenuBackgroundPositions[ArrayIndex] = vec2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
+				}
+
+				x += Tile.m_Skip;
+			}
+		}
+	}
+
+	m_vMenuBackgroundCollisions.clear();
+	m_vMenuBackgroundCollisions.resize(m_vMenuBackgroundPositions.size());
+	for(size_t i = 0; i < m_vMenuBackgroundPositions.size(); i++)
+	{
+		for(size_t j = i + 1; j < m_vMenuBackgroundPositions.size(); j++)
+		{
+			if(i != j && distance(m_vMenuBackgroundPositions[i], m_vMenuBackgroundPositions[j]) < 0.001f)
+				m_vMenuBackgroundCollisions.at(i).push_back(j);
+		}
+	}
+}
 
 // DDRace
 
