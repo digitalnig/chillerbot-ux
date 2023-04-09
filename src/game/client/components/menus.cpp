@@ -1474,9 +1474,6 @@ int CMenus::Render()
 	}
 	else
 	{
-		// make sure that other windows doesn't do anything funnay!
-		//UI()->SetHotItem(0);
-		//UI()->SetActiveItem(nullptr);
 		char aBuf[1536];
 		const char *pTitle = "";
 		const char *pExtraText = "";
@@ -2181,6 +2178,9 @@ int CMenus::Render()
 		if(m_Popup == POPUP_NONE)
 			UI()->SetActiveItem(nullptr);
 	}
+
+	UI()->RenderPopupMenus();
+
 	return 0;
 }
 
@@ -2450,7 +2450,7 @@ void CMenus::OnRender()
 	ms_ColorTabbarHoverIngame = ColorRGBA(1, 1, 1, 0.75f);
 
 	// update the ui
-	CUIRect *pScreen = UI()->Screen();
+	const CUIRect *pScreen = UI()->Screen();
 	float mx = (m_MousePos.x / (float)Graphics()->WindowWidth()) * pScreen->w;
 	float my = (m_MousePos.y / (float)Graphics()->WindowHeight()) * pScreen->h;
 
