@@ -829,12 +829,12 @@ bool CWarList::SearchName(const char *pName, bool AllowPartialMatch, bool Silent
 	return true;
 }
 
-void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArgs, const char **ppArgs)
+bool CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArgs, const char **ppArgs)
 {
 	if(!g_Config.m_ClWarList)
-		return;
+		return false;
 	if(ClientID != m_pClient->m_Snap.m_LocalClientID)
-		return;
+		return false;
 	char aBuf[512];
 	if(!str_comp(pCmd, "search")) // "search <name can contain spaces>"
 	{
@@ -842,7 +842,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		{
 			str_format(aBuf, sizeof(aBuf), "Error: expected 1 argument but got %d", NumArgs);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return;
+			return true;
 		}
 		m_pClient->m_Chat.AddLine(-2, 0, "[search] fullmatch:");
 		if(!SearchName(ppArgs[0], false))
@@ -869,12 +869,12 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		if(NumArgs < 1)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <type>");
-			return;
+			return true;
 		}
 		if(NumArgs < 2)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <folder>");
-			return;
+			return true;
 		}
 		char aType[512];
 		char aFolder[512];
@@ -890,21 +890,21 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 			str_comp(aType, "traitor"))
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error type has to be one of those: <war|team|neutral|traitor>");
-			return;
+			return true;
 		}
 		str_format(aBuf, sizeof(aBuf), "chillerbot/warlist/%s", aType);
 		if(!Storage()->CreateFolder(aBuf, IStorage::TYPE_SAVE))
 		{
 			str_format(aBuf, sizeof(aBuf), "Failed to create folder %s/%s", aType, aFolder);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return;
+			return true;
 		}
 		str_format(aBuf, sizeof(aBuf), "chillerbot/warlist/%s/%s", aType, aFolder);
 		if(!Storage()->CreateFolder(aBuf, IStorage::TYPE_SAVE))
 		{
 			str_format(aBuf, sizeof(aBuf), "Failed to create folder %s/%s", aType, aFolder);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return;
+			return true;
 		}
 		if(aName[0])
 		{
@@ -912,7 +912,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 			{
 				str_format(aBuf, sizeof(aBuf), "Error: name '%s' is already used in different folder", aName);
 				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-				return;
+				return true;
 			}
 			str_format(aBuf, sizeof(aBuf), "Created folder %s/%s and add name '%s'", aType, aFolder, aName);
 			AddWar(aFolder, aName);
@@ -928,12 +928,12 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		if(NumArgs < 1)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <folder>");
-			return;
+			return true;
 		}
 		if(NumArgs < 2)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <name>");
-			return;
+			return true;
 		}
 		char aFolder[512];
 		char aName[512];
@@ -946,12 +946,12 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		if(NumArgs < 1)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <folder>");
-			return;
+			return true;
 		}
 		if(NumArgs < 2)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <name>");
-			return;
+			return true;
 		}
 		char aFolder[512];
 		char aName[512];
@@ -964,7 +964,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		{
 			str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return;
+			return true;
 		}
 
 		io_write(File, aName, str_length(aName));
@@ -980,7 +980,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		if(NumArgs < 1)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <folder>");
-			return;
+			return true;
 		}
 		char aFolder[512];
 		str_copy(aFolder, ppArgs[0], sizeof(aFolder));
@@ -993,7 +993,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		{
 			str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aPath);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return;
+			return true;
 		}
 		io_close(File);
 		File = Storage()->OpenFile(aPeacePath, IOFLAG_READ, IStorage::TYPE_SAVE);
@@ -1002,7 +1002,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 			str_format(aBuf, sizeof(aBuf), "Peace entry already exists '%s'", aPeacePath);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 			io_close(File);
-			return;
+			return true;
 		}
 
 		str_format(aPath, sizeof(aPath), "chillerbot/warlist/war/%s", aFolder);
@@ -1018,7 +1018,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		if(NumArgs < 1)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <folder>");
-			return;
+			return true;
 		}
 		char aFolder[512];
 		str_copy(aFolder, ppArgs[0], sizeof(aFolder));
@@ -1031,7 +1031,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		{
 			str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aPath);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return;
+			return true;
 		}
 		io_close(File);
 		File = Storage()->OpenFile(aNeutralPath, IOFLAG_READ, IStorage::TYPE_SAVE);
@@ -1040,7 +1040,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 			str_format(aBuf, sizeof(aBuf), "Neutral entry already exists '%s'", aNeutralPath);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 			io_close(File);
-			return;
+			return true;
 		}
 
 		str_format(aPath, sizeof(aPath), "chillerbot/warlist/team/%s", aFolder);
@@ -1056,7 +1056,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		if(NumArgs < 1)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <folder>");
-			return;
+			return true;
 		}
 		char aFolder[512];
 		str_copy(aFolder, ppArgs[0], sizeof(aFolder));
@@ -1069,7 +1069,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		{
 			str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aPath);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return;
+			return true;
 		}
 		io_close(File);
 		File = Storage()->OpenFile(aTeamPath, IOFLAG_READ, IStorage::TYPE_SAVE);
@@ -1078,7 +1078,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 			str_format(aBuf, sizeof(aBuf), "Peace entry already exists '%s'", aTeamPath);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 			io_close(File);
-			return;
+			return true;
 		}
 
 		str_format(aPath, sizeof(aPath), "chillerbot/warlist/neutral/%s", aFolder);
@@ -1094,7 +1094,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		if(NumArgs < 1)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <folder>");
-			return;
+			return true;
 		}
 		char aFolder[512];
 		str_copy(aFolder, ppArgs[0], sizeof(aFolder));
@@ -1107,7 +1107,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		{
 			str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aPath);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return;
+			return true;
 		}
 		io_close(File);
 		File = Storage()->OpenFile(aWarPath, IOFLAG_READ, IStorage::TYPE_SAVE);
@@ -1116,7 +1116,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 			str_format(aBuf, sizeof(aBuf), "War entry already exists '%s'", aWarPath);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 			io_close(File);
-			return;
+			return true;
 		}
 
 		str_format(aPath, sizeof(aPath), "chillerbot/warlist/neutral/%s", aFolder);
@@ -1132,12 +1132,12 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		if(NumArgs < 1)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <folder>");
-			return;
+			return true;
 		}
 		if(NumArgs < 2)
 		{
 			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <reason>");
-			return;
+			return true;
 		}
 		char aFolder[512];
 		char aReason[512];
@@ -1165,7 +1165,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 			{
 				str_format(aBuf, sizeof(aBuf), "Folder %s already has a reason. Use -f to overwrite reason: %s", aFolder, pLine);
 				m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-				return;
+				return true;
 			}
 			io_close(File);
 		}
@@ -1174,7 +1174,7 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		{
 			str_format(aBuf, sizeof(aBuf), "Failed to open file for writing chillerbot/warlist/war/%s/reason.txt", aFolder);
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return;
+			return true;
 		}
 		str_format(aBuf, sizeof(aBuf), "Adding reason to folder='%s' reason='%s'", aFolder, pReason);
 		io_write(File, pReason, str_length(pReason));
@@ -1187,4 +1187,9 @@ void CWarList::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArg
 		ReloadList();
 		m_pClient->m_Chat.AddLine(-1, 0, aBuf);
 	}
+	else
+	{
+		return false;
+	}
+	return true;
 }

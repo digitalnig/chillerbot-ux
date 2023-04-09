@@ -9,8 +9,30 @@ class CChatCommand : public CComponent
 
 	void OnServerMsg(const char *pMsg);
 	void OnChatMsg(int ClientID, int Team, const char *pMsg);
-	void ParseChatCmd(char Prefix, int ClientID, const char *pCmdWithArgs);
-	void OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArgs, const char **ppArgs);
+	bool ParseChatCmd(char Prefix, int ClientID, const char *pCmdWithArgs);
+
+	/*
+		Function: OnChatCmd
+
+		define the same signature in your component
+		and hook it inside (manually)
+
+		to get parsed arguments
+
+		only return true if a valid command was matched
+	*/
+	bool OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArgs, const char **ppArgs);
+
+	/*
+		Function: OnNoChatCommandMatches
+
+		define the same signature in your component
+		and hook it inside (manually)
+
+		will be called if no component matched
+		a valid chat command in this message
+	*/
+	void OnNoChatCommandMatches(int ClientID, int Team, const char *pMsg);
 
 public:
 	virtual int Sizeof() const override { return sizeof(*this); }
