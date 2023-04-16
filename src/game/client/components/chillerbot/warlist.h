@@ -119,7 +119,7 @@ class CWarList : public CComponent
 public:
 	virtual int Sizeof() const override { return sizeof(*this); }
 
-	bool OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArgs, const char **ppArgs);
+	bool OnChatCmd(char Prefix, int ClientID, int Team, const char *pCmd, int NumArgs, const char **ppArgs);
 
 	void GetWarReason(const char *pName, char *pReason, int ReasonSize);
 	void GetWarClansStr(char *pBuf, int Size);

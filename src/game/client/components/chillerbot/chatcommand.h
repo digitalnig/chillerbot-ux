@@ -9,7 +9,7 @@ class CChatCommand : public CComponent
 
 	void OnServerMsg(const char *pMsg);
 	void OnChatMsg(int ClientID, int Team, const char *pMsg);
-	bool ParseChatCmd(char Prefix, int ClientID, const char *pCmdWithArgs);
+	bool ParseChatCmd(char Prefix, int ClientID, int Team, const char *pCmdWithArgs);
 
 	/*
 		Function: OnChatCmd
@@ -21,7 +21,7 @@ class CChatCommand : public CComponent
 
 		only return true if a valid command was matched
 	*/
-	bool OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArgs, const char **ppArgs);
+	bool OnChatCmd(char Prefix, int ClientID, int Team, const char *pCmd, int NumArgs, const char **ppArgs);
 
 	/*
 		Function: OnNoChatCommandMatches

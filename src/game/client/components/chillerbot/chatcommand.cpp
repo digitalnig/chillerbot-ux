@@ -19,7 +19,7 @@ void CChatCommand::OnChatMsg(int ClientID, int Team, const char *pMsg)
 	if(!pMsg[1])
 		return;
 	if(pMsg[0] == '.' || pMsg[0] == ':' || pMsg[0] == '!' || pMsg[0] == '#' || pMsg[0] == '$' || pMsg[0] == '/')
-		if(ParseChatCmd(pMsg[0], ClientID, pMsg + 1))
+		if(ParseChatCmd(pMsg[0], ClientID, Team, pMsg + 1))
 			return;
 
 	OnNoChatCommandMatches(ClientID, Team, pMsg);
@@ -34,12 +34,12 @@ void CChatCommand::OnNoChatCommandMatches(int ClientID, int Team, const char *pM
 	// zx components
 }
 
-bool CChatCommand::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int NumArgs, const char **ppArgs)
+bool CChatCommand::OnChatCmd(char Prefix, int ClientID, int Team, const char *pCmd, int NumArgs, const char **ppArgs)
 {
 	bool match = false;
 	// ux components
 
-	if(m_pClient->m_WarList.OnChatCmd(Prefix, ClientID, pCmd, NumArgs, ppArgs))
+	if(m_pClient->m_WarList.OnChatCmd(Prefix, ClientID, Team, pCmd, NumArgs, ppArgs))
 		match = true;
 
 	// zx components
@@ -47,7 +47,7 @@ bool CChatCommand::OnChatCmd(char Prefix, int ClientID, const char *pCmd, int Nu
 	return match;
 }
 
-bool CChatCommand::ParseChatCmd(char Prefix, int ClientID, const char *pCmdWithArgs)
+bool CChatCommand::ParseChatCmd(char Prefix, int ClientID, int Team, const char *pCmdWithArgs)
 {
 	char aCmd[128];
 	int i;
@@ -130,7 +130,7 @@ bool CChatCommand::ParseChatCmd(char Prefix, int ClientID, const char *pCmdWithA
 	// char aBuf[512];
 	// str_format(aBuf, sizeof(aBuf), "got cmd '%s' with %d args: %s", aCmd, NumArgs, aArgsStr);
 	// Say(aBuf);
-	bool match = OnChatCmd(Prefix, ClientID, aCmd, NumArgs, (const char **)ppArgs);
+	bool match = OnChatCmd(Prefix, ClientID, Team, aCmd, NumArgs, (const char **)ppArgs);
 	for(int x = 0; x < 8; ++x)
 		delete[] ppArgs[x];
 	delete[] ppArgs;
