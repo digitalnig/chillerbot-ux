@@ -88,7 +88,7 @@ CTermWindow::CTermWindow()
 	m_pCursesWin = nullptr;
 }
 
-void CTermWindow::SetTextTop(const char *pText)
+void CTermWindow::SetTextTopLeft(const char *pText)
 {
 	unsigned int i = 0;
 	const char *pCursor = pText;

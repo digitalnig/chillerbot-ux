@@ -16,7 +16,7 @@ class CTermWindow
 
 public:
 	CTermWindow();
-	void SetTextTop(const char *pText);
+	void SetTextTopLeft(const char *pText);
 	void DrawBorders();
 	void DrawBorders(int x, int y, int w, int h);
 

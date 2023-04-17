@@ -311,7 +311,7 @@ void CTerminalUI::OnMessage(int MsgType, void *pRawMsg)
 		if(!g_Config.m_ClShowBroadcasts)
 			return;
 		CNetMsg_Sv_Broadcast *pMsg = (CNetMsg_Sv_Broadcast *)pRawMsg;
-		g_LogWindow.SetTextTop(pMsg->m_pMessage);
+		g_LogWindow.SetTextTopLeft(pMsg->m_pMessage);
 		m_BroadcastTick = Client()->GameTick(g_Config.m_ClDummy) + Client()->GameTickSpeed() * 10;
 		gs_NeedLogDraw = true;
 		m_NewInput = true;
@@ -326,7 +326,7 @@ void CTerminalUI::OnRender()
 
 	if(m_BroadcastTick && Client()->GameTick(g_Config.m_ClDummy) > m_BroadcastTick)
 	{
-		g_LogWindow.SetTextTop("");
+		g_LogWindow.SetTextTopLeft("");
 		gs_NeedLogDraw = true;
 		m_NewInput = true;
 		m_BroadcastTick = 0;
@@ -362,6 +362,18 @@ void CTerminalUI::OnInputModeChange(int Old, int New)
 	InputDraw();
 	g_InputWin.DrawBorders();
 	UpdateCursor();
+}
+
+static void StrCopyUntilSpace(char *pDest, size_t DestSize, const char *pSrc)
+{
+	const char *pSpace = str_find(pSrc, " ");
+	// if no space found consume the whole thing
+	if(!pSpace)
+	{
+		str_copy(pDest, pSrc, DestSize);
+		return;
+	}
+	str_copy(pDest, pSrc, minimum<size_t>(pSpace ? pSpace - pSrc + 1 : 1, DestSize));
 }
 
 int CTerminalUI::GetInput()
@@ -404,6 +416,7 @@ int CTerminalUI::GetInput()
 	{
 		if(c == ERR) // nonblocking empty read
 			return 0;
+
 		if(c == EOF || c == 10) // return
 		{
 			if(m_InputMode == INPUT_LOCAL_CONSOLE)
@@ -465,6 +478,7 @@ int CTerminalUI::GetInput()
 				CompleteCommands(true);
 			else
 				CompleteNames(true);
+			RefreshConsoleCmdHelpText();
 			return 0;
 		}
 		else if(keyname(c)[0] == '^' && keyname(c)[1] == 'I') // tab
@@ -473,6 +487,7 @@ int CTerminalUI::GetInput()
 				CompleteCommands();
 			else
 				CompleteNames();
+			RefreshConsoleCmdHelpText();
 			return 0;
 		}
 		else if(keyname(c)[0] == '^' && keyname(c)[1] == '[')
@@ -712,10 +727,66 @@ int CTerminalUI::GetInput()
 			}
 			m_InputCursor += str_length(aKey);
 		}
+
+		// can we do this more performant?
+		// do we need to check command help
+		// after EVERY key press?
+		//
+		// has to stay at the end to show hint
+		// of the latest input not of the prev input
+		RefreshConsoleCmdHelpText();
+
 		// dbg_msg("yeee", "got key d=%d c=%c", c, c);
 	}
 	InputDraw();
 	return 0;
+}
+
+void CTerminalUI::RefreshConsoleCmdHelpText()
+{
+	// show command hints in console
+
+	m_aCommandName[0] = '\0';
+	m_aCommandHelp[0] = '\0';
+	m_aCommandParams[0] = '\0';
+
+	g_InputWin.SetTextTopLeft("");
+
+	if(m_InputMode == INPUT_REMOTE_CONSOLE || m_InputMode == INPUT_LOCAL_CONSOLE)
+	{
+		int CompletionFlagmask = CFGFLAG_CLIENT;
+		int Type = CGameConsole::CONSOLETYPE_LOCAL;
+		if(m_InputMode == INPUT_REMOTE_CONSOLE)
+		{
+			CompletionFlagmask = CFGFLAG_SERVER;
+			Type = CGameConsole::CONSOLETYPE_REMOTE;
+		}
+
+		// find the current command
+		char aCurrentCmd[sizeof(m_aCommandName)];
+		StrCopyUntilSpace(aCurrentCmd, sizeof(aCurrentCmd), g_aInputStr);
+		const IConsole::CCommandInfo *pCommand = Console()->GetCommandInfo(aCurrentCmd, CompletionFlagmask,
+			Type != CGameConsole::CONSOLETYPE_LOCAL && Client()->RconAuthed() && Client()->UseTempRconCommands());
+
+		// use this to highlight command as green
+		// and make it white otherwise
+		// like zsh does it
+		// m_IsCommand = false;
+		if(pCommand)
+		{
+			// m_IsCommand = true;
+			str_copy(m_aCommandName, pCommand->m_pName);
+			str_copy(m_aCommandHelp, pCommand->m_pHelp);
+			str_copy(m_aCommandParams, pCommand->m_pParams);
+			// dbg_msg("cmd", "help: %s", m_aCommandHelp);
+			char aBuf[512];
+			str_format(aBuf, sizeof(aBuf), "%s %s - %s", aCurrentCmd, m_aCommandParams, m_aCommandHelp);
+			g_InputWin.SetTextTopLeft(aBuf);
+			wclear(g_InputWin.m_pCursesWin);
+			InputDraw();
+			g_InputWin.DrawBorders();
+		}
+	}
 }
 
 void CTerminalUI::CompleteCommands(bool IsReverse)

@@ -248,6 +248,12 @@ class CTerminalUI : public CComponent
 	void CompleteNames(bool IsReverse = false);
 	void CompleteCommands(bool IsReverse = false);
 
+	char m_aCommandName[IConsole::TEMPCMD_NAME_LENGTH];
+	char m_aCommandHelp[IConsole::TEMPCMD_HELP_LENGTH];
+	char m_aCommandParams[IConsole::TEMPCMD_PARAMS_LENGTH];
+
+	void RefreshConsoleCmdHelpText();
+
 	static void PossibleCommandsCompleteCallback(int Index, const char *pStr, void *pUser);
 
 	// render in game
