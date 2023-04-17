@@ -152,10 +152,10 @@ void CTerminalUI::RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth,
 		but has more byte size for utf8 characters
 	*/
 	char aFrame[MAX_FRAME_HEIGHT][MAX_FRAME_WIDTH * 4]; // tee aka center is at 8/16   y/x
-	int aFrameLetterCount[32] = {0}; // TODO: do we need this? Should always be 32
-	int aFrameByteCount[32] = {0};
+	int aFrameLetterCount[MAX_FRAME_HEIGHT] = {0}; // TODO: do we need this? Should always be 32
+	int aFrameByteCount[MAX_FRAME_HEIGHT] = {0};
 	// init with spaces
-	for(int i = 0; i < 32; i++)
+	for(int i = 0; i < MAX_FRAME_HEIGHT; i++)
 	{
 		mem_zero(aFrame[i], sizeof(aFrame[i]));
 		// str_format(aFrame[i], sizeof(aFrame[i]), "%*s", (int)sizeof(aFrame[i]), " ");
@@ -213,67 +213,70 @@ void CTerminalUI::RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth,
 			// dbg_msg("x", "mx=%d my=%d renderX=%d renderY=%d", mx, my, renderX, renderY);
 			renderX += 32;
 			renderY += 16;
+			bool InValidBounds = true;
 			if(renderX >= MAX_FRAME_WIDTH || renderX < 0)
-				continue;
+				InValidBounds = false;
 			if(renderY >= MAX_FRAME_HEIGHT || renderY < 0)
-				continue;
-			if(Index)
+				InValidBounds = false;
+			// if(aFrameByteCount[renderY] >= MAX_FRAME_WIDTH - (int)str_length("█"))
+			// 	InValidBounds = false;
+			if(InValidBounds)
 			{
-				// dbg_msg("map", "draw tile=%d at x: %.2f y: %.2f w: %.2f h: %.2f", Index, x*Scale, y*Scale, Scale, Scale);
-				// dbg_msg("map", "absolut tile x: %d y: %d       tee x: %.2f y: %.2f", renderX, renderY, static_cast<float>(m_pClient->m_Snap.m_pLocalCharacter->m_X)/32.0f, static_cast<float>(m_pClient->m_Snap.m_pLocalCharacter->m_Y)/32.0f);
-				// dbg_msg("map", "array pos  tile x: %d y: %d\n", renderX, renderY);
-				if(renderX > 0 && renderX < 64 && renderY > 0 && renderY < 32)
+				if(Index)
 				{
+					// dbg_msg("map", "draw tile=%d at x: %.2f y: %.2f w: %.2f h: %.2f", Index, x*Scale, y*Scale, Scale, Scale);
+					// dbg_msg("map", "absolut tile x: %d y: %d       tee x: %.2f y: %.2f", renderX, renderY, static_cast<float>(m_pClient->m_Snap.m_pLocalCharacter->m_X)/32.0f, static_cast<float>(m_pClient->m_Snap.m_pLocalCharacter->m_Y)/32.0f);
+					// dbg_msg("map", "array pos  tile x: %d y: %d\n", renderX, renderY);
 					if(Index == TILE_SOLID)
 					{
 						// TODO: use ▆
 						// aFrame[renderY][renderX] = '#';
-						str_append(aFrame[renderY], "█", sizeof(aFrame));
-						aFrameByteCount[renderY] += (int)sizeof("█");
+						str_append(aFrame[renderY], "█", sizeof(aFrame[renderY]));
+						aFrameByteCount[renderY] += (int)str_length("█");
 					}
 					else if(Index == TILE_FREEZE)
 					{
 						// aFrame[renderY][renderX] = 'x'; // TODO: use ▒
-						str_append(aFrame[renderY], "▒", sizeof(aFrame));
-						aFrameByteCount[renderY] += (int)sizeof("▒");
+						str_append(aFrame[renderY], "▒", sizeof(aFrame[renderY]));
+						aFrameByteCount[renderY] += (int)str_length("▒");
 					}
 					else if(Index == TILE_UNFREEZE)
 					{
-						str_append(aFrame[renderY], "░", sizeof(aFrame));
-						aFrameByteCount[renderY] += (int)sizeof("░");
+						str_append(aFrame[renderY], "░", sizeof(aFrame[renderY]));
+						aFrameByteCount[renderY] += (int)str_length("░");
 					}
 					else if(Index == TILE_DEATH)
 					{
-						str_append(aFrame[renderY], "x", sizeof(aFrame));
-						aFrameByteCount[renderY] += (int)sizeof("x");
+						str_append(aFrame[renderY], "x", sizeof(aFrame[renderY]));
+						aFrameByteCount[renderY] += (int)str_length("x");
 					}
 					else if(Index == TILE_NOHOOK)
 					{
 						// 🮽
-						str_append(aFrame[renderY], "🮽", sizeof(aFrame));
-						aFrameByteCount[renderY] += (int)sizeof("🮽");
+						str_append(aFrame[renderY], "🮽", sizeof(aFrame[renderY]));
+						aFrameByteCount[renderY] += (int)str_length("🮽");
 					}
 					else
 					{
 						// aFrame[renderY][renderX] = '?';
-						str_append(aFrame[renderY], " ", sizeof(aFrame));
+						str_append(aFrame[renderY], " ", sizeof(aFrame[renderY]));
 						aFrameByteCount[renderY]++;
 						// char aIndex[16];
 						// str_format(aIndex, sizeof(aIndex), "[%d]", Index);
-						// str_append(aFrame[renderY], aIndex, sizeof(aFrame));
+						// str_append(aFrame[renderY], aIndex, sizeof(aFrame[renderY]));
 						// aFrameByteCount[renderY] += str_length(aIndex);
 					}
 					rendered_tiles++;
 					aFrameLetterCount[renderY]++;
+					// aFrame[15][32] = 'o'; // tee in center
 				}
-				// aFrame[15][32] = 'o'; // tee in center
-			}
-			else
-			{
-				str_append(aFrame[renderY], " ", sizeof(aFrame));
-				aFrameLetterCount[renderY]++;
-				aFrameByteCount[renderY]++;
-				// dbg_msg("map", "skip at x: %.2f y: %.2f w: %.2f h: %.2f", x*Scale, y*Scale, Scale, Scale);
+				else
+				{
+					str_append(aFrame[renderY], " ", sizeof(aFrame[renderY]));
+					aFrameLetterCount[renderY]++;
+					aFrameByteCount[renderY]++;
+					// dbg_msg("map", "skip at x: %.2f y: %.2f w: %.2f h: %.2f", x*Scale, y*Scale, Scale, Scale);
+				}
 			}
 			x += pTiles[c].m_Skip;
 		}
