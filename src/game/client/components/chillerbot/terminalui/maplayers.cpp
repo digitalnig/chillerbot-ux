@@ -141,6 +141,7 @@ void CTerminalUI::RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth,
 		return;
 
 	static const int MAX_FRAME_WIDTH = 64;
+	static const int MAX_FRAME_HEIGHT = 32;
 	/*
 		aFrame
 
@@ -150,7 +151,7 @@ void CTerminalUI::RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth,
 		The second dimension is supposed to hold 64 letters max
 		but has more byte size for utf8 characters
 	*/
-	char aFrame[32][MAX_FRAME_WIDTH * 4]; // tee aka center is at 8/16   y/x
+	char aFrame[MAX_FRAME_HEIGHT][MAX_FRAME_WIDTH * 4]; // tee aka center is at 8/16   y/x
 	int aFrameLetterCount[32] = {0}; // TODO: do we need this? Should always be 32
 	int aFrameByteCount[32] = {0};
 	// init with spaces
@@ -212,6 +213,10 @@ void CTerminalUI::RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth,
 			// dbg_msg("x", "mx=%d my=%d renderX=%d renderY=%d", mx, my, renderX, renderY);
 			renderX += 32;
 			renderY += 16;
+			if(renderX >= MAX_FRAME_WIDTH || renderX < 0)
+				continue;
+			if(renderY >= MAX_FRAME_HEIGHT || renderY < 0)
+				continue;
 			if(Index)
 			{
 				// dbg_msg("map", "draw tile=%d at x: %.2f y: %.2f w: %.2f h: %.2f", Index, x*Scale, y*Scale, Scale, Scale);
