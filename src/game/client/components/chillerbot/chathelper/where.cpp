@@ -46,8 +46,8 @@ bool CReplyToPing::Where()
 				continue;
 			vec2 Self = pChar->m_Pos;
 			vec2 Other = Client.m_RenderPos;
-			float distY = abs(Self.y - Other.y);
-			float distX = abs(Self.x - Other.x);
+			float distY = std::abs(Self.y - Other.y);
+			float distX = std::abs(Self.x - Other.x);
 			// instead of some unimaginable long distance number in tiles
 			// prefer saying "finish" or "end" without any relation to the other player
 			// since it does not matter in this case
