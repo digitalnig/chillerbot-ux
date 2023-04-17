@@ -83,6 +83,7 @@ void log_draw()
 
 CTermWindow::CTermWindow()
 {
+	m_aTextTopYellow[0] = '\0';
 	m_aTextTop[0] = '\0';
 	// str_copy(m_aTextTop, "gaming", sizeof(m_aTextTop));
 	m_pCursesWin = nullptr;
@@ -106,6 +107,27 @@ void CTermWindow::SetTextTopLeft(const char *pText)
 		pCursor++;
 	}
 	m_aTextTop[i] = '\0';
+	// str_copy(m_aTextTop, pText, sizeof(m_aTextTop));
+}
+
+void CTermWindow::SetTextTopLeftYellow(const char *pText)
+{
+	unsigned int i = 0;
+	const char *pCursor = pText;
+	while(true)
+	{
+		if(*pCursor == 0)
+			break;
+		if(i + 1 >= sizeof(m_aTextTopYellow))
+			break;
+		// TODO: think of something cool for multi line broadcast
+		if(*pCursor == '\n')
+			m_aTextTopYellow[i++] = ' ';
+		else
+			m_aTextTopYellow[i++] = *pCursor;
+		pCursor++;
+	}
+	m_aTextTopYellow[i] = '\0';
 	// str_copy(m_aTextTop, pText, sizeof(m_aTextTop));
 }
 
@@ -159,12 +181,56 @@ void CTermWindow::DrawBorders()
 		mvwprintw(screen, 0, i, "-");
 		mvwprintw(screen, y - 1, i, "-");
 	}
-	if(m_aTextTop[0] != '\0')
+
+	// title
+	if(x < 8)
+		return;
+
+	int TitleOffset = 1;
+	char aBuf[1024 * 4];
+	if(m_aTextTop[0] != '\0' || m_aTextTopYellow[0] != '\0')
 	{
-		char aBuf[1024 * 4];
-		str_format(aBuf, sizeof(aBuf), "-[ %s ]", m_aTextTop);
-		aBuf[x - 2] = '\0';
-		mvwprintw(screen, 0, 1, "%s", aBuf);
+		mvwprintw(screen, 0, TitleOffset, "%s", "-[ ");
+		TitleOffset += str_length("-[ ");
+	}
+	int AvailableWidth = x - 3;
+	// for poor mans goto
+	while(true)
+	{
+		if(m_aTextTopYellow[0] != '\0')
+		{
+			wattron(g_InputWin.m_pCursesWin, COLOR_PAIR(YELLOW_ON_BLACK));
+			wattron(g_InputWin.m_pCursesWin, A_BOLD);
+			str_copy(aBuf, m_aTextTopYellow, sizeof(aBuf));
+			aBuf[std::clamp(AvailableWidth - TitleOffset, 0, (int)sizeof(aBuf))] = '\0';
+			mvwprintw(screen, 0, TitleOffset, "%s", aBuf);
+			TitleOffset += str_length(aBuf);
+			refresh();
+			wattroff(g_InputWin.m_pCursesWin, A_BOLD);
+			wattroff(g_InputWin.m_pCursesWin, COLOR_PAIR(CYAN_ON_BLACK));
+			if(TitleOffset >= AvailableWidth)
+			{
+				TitleOffset = AvailableWidth - 1;
+				break;
+			}
+		}
+		if(m_aTextTop[0] != '\0')
+		{
+			str_copy(aBuf, m_aTextTop, sizeof(aBuf));
+			aBuf[std::clamp(AvailableWidth - TitleOffset, 0, (int)sizeof(aBuf))] = '\0';
+			mvwprintw(screen, 0, TitleOffset, "%s", aBuf);
+			TitleOffset += str_length(aBuf);
+			if(TitleOffset >= AvailableWidth)
+			{
+				TitleOffset = AvailableWidth - 1;
+				break;
+			}
+		}
+		break;
+	}
+	if(m_aTextTop[0] != '\0' || m_aTextTopYellow[0] != '\0')
+	{
+		mvwprintw(screen, 0, TitleOffset, "%s", " ]-");
 	}
 }
 

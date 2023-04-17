@@ -750,6 +750,7 @@ void CTerminalUI::RefreshConsoleCmdHelpText()
 	m_aCommandHelp[0] = '\0';
 	m_aCommandParams[0] = '\0';
 
+	g_InputWin.SetTextTopLeftYellow("");
 	g_InputWin.SetTextTopLeft("");
 
 	if(m_InputMode == INPUT_REMOTE_CONSOLE || m_InputMode == INPUT_LOCAL_CONSOLE)
@@ -780,7 +781,16 @@ void CTerminalUI::RefreshConsoleCmdHelpText()
 			str_copy(m_aCommandParams, pCommand->m_pParams);
 			// dbg_msg("cmd", "help: %s", m_aCommandHelp);
 			char aBuf[512];
-			str_format(aBuf, sizeof(aBuf), "%s %s - %s", aCurrentCmd, m_aCommandParams, m_aCommandHelp);
+			// str_format(aBuf, sizeof(aBuf), "%s %s - %s", aCurrentCmd, m_aCommandParams, m_aCommandHelp);
+			str_format(
+				aBuf,
+				sizeof(aBuf),
+				"%s%s%s",
+				aCurrentCmd,
+				m_aCommandParams[0] == '\0' ? "" : " ",
+				m_aCommandParams);
+			g_InputWin.SetTextTopLeftYellow(aBuf);
+			str_format(aBuf, sizeof(aBuf), " - %s", m_aCommandHelp);
 			g_InputWin.SetTextTopLeft(aBuf);
 			wclear(g_InputWin.m_pCursesWin);
 			InputDraw();

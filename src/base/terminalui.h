@@ -12,10 +12,12 @@
 
 class CTermWindow
 {
+	char m_aTextTopYellow[128];
 	char m_aTextTop[128];
 
 public:
 	CTermWindow();
+	void SetTextTopLeftYellow(const char *pText);
 	void SetTextTopLeft(const char *pText);
 	void DrawBorders();
 	void DrawBorders(int x, int y, int w, int h);
