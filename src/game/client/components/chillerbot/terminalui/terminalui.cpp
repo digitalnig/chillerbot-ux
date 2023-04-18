@@ -26,6 +26,149 @@ void HandleSigIntTerm(int Param)
 	signal(SIGTERM, SIG_DFL);
 }
 
+bool CTerminalUI::SaveInputToHistoryFile(int Type, const char *pInput)
+{
+	char aType[128];
+	str_copy(aType, GetInputModeSlug(Type), sizeof(aType));
+
+	char aFilename[1024];
+	str_format(aFilename, sizeof(aFilename), "chillerbot/term_hist/%s.txt", aType);
+	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_APPEND, IStorage::TYPE_SAVE);
+	if(!File)
+	{
+		dbg_msg("term-ux", "failed to open history file '%s'", aFilename);
+		return false;
+	}
+
+	io_write(File, pInput, str_length(pInput));
+	io_write_newline(File);
+	io_close(File);
+	return true;
+}
+
+bool CTerminalUI::SaveCurrentHistoryBufferToDisk(int Type)
+{
+	char aType[128];
+	str_copy(aType, GetInputModeSlug(Type), sizeof(aType));
+
+	char aFilename[1024];
+	str_format(aFilename, sizeof(aFilename), "chillerbot/term_hist/%s.txt", aType);
+	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	if(!File)
+	{
+		dbg_msg("term-ux", "failed to open history file '%s'", aFilename);
+		return false;
+	}
+
+	for(int i = INPUT_HISTORY_MAX_LEN; i >= 0; i--)
+	{
+		if(m_aaInputHistory[Type][i][0] == '\0')
+			continue;
+
+		io_write(File, m_aaInputHistory[Type][i], str_length(m_aaInputHistory[Type][i]));
+		io_write_newline(File);
+	}
+	io_close(File);
+	return true;
+}
+
+bool CTerminalUI::LoadInputHistoryFile(int Type)
+{
+	char aType[128];
+	str_copy(aType, GetInputModeSlug(Type), sizeof(aType));
+
+	char aFilename[1024];
+	str_format(aFilename, sizeof(aFilename), "chillerbot/term_hist/%s.txt", aType);
+
+	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_READ, IStorage::TYPE_ALL);
+	if(!File)
+	{
+		// do not bother the user if the file does not exist yet
+		// dbg_msg("term-ux", "failed to read history file '%s'", aFilename);
+		return false;
+	}
+
+	char *pLine;
+	int i = INPUT_HISTORY_MAX_LEN;
+	CLineReader *lr = new CLineReader();
+	lr->Init(File);
+	while((pLine = lr->Get()))
+	{
+		if(pLine[0] == '\0')
+			continue;
+
+		if(i <= 0)
+			break;
+
+		dbg_msg("term-ux", "hist type=%s i=%d max=%d line=%s", aType, i, INPUT_HISTORY_MAX_LEN, pLine);
+		str_copy(m_aaInputHistory[Type][i], pLine, sizeof(m_aaInputHistory[Type][i]));
+		i--;
+	}
+	io_close(File);
+
+	// less than INPUT_HISTORY_MAX_LEN entries
+	// keeps the latest element still empty
+	// which makes the history search think its empty
+	if(i > 0)
+		ShiftHistoryFromHighToLow(Type);
+	return true;
+}
+
+void CTerminalUI::ShiftHistoryFromHighToLow(int Type)
+{
+	// if there is no element at the top we wont shift
+	// to avoid infinite loops
+	// if your hist is starting at offset 2 you did somehting wrong anyways
+	if(m_aaInputHistory[Type][(INPUT_HISTORY_MAX_LEN - 1)][0] == '\0')
+		return;
+	while(m_aaInputHistory[Type][0][0] == '\0')
+		for(int i = 0; i < INPUT_HISTORY_MAX_LEN; i++)
+			str_copy(m_aaInputHistory[Type][i], m_aaInputHistory[Type][i + 1], sizeof(m_aaInputHistory[Type][i]));
+}
+
+void CTerminalUI::OnConsoleInit()
+{
+	Console()->Register("term", "?s[action]?s[arg]", CFGFLAG_CLIENT, ConTerm, this, "Command for the terminal/curses client (see 'term help')");
+}
+
+void CTerminalUI::ConTerm(IConsole::IResult *pResult, void *pUserData)
+{
+	CTerminalUI *pSelf = (CTerminalUI *)pUserData;
+	if(!str_comp(pResult->GetString(0), "help") || pResult->NumArguments() < 1)
+	{
+		dbg_msg("term-ux", "/----------------- term -------------\\");
+		dbg_msg("term-ux", "usage: term ?s[action]?s[arg]");
+		dbg_msg("term-ux", "description: commands for the term-ux client (not for gui clients)");
+		dbg_msg("term-ux", "actions:");
+		dbg_msg("term-ux", "  help - show this help");
+		dbg_msg("term-ux", "  hist <load|save> - load/save history");
+		dbg_msg("term-ux", "\\----------------- term -------------/");
+		return;
+	}
+	if(!str_comp(pResult->GetString(0), "hist"))
+	{
+		if(!str_comp(pResult->GetString(1), "load"))
+		{
+			for(int i = 0; i < NUM_INPUTS; i++)
+				pSelf->LoadInputHistoryFile(i);
+		}
+		else if(!str_comp(pResult->GetString(1), "save"))
+		{
+			for(int i = 0; i < NUM_INPUTS; i++)
+				pSelf->SaveCurrentHistoryBufferToDisk(i);
+		}
+		else
+		{
+			dbg_msg("term-ux", "usage: term hist s[arg]");
+			dbg_msg("term-ux", "args:");
+			dbg_msg("term-ux", " load - load history files for all inputs");
+			dbg_msg("term-ux", " save - save history files for all inputs");
+		}
+		return;
+	}
+	dbg_msg("term-ux", "Invalid term action '%s'", pResult->GetString(0));
+}
+
 void CTerminalUI::DrawAllBorders()
 {
 	g_LogWindow.DrawBorders();
@@ -292,6 +435,10 @@ void CTerminalUI::OnInit()
 	// {
 	// 	gs_Logfile = io_open(g_Config.m_Logfile, IOFLAG_WRITE);
 	// }
+
+	if(g_Config.m_ClTermHistory)
+		for(int i = 0; i < NUM_INPUTS; i++)
+			LoadInputHistoryFile(i);
 }
 
 void CTerminalUI::OnReset()
@@ -302,6 +449,9 @@ void CTerminalUI::OnReset()
 void CTerminalUI::OnShutdown()
 {
 	endwin();
+	if(g_Config.m_ClTermHistory)
+		for(int i = 0; i < NUM_INPUTS; i++)
+			SaveCurrentHistoryBufferToDisk(i);
 }
 
 void CTerminalUI::OnMessage(int MsgType, void *pRawMsg)

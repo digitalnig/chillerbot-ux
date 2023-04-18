@@ -104,6 +104,38 @@ class CTerminalUI : public CComponent
 			return "INVALID";
 		}
 	};
+	const char *GetInputModeSlug(int Mode)
+	{
+		switch(Mode)
+		{
+		case INPUT_OFF:
+			return "off";
+		case INPUT_NORMAL:
+			return "normal_mode";
+		case INPUT_LOCAL_CONSOLE:
+			return "local_console";
+		case INPUT_REMOTE_CONSOLE:
+			return "remote_console";
+		case INPUT_CHAT:
+			return "chat";
+		case INPUT_CHAT_TEAM:
+			return "team_chat";
+		case INPUT_BROWSER_SEARCH:
+			return "input_browser_search";
+		case INPUT_SEARCH_LOCAL_CONSOLE:
+			return "search_local_console";
+		case INPUT_SEARCH_REMOTE_CONSOLE:
+			return "search_remote_console";
+		case INPUT_SEARCH_CHAT:
+			return "search_chat";
+		case INPUT_SEARCH_CHAT_TEAM:
+			return "search_team_chat";
+		case INPUT_SEARCH_BROWSER_SEARCH:
+			return "search_input_browser_search";
+		default:
+			return "invalid";
+		}
+	};
 
 	/*
 		m_aaInputHistory
@@ -132,19 +164,50 @@ class CTerminalUI : public CComponent
 	};
 	void AddInputHistory(int Type, const char *pInput)
 	{
+		// we get a free max hist size
+		// if we dump our buffer into the file at the end
+		// instead of appending on every command
+		// SaveInputToHistoryFile(Type, pInput);
 		for(int i = INPUT_HISTORY_MAX_LEN; i > 0; i--)
 		{
 			str_copy(m_aaInputHistory[Type][i], m_aaInputHistory[Type][i - 1], sizeof(m_aaInputHistory[Type][i]));
 		}
 		str_copy(m_aaInputHistory[Type][0], pInput, sizeof(m_aaInputHistory[Type][0]));
 	}
+	/*
+		Function: ShiftHistoryFromHighToLow
+
+		Expects a history that is not full as in less elements than INPUT_HISTORY_MAX_LEN
+		And they should be at the upper bound of the array
+		since the history search starts from the bottom and stops at the bottom
+		this function fixes the history buffer by shifting the values down until
+		they reach 0
+	*/
+	void ShiftHistoryFromHighToLow(int Type);
+	/*
+		Function: SaveInputToHistoryFile
+
+		Appends a single input to a history file
+		Currently no longer in use and replaced by
+		SaveCurrentHistoryBufferToDisk()
+		because we get a free max hist size
+		if we dump our buffer into the file at the end
+		instead of appending on every command
+	*/
+	bool SaveInputToHistoryFile(int Type, const char *pInput);
+	bool SaveCurrentHistoryBufferToDisk(int Type);
+	bool LoadInputHistoryFile(int Type);
 
 	virtual void OnInit() override;
+	virtual void OnConsoleInit() override;
 	virtual void OnReset() override;
 	virtual void OnRender() override;
 	virtual void OnShutdown() override;
 	virtual void OnStateChange(int NewState, int OldState) override;
 	virtual void OnMessage(int MsgType, void *pRawMsg) override;
+
+	static void ConTerm(IConsole::IResult *pResult, void *pUserData);
+
 	void RenderConnecting();
 	bool RenderDownload();
 	bool RconAuthed() { return Client()->RconAuthed(); }

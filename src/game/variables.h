@@ -44,6 +44,9 @@ MACRO_CONFIG_INT(ClSpikeTracerWalls, cl_spike_tracer_walls, 0, 0, 1, CFGFLAG_CLI
 MACRO_CONFIG_INT(ClPenTest, cl_pentest, 0, 0, 1, CFGFLAG_CLIENT, "penetrate servers to test stability")
 MACRO_CONFIG_STR(ClPenTestFile, cl_pentest_file, 128, "pentest.txt", CFGFLAG_CLIENT, "chat messages file for pentestmode")
 MACRO_CONFIG_INT(ClDbgIntersect, cl_dbg_intersect, 0, 0, 1, CFGFLAG_CLIENT, "Show graphical output for CCollsion::IntersectLine")
+#if defined(CONF_CURSES_CLIENT)
+MACRO_CONFIG_INT(ClTermHistory, cl_term_history, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Persist input history in filesystem for curses client")
+#endif
 
 // skin stealer
 MACRO_CONFIG_INT(ClSkinStealer, cl_skin_stealer, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Automatically adapt skin of close by tees (see also cl_skin_steal_radius)")
