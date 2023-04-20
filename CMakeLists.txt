@@ -2245,6 +2245,7 @@ if(CLIENT)
     components/chillerbot/terminalui/history.cpp
     components/chillerbot/terminalui/maplayers.cpp
     components/chillerbot/terminalui/menus.cpp
+    components/chillerbot/terminalui/scoreboard.cpp
     components/chillerbot/terminalui/terminalui.cpp
     components/chillerbot/terminalui/terminalui.h
     components/chillerbot/terminalui/terminalui_keys.h
