@@ -7,7 +7,7 @@
 #include <base/chillerbot/curses_colors.h>
 #include <base/terminalui.h>
 
-#include <base/chillerbot/pad_utf8.h>
+#include "pad_utf8.h"
 
 #include "terminalui.h"
 

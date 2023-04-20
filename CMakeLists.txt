@@ -959,6 +959,9 @@ set(RUST_SRC
       Cargo.lock
 )
 set(RUST_TARGETS engine_shared)
+
+include("cmake/chillerbot/chillerbot_rust.cmake")
+
 if(NOT CMAKE_OSX_ARCHITECTURES)
   set(RUST_OUTPUTS)
   foreach(rust_target ${RUST_TARGETS})
@@ -1884,8 +1887,6 @@ set_src(BASE GLOB_RECURSE src/base
   bezier.h
   chillerbot/curses_colors.cpp
   chillerbot/curses_colors.h
-  chillerbot/pad_utf8.cpp
-  chillerbot/pad_utf8.h
   chillerbot/terminalui_logger.h
   color.h
   curses.h
@@ -2247,6 +2248,8 @@ if(CLIENT)
     components/chillerbot/terminalui/history.cpp
     components/chillerbot/terminalui/maplayers.cpp
     components/chillerbot/terminalui/menus.cpp
+    components/chillerbot/terminalui/pad_utf8.cpp
+    components/chillerbot/terminalui/pad_utf8.h
     components/chillerbot/terminalui/scoreboard.cpp
     components/chillerbot/terminalui/terminalui.cpp
     components/chillerbot/terminalui/terminalui.h
@@ -2403,6 +2406,7 @@ if(CLIENT)
 
     ${TARGET_STEAMAPI}
     rust_engine_shared
+    rust_chillerbot_rs
 
     ${PLATFORM_CLIENT_LIBS}
     ${LIBS}
@@ -2441,6 +2445,7 @@ if(CLIENT)
       $<TARGET_OBJECTS:engine-shared>
       $<TARGET_OBJECTS:game-shared>
       $<TARGET_OBJECTS:rust-bridge-shared>
+      $<TARGET_OBJECTS:rust-bridge-chillerbot>
     )
   else()
     add_executable(game-client WIN32
@@ -2452,6 +2457,7 @@ if(CLIENT)
       $<TARGET_OBJECTS:engine-shared>
       $<TARGET_OBJECTS:game-shared>
       $<TARGET_OBJECTS:rust-bridge-shared>
+      $<TARGET_OBJECTS:rust-bridge-chillerbot>
     )
   endif()
   set_property(TARGET game-client
@@ -2631,6 +2637,7 @@ if(SERVER)
     ${MYSQL_LIBRARIES}
     ${TARGET_ANTIBOT}
     rust_engine_shared
+    rust_chillerbot_rs
 
     ${LIBS}
   )
@@ -2643,6 +2650,7 @@ if(SERVER)
     $<TARGET_OBJECTS:engine-shared>
     $<TARGET_OBJECTS:game-shared>
     $<TARGET_OBJECTS:rust-bridge-shared>
+    $<TARGET_OBJECTS:rust-bridge-chillerbot>
   )
   set_property(TARGET game-server
       PROPERTY OUTPUT_NAME ${SERVER_EXECUTABLE}
@@ -2880,6 +2888,7 @@ add_library(rust_test STATIC EXCLUDE_FROM_ALL
   $<TARGET_OBJECTS:engine-shared>
   $<TARGET_OBJECTS:game-shared>
   $<TARGET_OBJECTS:rust-bridge-shared>
+  $<TARGET_OBJECTS:rust-bridge-chillerbot>
   ${DEPS}
 )
 
@@ -3406,9 +3415,6 @@ foreach(target ${TARGETS_OWN})
   if(HEADLESS_CLIENT)
     target_compile_definitions(${target} PRIVATE CONF_HEADLESS_CLIENT)
   endif()
-  if(CURSES_CLIENT)
-    target_compile_definitions(${target} PRIVATE CONF_CURSES_CLIENT)
-  endif()
   if(MYSQL)
     target_compile_definitions(${target} PRIVATE CONF_MYSQL)
     target_include_directories(${target} SYSTEM PRIVATE ${MYSQL_INCLUDE_DIRS})
@@ -3438,6 +3444,8 @@ foreach(target ${TARGETS_OWN})
    target_compile_definitions(${target} PRIVATE CONF_WEBASM)
   endif()
 endforeach()
+
+include("cmake/chillerbot/targets.cmake")
 
 foreach(target ${TARGETS_DEP})
   if(MSVC)

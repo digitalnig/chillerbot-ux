@@ -9,7 +9,7 @@
 
 #include <csignal>
 
-#include <base/chillerbot/pad_utf8.h>
+#include "pad_utf8.h"
 
 #include "terminalui.h"
 
@@ -143,8 +143,10 @@ void CTerminalUI::RenderServerList()
 		}
 
 		str_pad_right_utf8(aName, sizeof(aName), 60);
+		str_pad_right_utf8(aMap, sizeof(aMap), 20);
+		str_pad_right_utf8(aPlayers, sizeof(aPlayers), 16);
 		str_format(aBuf, sizeof(aBuf),
-			"%s | %-20s | %-16s",
+			"%s | %s | %s",
 			aName,
 			aMap,
 			aPlayers);
@@ -152,12 +154,14 @@ void CTerminalUI::RenderServerList()
 		if(m_SelectedServer == i)
 		{
 			wattron(g_LogWindow.m_pCursesWin, A_BOLD);
-			str_format(aLine, sizeof(aLine), "<%-*s>", width - 2, aBuf);
+			str_pad_right_utf8(aBuf, sizeof(aBuf), width - 2);
+			str_format(aLine, sizeof(aLine), "<%s>", aBuf);
 		}
 		else
 		{
 			wattroff(g_LogWindow.m_pCursesWin, A_BOLD);
-			str_format(aLine, sizeof(aLine), "|%-*s|", width - 2, aBuf);
+			str_pad_right_utf8(aBuf, sizeof(aBuf), width - 2);
+			str_format(aLine, sizeof(aLine), "|%s|", aBuf);
 		}
 		mvwprintw(g_LogWindow.m_pCursesWin, offY + k, offX, "%s", aLine);
 	}
