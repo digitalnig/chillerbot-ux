@@ -168,7 +168,7 @@ class CTerminalUI : public CComponent
 		// if we dump our buffer into the file at the end
 		// instead of appending on every command
 		// SaveInputToHistoryFile(Type, pInput);
-		for(int i = INPUT_HISTORY_MAX_LEN; i > 0; i--)
+		for(int i = (INPUT_HISTORY_MAX_LEN - 1); i > 0; i--)
 		{
 			str_copy(m_aaInputHistory[Type][i], m_aaInputHistory[Type][i - 1], sizeof(m_aaInputHistory[Type][i]));
 		}

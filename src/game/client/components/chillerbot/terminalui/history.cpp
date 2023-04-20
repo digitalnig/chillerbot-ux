@@ -45,7 +45,7 @@ bool CTerminalUI::SaveCurrentHistoryBufferToDisk(int Type)
 		return false;
 	}
 
-	for(int i = INPUT_HISTORY_MAX_LEN; i >= 0; i--)
+	for(int i = (INPUT_HISTORY_MAX_LEN - 1); i >= 0; i--)
 	{
 		if(m_aaInputHistory[Type][i][0] == '\0')
 			continue;
@@ -74,7 +74,7 @@ bool CTerminalUI::LoadInputHistoryFile(int Type)
 	}
 
 	char *pLine;
-	int i = INPUT_HISTORY_MAX_LEN;
+	int i = (INPUT_HISTORY_MAX_LEN - 1);
 	CLineReader *lr = new CLineReader();
 	lr->Init(File);
 	while((pLine = lr->Get()))
