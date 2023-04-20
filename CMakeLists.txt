@@ -1884,6 +1884,8 @@ set_src(BASE GLOB_RECURSE src/base
   bezier.h
   chillerbot/curses_colors.cpp
   chillerbot/curses_colors.h
+  chillerbot/pad_utf8.cpp
+  chillerbot/pad_utf8.h
   chillerbot/terminalui_logger.h
   color.h
   curses.h

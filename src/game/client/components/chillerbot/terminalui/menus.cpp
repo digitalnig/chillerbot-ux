@@ -9,6 +9,8 @@
 
 #include <csignal>
 
+#include <base/chillerbot/pad_utf8.h>
+
 #include "terminalui.h"
 
 #if defined(CONF_CURSES_CLIENT)
@@ -124,7 +126,7 @@ void CTerminalUI::RenderServerList()
 		// dbg_msg("serverbrowser", "server %s", pItem->m_aName);
 		char aLine[1024];
 		char aBuf[1024];
-		char aName[64];
+		char aName[512];
 		char aMap[64];
 		char aPlayers[16];
 		if(m_SelectedServer == i)
@@ -139,13 +141,10 @@ void CTerminalUI::RenderServerList()
 			str_copy(aMap, pItem->m_aMap, sizeof(aMap));
 			str_format(aPlayers, sizeof(aPlayers), "%d/%d", pItem->m_NumPlayers, pItem->m_MaxPlayers);
 		}
-		aName[60] = '\0';
-		int NameSize;
-		int NameCount;
-		str_utf8_stats(aName, 60, 60, &NameSize, &NameCount);
+
+		str_pad_right_utf8(aName, sizeof(aName), 60);
 		str_format(aBuf, sizeof(aBuf),
-			"%-*s | %-20s | %-16s",
-			60 + ((NameSize - NameCount) / 2),
+			"%s | %-20s | %-16s",
 			aName,
 			aMap,
 			aPlayers);
@@ -153,12 +152,12 @@ void CTerminalUI::RenderServerList()
 		if(m_SelectedServer == i)
 		{
 			wattron(g_LogWindow.m_pCursesWin, A_BOLD);
-			str_format(aLine, sizeof(aLine), "<%-*s>", (width - 2) + ((NameSize - NameCount) / 2), aBuf);
+			str_format(aLine, sizeof(aLine), "<%-*s>", width - 2, aBuf);
 		}
 		else
 		{
 			wattroff(g_LogWindow.m_pCursesWin, A_BOLD);
-			str_format(aLine, sizeof(aLine), "|%-*s|", (width - 2) + ((NameSize - NameCount) / 2), aBuf);
+			str_format(aLine, sizeof(aLine), "|%-*s|", width - 2, aBuf);
 		}
 		mvwprintw(g_LogWindow.m_pCursesWin, offY + k, offX, "%s", aLine);
 	}
