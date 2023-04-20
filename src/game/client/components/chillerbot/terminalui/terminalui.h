@@ -218,6 +218,13 @@ class CTerminalUI : public CComponent
 	void InputDraw();
 	int CursesTick();
 	void ResetCompletion();
+	/*
+		Function: ClearCompletionPreview
+
+		Clears out the greyed out text that appears when tab completing
+		console commands.
+	*/
+	void ClearCompletionPreview() { m_aCompletionPreview[0] = '\0'; }
 	void SetServerBrowserPage(int NewPage);
 	void RenderPopup();
 	bool IsSearchInputMode() { return m_InputMode > NUM_INPUTS; }

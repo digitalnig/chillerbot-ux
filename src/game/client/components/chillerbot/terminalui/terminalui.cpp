@@ -627,8 +627,16 @@ int CTerminalUI::GetInput()
 		else if(c == KEY_BACKSPACE || c == 127) // delete
 		{
 			ResetCompletion();
-			if(str_length(g_aInputStr) < 1)
-				return 0;
+			int InputLen = str_length(g_aInputStr);
+			if(InputLen < 2)
+			{
+				// deleting until the start
+				// is a clear indication of not wanting to
+				// see tab completion preview anymore
+				ClearCompletionPreview();
+				if(InputLen < 1)
+					return 0;
+			}
 			char aRight[1024];
 			char aLeft[1024];
 
@@ -684,6 +692,8 @@ int CTerminalUI::GetInput()
 				{
 					str_copy(aRight, g_aInputStr + m_InputCursor, sizeof(aRight));
 					str_copy(g_aInputStr, aRight, sizeof(g_aInputStr));
+					if(str_length(g_aInputStr) < 2)
+						ClearCompletionPreview();
 					wclear(g_InputWin.m_pCursesWin);
 					InputDraw();
 					g_InputWin.DrawBorders();
@@ -702,6 +712,8 @@ int CTerminalUI::GetInput()
 				else
 				{
 					g_aInputStr[m_InputCursor] = '\0';
+					if(str_length(g_aInputStr) < 2)
+						ClearCompletionPreview();
 					wclear(g_InputWin.m_pCursesWin);
 					InputDraw();
 					g_InputWin.DrawBorders();
@@ -757,6 +769,9 @@ int CTerminalUI::GetInput()
 			ResetCompletion();
 			char aKey[8];
 			str_format(aKey, sizeof(aKey), "%c", c);
+			// pressing space clears completion suggestions
+			if(c == ' ')
+				ClearCompletionPreview();
 			// str_append(g_aInputStr, aKey, sizeof(g_aInputStr));
 			char aRight[1024];
 			char aLeft[1024];
@@ -862,7 +877,7 @@ void CTerminalUI::CompleteCommands(bool IsReverse)
 
 	// dbg_msg("complete", "buffer='%s' index=%d count=%d", m_aCompletionBuffer, m_CompletionChosen, m_CompletionEnumerationCount);
 
-	m_aCompletionPreview[0] = '\0';
+	ClearCompletionPreview();
 	m_CompletionEnumerationCount = 0;
 	if(IsReverse)
 		m_CompletionChosen--;
