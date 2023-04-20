@@ -2242,6 +2242,7 @@ if(CLIENT)
     components/chillerbot/remotecontrol.h
     components/chillerbot/stresser.cpp
     components/chillerbot/stresser.h
+    components/chillerbot/terminalui/history.cpp
     components/chillerbot/terminalui/maplayers.cpp
     components/chillerbot/terminalui/menus.cpp
     components/chillerbot/terminalui/terminalui.cpp
