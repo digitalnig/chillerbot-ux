@@ -205,6 +205,7 @@ class CTerminalUI : public CComponent
 	virtual void OnShutdown() override;
 	virtual void OnStateChange(int NewState, int OldState) override;
 	virtual void OnMessage(int MsgType, void *pRawMsg) override;
+	virtual void OnMapLoad() override;
 
 	static void ConTerm(IConsole::IResult *pResult, void *pUserData);
 
@@ -333,6 +334,8 @@ class CTerminalUI : public CComponent
 	bool IsPlayerInfoAvailable(int ClientID) const;
 	int m_NextRender; // TODO: remove
 	bool m_RenderGame;
+	char m_aTileSolidTexture[16];
+	char m_aTileUnhookTexture[16];
 
 public:
 	int OnKeyPress(int Key, WINDOW *pWin);

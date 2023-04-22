@@ -199,6 +199,8 @@ int CTerminalUI::CursesTick()
 
 void CTerminalUI::OnInit()
 {
+	str_copy(m_aTileSolidTexture, "█", sizeof(m_aTileSolidTexture));
+	str_copy(m_aTileUnhookTexture, "▓", sizeof(m_aTileUnhookTexture));
 	m_UpdateCompletionBuffer = true;
 	m_LastInputMode = -1;
 	m_aCompletionPreview[0] = '\0';
@@ -269,6 +271,22 @@ void CTerminalUI::OnShutdown()
 	if(g_Config.m_ClTermHistory)
 		for(int i = 0; i < NUM_INPUTS; i++)
 			SaveCurrentHistoryBufferToDisk(i);
+}
+
+void CTerminalUI::OnMapLoad()
+{
+	str_copy(m_aTileSolidTexture, "█", sizeof(m_aTileSolidTexture));
+	str_copy(m_aTileUnhookTexture, "▓", sizeof(m_aTileUnhookTexture));
+	if(!str_comp(Client()->GetCurrentMap(), "Multimap") ||
+		!str_comp(Client()->GetCurrentMap(), "Multeasymap"))
+	{
+		str_copy(m_aTileSolidTexture, "🟩", sizeof(m_aTileSolidTexture));
+	}
+	else if(!str_comp(Client()->GetCurrentMap(), "Copy Love Box") ||
+		!str_comp(Client()->GetCurrentMap(), "Copy Love Box 2s"))
+	{
+		str_copy(m_aTileUnhookTexture, "🟦", sizeof(m_aTileUnhookTexture));
+	}
 }
 
 void CTerminalUI::OnMessage(int MsgType, void *pRawMsg)

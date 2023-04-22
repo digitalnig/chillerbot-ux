@@ -231,8 +231,8 @@ void CTerminalUI::RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth,
 					{
 						// TODO: use ▆
 						// aFrame[renderY][renderX] = '#';
-						str_append(aFrame[renderY], "█", sizeof(aFrame[renderY]));
-						aFrameByteCount[renderY] += (int)str_length("█");
+						str_append(aFrame[renderY], m_aTileSolidTexture, sizeof(aFrame[renderY]));
+						aFrameByteCount[renderY] += (int)str_length(m_aTileSolidTexture);
 					}
 					else if(Index == TILE_FREEZE)
 					{
@@ -253,8 +253,13 @@ void CTerminalUI::RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth,
 					else if(Index == TILE_NOHOOK)
 					{
 						// 🮽
-						str_append(aFrame[renderY], "▓", sizeof(aFrame[renderY]));
-						aFrameByteCount[renderY] += (int)str_length("▓");
+						str_append(aFrame[renderY], m_aTileUnhookTexture, sizeof(aFrame[renderY]));
+						aFrameByteCount[renderY] += (int)str_length(m_aTileUnhookTexture);
+					}
+					else if(Index == TILE_THROUGH || Index == TILE_THROUGH_CUT || Index == TILE_THROUGH_ALL || Index == TILE_THROUGH_DIR)
+					{
+						str_append(aFrame[renderY], "🔳", sizeof(aFrame[renderY]));
+						aFrameByteCount[renderY] += (int)str_length("🔳");
 					}
 					else
 					{
