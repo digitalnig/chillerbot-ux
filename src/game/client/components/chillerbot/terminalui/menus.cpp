@@ -181,11 +181,11 @@ void CTerminalUI::RenderServerList()
 		}
 		else
 		{
-			wattroff(g_LogWindow.m_pCursesWin, A_BOLD);
 			str_pad_right_utf8(aBuf, sizeof(aBuf), width - 2);
 			str_format(aLine, sizeof(aLine), "|%s|", aBuf);
 		}
 		mvwprintw(g_LogWindow.m_pCursesWin, offY + k, offX, "%s", aLine);
+		wattroff(g_LogWindow.m_pCursesWin, A_BOLD);
 	}
 }
 
