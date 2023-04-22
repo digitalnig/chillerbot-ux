@@ -329,6 +329,8 @@ class CTerminalUI : public CComponent
 
 	// render in game
 	void RenderGame();
+	void RenderItems();
+	void RenderPickup(const CNetObj_Pickup *pPrev, const CNetObj_Pickup *pCurrent, bool IsPredicted = false);
 	void RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth, int WinHeight, int w, int h, float Scale, vec4 Color, int RenderFlags, int ColorEnv, int ColorEnvOffset);
 	void RenderPlayers(int offX, int offY, int w, int h);
 	bool IsPlayerInfoAvailable(int ClientID) const;

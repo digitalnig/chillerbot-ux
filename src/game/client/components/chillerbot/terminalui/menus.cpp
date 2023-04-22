@@ -9,8 +9,8 @@
 
 #include <csignal>
 
-#include <rust-bridge-chillerbot/unicode.h>
 #include "pad_utf8.h"
+#include <rust-bridge-chillerbot/unicode.h>
 
 #include "terminalui.h"
 
@@ -129,6 +129,8 @@ void CTerminalUI::RenderServerList()
 		static const int NAME_COL_SIZE = 65;
 		static const int MAP_COL_SIZE = 24;
 		static const int PLAYER_COL_SIZE = 16;
+
+		// TODO: add country column using these emojis https://emojipedia.org/flags/
 
 		char aLine[1024];
 		char aBuf[1024];

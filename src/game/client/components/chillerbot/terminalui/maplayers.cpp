@@ -3,6 +3,7 @@
 #include <engine/client/serverbrowser.h>
 #include <game/client/components/controls.h>
 #include <game/client/gameclient.h>
+#include <game/client/prediction/entities/pickup.h>
 
 #include <base/terminalui.h>
 
@@ -19,6 +20,70 @@ inline bool CTerminalUI::IsPlayerInfoAvailable(int ClientID) const
 	const void *pPrevInfo = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_PLAYERINFO, ClientID);
 	const void *pInfo = Client()->SnapFindItem(IClient::SNAP_CURRENT, NETOBJTYPE_PLAYERINFO, ClientID);
 	return pPrevInfo && pInfo;
+}
+
+void CTerminalUI::RenderPickup(const CNetObj_Pickup *pPrev, const CNetObj_Pickup *pCurrent, bool IsPredicted)
+{
+	float IntraTick = IsPredicted ? Client()->PredIntraGameTick(g_Config.m_ClDummy) : Client()->IntraGameTick(g_Config.m_ClDummy);
+	vec2 Pos = mix(vec2(pPrev->m_X, pPrev->m_Y), vec2(pCurrent->m_X, pCurrent->m_Y), IntraTick);
+	if(pCurrent->m_Type == POWERUP_HEALTH)
+	{
+		// TODO: render this ❤️
+	}
+}
+
+void CTerminalUI::RenderItems()
+{
+	int SwitcherTeam = m_pClient->SwitchStateTeam();
+	bool UsePredicted = GameClient()->Predict() && GameClient()->AntiPingGunfire();
+	auto &aSwitchers = GameClient()->Switchers();
+	bool IsSuper = m_pClient->IsLocalCharSuper();
+	int Ticks = Client()->GameTick(g_Config.m_ClDummy) % Client()->GameTickSpeed();
+	bool BlinkingPickup = (Ticks % 22) < 4;
+	if(UsePredicted)
+	{
+		for(auto *pPickup = (CPickup *)GameClient()->m_PredictedWorld.FindFirst(CGameWorld::ENTTYPE_PICKUP); pPickup; pPickup = (CPickup *)pPickup->NextEntity())
+		{
+			if(!IsSuper && pPickup->m_Layer == LAYER_SWITCH && pPickup->m_Number > 0 && pPickup->m_Number < (int)aSwitchers.size() && !aSwitchers[pPickup->m_Number].m_aStatus[SwitcherTeam] && BlinkingPickup)
+				continue;
+
+			if(pPickup->InDDNetTile())
+			{
+				if(auto *pPrev = (CPickup *)GameClient()->m_PrevPredictedWorld.GetEntity(pPickup->GetID(), CGameWorld::ENTTYPE_PICKUP))
+				{
+					CNetObj_Pickup Data, Prev;
+					pPickup->FillInfo(&Data);
+					pPrev->FillInfo(&Prev);
+					RenderPickup(&Prev, &Data, true);
+				}
+			}
+		}
+	}
+	for(const CSnapEntities &Ent : m_pClient->SnapEntities())
+	{
+		const IClient::CSnapItem Item = Ent.m_Item;
+		const void *pData = Ent.m_pData;
+		const CNetObj_EntityEx *pEntEx = Ent.m_pDataEx;
+
+		bool Inactive = false;
+		if(pEntEx)
+			Inactive = !IsSuper && pEntEx->m_SwitchNumber > 0 && pEntEx->m_SwitchNumber < (int)aSwitchers.size() && !aSwitchers[pEntEx->m_SwitchNumber].m_aStatus[SwitcherTeam];
+
+		if(Item.m_Type == NETOBJTYPE_PICKUP)
+		{
+			if(Inactive && BlinkingPickup)
+				continue;
+			if(UsePredicted)
+			{
+				auto *pPickup = (CPickup *)GameClient()->m_GameWorld.FindMatch(Item.m_ID, Item.m_Type, pData);
+				if(pPickup && pPickup->InDDNetTile())
+					continue;
+			}
+			const void *pPrev = Client()->SnapFindItem(IClient::SNAP_PREV, Item.m_Type, Item.m_ID);
+			if(pPrev)
+				RenderPickup((const CNetObj_Pickup *)pPrev, (const CNetObj_Pickup *)pData);
+		}
+	}
 }
 
 void CTerminalUI::RenderGame()
@@ -55,8 +120,9 @@ void CTerminalUI::RenderGame()
 		RenderTilemap(pTiles, offX, offY, width, height, pTMap->m_Width, pTMap->m_Height, 32.0f, Color, 0,
 			pTMap->m_ColorEnv, pTMap->m_ColorEnvOffset);
 		RenderPlayers(offX, offY, pTMap->m_Width, pTMap->m_Height);
-		wrefresh(g_GameWindow.m_pCursesWin);
 	}
+	RenderItems();
+	wrefresh(g_GameWindow.m_pCursesWin);
 }
 
 void CTerminalUI::RenderPlayers(int offX, int offY, int w, int h)
