@@ -253,8 +253,8 @@ void CTerminalUI::RenderTilemap(CTile *pTiles, int offX, int offY, int WinWidth,
 					else if(Index == TILE_NOHOOK)
 					{
 						// 🮽
-						str_append(aFrame[renderY], "🮽", sizeof(aFrame[renderY]));
-						aFrameByteCount[renderY] += (int)str_length("🮽");
+						str_append(aFrame[renderY], "▓", sizeof(aFrame[renderY]));
+						aFrameByteCount[renderY] += (int)str_length("▓");
 					}
 					else
 					{
