@@ -9,6 +9,7 @@
 
 #include <csignal>
 
+#include <rust-bridge-chillerbot/unicode.h>
 #include "pad_utf8.h"
 
 #include "terminalui.h"
@@ -124,6 +125,11 @@ void CTerminalUI::RenderServerList()
 			continue;
 
 		// dbg_msg("serverbrowser", "server %s", pItem->m_aName);
+
+		static const int NAME_COL_SIZE = 65;
+		static const int MAP_COL_SIZE = 24;
+		static const int PLAYER_COL_SIZE = 16;
+
 		char aLine[1024];
 		char aBuf[1024];
 		char aName[512];
@@ -144,15 +150,22 @@ void CTerminalUI::RenderServerList()
 
 		// the name buffer in serverbrowser is 64
 		// so this should never overflow
-		str_pad_right_utf8(aName, sizeof(aName), 65);
+		str_pad_right_utf8(aName, sizeof(aName), NAME_COL_SIZE);
 
 		// MAX_MAP_LENGTH is 128
 		// so this could overflow
-		str_pad_right_utf8(aMap, sizeof(aMap), 20);
+		int MapLen = str_width_unicode(aMap);
+		if(MapLen >= MAP_COL_SIZE)
+		{
+			aMap[MAP_COL_SIZE - 2] = '\0';
+			str_format(aBuf, sizeof(aBuf), "%s..", aMap);
+			str_copy(aMap, aBuf, sizeof(aMap));
+		}
+		str_pad_right_utf8(aMap, sizeof(aMap), MAP_COL_SIZE);
 
 		// 999/999 players is 7 characters
 		// so this should be safe
-		str_pad_right_utf8(aPlayers, sizeof(aPlayers), 16);
+		str_pad_right_utf8(aPlayers, sizeof(aPlayers), PLAYER_COL_SIZE);
 
 		str_format(aBuf, sizeof(aBuf),
 			" %s | %s | %s",
