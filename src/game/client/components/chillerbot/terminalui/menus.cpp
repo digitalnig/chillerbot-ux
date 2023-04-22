@@ -142,11 +142,20 @@ void CTerminalUI::RenderServerList()
 			str_format(aPlayers, sizeof(aPlayers), "%d/%d", pItem->m_NumPlayers, pItem->m_MaxPlayers);
 		}
 
-		str_pad_right_utf8(aName, sizeof(aName), 60);
+		// the name buffer in serverbrowser is 64
+		// so this should never overflow
+		str_pad_right_utf8(aName, sizeof(aName), 65);
+
+		// MAX_MAP_LENGTH is 128
+		// so this could overflow
 		str_pad_right_utf8(aMap, sizeof(aMap), 20);
+
+		// 999/999 players is 7 characters
+		// so this should be safe
 		str_pad_right_utf8(aPlayers, sizeof(aPlayers), 16);
+
 		str_format(aBuf, sizeof(aBuf),
-			"%s | %s | %s",
+			" %s | %s | %s",
 			aName,
 			aMap,
 			aPlayers);
