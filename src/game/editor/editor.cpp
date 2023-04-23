@@ -6663,8 +6663,8 @@ void CEditorMap::Clean()
 	DeleteAll(m_vpImages);
 	DeleteAll(m_vpSounds);
 
-	if(g_Config.m_ClSaveMapInfo)
-		m_MapInfo.Reset();
+	m_MapInfo.Reset();
+	m_MapInfoTmp.Reset();
 
 	m_vSettings.clear();
 
@@ -6860,7 +6860,7 @@ void CEditor::OnUpdate()
 		Reset();
 	}
 
-	for(int i = 0; i < Input()->NumEvents(); i++)
+	for(size_t i = 0; i < Input()->NumEvents(); i++)
 		UI()->OnInput(Input()->GetEvent(i));
 
 	// handle cursor movement
