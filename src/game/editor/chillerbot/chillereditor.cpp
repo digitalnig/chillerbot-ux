@@ -144,7 +144,7 @@ void CChillerEditor::DoMapEditor()
 		}
 		// handle key presses
 		IInput::CEvent e = m_pEditor->Input()->GetEvent(0);
-		if(!m_pEditor->Input()->IsEventValid(&e))
+		if(!m_pEditor->Input()->IsEventValid(e))
 			return;
 		if(m_pEditor->Input()->KeyPress(e.m_Key))
 			return;

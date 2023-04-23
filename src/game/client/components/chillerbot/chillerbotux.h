@@ -117,7 +117,7 @@ class CChillerBotUX : public CComponent
 	virtual void OnInit() override;
 	virtual void OnShutdown() override;
 	virtual bool OnCursorMove(float x, float y, IInput::ECursorType CursorType) override;
-	virtual bool OnInput(IInput::CEvent e) override;
+	virtual bool OnInput(const IInput::CEvent &Event) override;
 
 	static void ConAfk(IConsole::IResult *pResult, void *pUserData);
 	static void ConCampHack(IConsole::IResult *pResult, void *pUserData);

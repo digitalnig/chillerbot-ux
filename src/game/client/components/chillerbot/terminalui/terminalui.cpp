@@ -42,8 +42,9 @@ void CTerminalUI::ConTerm(IConsole::IResult *pResult, void *pUserData)
 		dbg_msg("term-ux", "usage: term ?s[action]?s[arg]");
 		dbg_msg("term-ux", "description: commands for the term-ux client (not for gui clients)");
 		dbg_msg("term-ux", "actions:");
-		dbg_msg("term-ux", "  help - show this help");
-		dbg_msg("term-ux", "  hist <load|save> - load/save history");
+		dbg_msg("term-ux", "  help                show this help");
+		dbg_msg("term-ux", "  visual <on|off>     show this help");
+		dbg_msg("term-ux", "  hist <load|save>    load/save history");
 		dbg_msg("term-ux", "\\----------------- term -------------/");
 		return;
 	}
@@ -66,9 +67,20 @@ void CTerminalUI::ConTerm(IConsole::IResult *pResult, void *pUserData)
 			dbg_msg("term-ux", " load - load history files for all inputs");
 			dbg_msg("term-ux", " save - save history files for all inputs");
 		}
-		return;
 	}
-	dbg_msg("term-ux", "Invalid term action '%s'", pResult->GetString(0));
+	else if(!str_comp(pResult->GetString(0), "visual"))
+	{
+		bool TurnOn = !str_comp(pResult->GetString(1), "on") || !str_comp(pResult->GetString(1), "1");
+		if(TurnOn == pSelf->m_RenderGame)
+			dbg_msg("term-ux", "visual mode is already %s", TurnOn ? "on" : "off");
+		else
+			dbg_msg("term-ux", "visual mode is now %s", TurnOn ? "on" : "off");
+		pSelf->m_RenderGame = TurnOn;
+	}
+	else
+	{
+		dbg_msg("term-ux", "Invalid term action '%s'", pResult->GetString(0));
+	}
 }
 
 void CTerminalUI::DrawAllBorders()

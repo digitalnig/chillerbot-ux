@@ -484,10 +484,10 @@ bool CChillerBotUX::OnCursorMove(float x, float y, IInput::ECursorType CursorTyp
 	return false;
 }
 
-bool CChillerBotUX::OnInput(IInput::CEvent e)
+bool CChillerBotUX::OnInput(const IInput::CEvent &Event)
 {
 	ReturnFromAfk();
-	SelectCampArea(e.m_Key);
+	SelectCampArea(Event.m_Key);
 	return false;
 }
 

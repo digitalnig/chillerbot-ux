@@ -25,7 +25,7 @@ inline bool CTerminalUI::IsPlayerInfoAvailable(int ClientID) const
 void CTerminalUI::RenderPickup(const CNetObj_Pickup *pPrev, const CNetObj_Pickup *pCurrent, bool IsPredicted)
 {
 	float IntraTick = IsPredicted ? Client()->PredIntraGameTick(g_Config.m_ClDummy) : Client()->IntraGameTick(g_Config.m_ClDummy);
-	vec2 Pos = mix(vec2(pPrev->m_X, pPrev->m_Y), vec2(pCurrent->m_X, pCurrent->m_Y), IntraTick);
+	// vec2 Pos = mix(vec2(pPrev->m_X, pPrev->m_Y), vec2(pCurrent->m_X, pCurrent->m_Y), IntraTick);
 	if(pCurrent->m_Type == POWERUP_HEALTH)
 	{
 		// TODO: render this ❤️
