@@ -25,10 +25,29 @@ public:
 	WINDOW *m_pCursesWin;
 };
 
+class CInputWindow : public CTermWindow
+{
+public:
+	CInputWindow()
+	{
+		CTermWindow();
+		m_Search = false;
+		m_CurserOffset = 0;
+	}
+	bool m_Search;
+	int m_CurserOffset;
+	void SetSearch(bool Search)
+	{
+		m_Search = Search;
+		m_CurserOffset = Search ? 1 : 0;
+	}
+	void DrawBorders();
+};
+
 extern CTermWindow g_LogWindow;
 extern CTermWindow g_GameWindow;
 extern CTermWindow g_InfoWin;
-extern CTermWindow g_InputWin;
+extern CInputWindow g_InputWin;
 
 extern int g_ParentX;
 extern int g_ParentY;

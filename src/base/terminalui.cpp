@@ -14,7 +14,7 @@ static CCursesLogMsg gs_aChillerLogger[CHILLER_LOGGER_HEIGHT];
 CTermWindow g_LogWindow;
 CTermWindow g_GameWindow;
 CTermWindow g_InfoWin;
-CTermWindow g_InputWin;
+CInputWindow g_InputWin;
 
 int g_ParentX;
 int g_ParentY;
@@ -276,6 +276,18 @@ void CTermWindow::DrawBorders()
 		mvwprintw(screen, 0, TitleOffset, "%s", " ]-");
 	}
 }
+
+void CInputWindow::DrawBorders()
+{
+	CTermWindow::DrawBorders();
+
+	if(m_Search)
+	{
+		WINDOW *screen = m_pCursesWin;
+		mvwprintw(screen, 1, 0, "%s", "🔍");
+	}
+}
+
 
 void curses_log_push(const char *pStr, const SLOG_COLOR *pColor)
 {

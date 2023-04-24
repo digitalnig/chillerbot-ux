@@ -367,6 +367,7 @@ void CTerminalUI::OnRender()
 
 void CTerminalUI::OnInputModeChange(int Old, int New)
 {
+	g_InputWin.SetSearch(New == INPUT_BROWSER_SEARCH);
 	ResetCompletion();
 	g_aInputStr[0] = '\0';
 	m_InputCursor = 0;
@@ -990,7 +991,7 @@ void CTerminalUI::ResetCompletion()
 
 void CTerminalUI::UpdateCursor()
 {
-	int Offset = 0;
+	int Offset = g_InputWin.m_CurserOffset;
 	if(IsSearchInputMode())
 		Offset = str_length("(reverse-i-search)`");
 	wmove(g_InputWin.m_pCursesWin, 1, m_InputCursor + 1 + Offset);
