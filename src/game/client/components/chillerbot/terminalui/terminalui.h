@@ -138,6 +138,18 @@ class CTerminalUI : public CComponent
 	};
 
 	/*
+		m_LockKeyUntilRelease
+
+		ncurses keycode of the locked key
+		its input will be ignored until it is released
+
+		the use case is that if for example a enter is used to submit
+		a search string the enter is not also sent to a the new context
+		which is then the search result.
+	*/
+	int m_LockKeyUntilRelease;
+
+	/*
 		m_aaInputHistory
 
 		All submitted input strings for all inputs

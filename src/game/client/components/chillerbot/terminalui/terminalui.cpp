@@ -240,6 +240,7 @@ void CTerminalUI::OnInit()
 	m_aPopupTitle[0] = '\0';
 	m_aCompletionBuffer[0] = '\0';
 	ResetCompletion();
+	m_LockKeyUntilRelease = EOF;
 	m_InputCursor = 0;
 	m_NumServers = 0;
 	m_SelectedServer = 0;
@@ -395,6 +396,12 @@ int CTerminalUI::GetInput()
 	cbreak();
 	noecho();
 	int c = getch();
+
+	if(c == m_LockKeyUntilRelease)
+		return EOF;
+
+	m_LockKeyUntilRelease = EOF;
+
 	if(m_InputMode == INPUT_NORMAL)
 	{
 		if(c == 'q')
@@ -431,6 +438,11 @@ int CTerminalUI::GetInput()
 
 		if(c == EOF || c == 10) // return
 		{
+			// do not repeat return input
+			// if the enter key is being held
+			if(c == 10)
+				m_LockKeyUntilRelease = c;
+
 			if(m_InputMode == INPUT_LOCAL_CONSOLE)
 				m_pClient->Console()->ExecuteLine(g_aInputStr);
 			else if(m_InputMode == INPUT_REMOTE_CONSOLE)
@@ -1068,14 +1080,28 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	// 	gs_NeedLogDraw = true;
 	// 	m_NewInput = true;
 	// }
-	else if(Key == 10 && (m_Popup == POPUP_MESSAGE || m_Popup == POPUP_DISCONNECTED)) // return
+	else if(Key == 10) // return / enter
 	{
-		// click "[ OK ]" on popups using enter
-		if(m_Popup == POPUP_DISCONNECTED && Client()->m_ReconnectTime > 0)
-			Client()->m_ReconnectTime = 0;
-		m_Popup = POPUP_NONE;
-		gs_NeedLogDraw = true;
-		m_NewInput = true;
+		if(m_Popup == POPUP_MESSAGE || m_Popup == POPUP_DISCONNECTED)
+		{
+			// click "[ OK ]" on popups using enter
+			if(m_Popup == POPUP_DISCONNECTED && Client()->m_ReconnectTime > 0)
+				Client()->m_ReconnectTime = 0;
+			m_Popup = POPUP_NONE;
+			gs_NeedLogDraw = true;
+			m_NewInput = true;
+		}
+		else if(m_RenderServerList)
+		{
+			m_RenderServerList = false;
+			const CServerInfo *pItem = ServerBrowser()->SortedGet(m_SelectedServer);
+			if(pItem && m_pClient->Client()->State() != IClient::STATE_CONNECTING)
+			{
+				char aBuf[128];
+				str_format(aBuf, sizeof(aBuf), "connect %s", pItem->m_aAddress);
+				Console()->ExecuteLine(aBuf);
+			}
+		}
 	}
 	else if(Key == 'h' && m_LastKeyPress < time_get() - time_freq() / 2)
 	{
@@ -1154,17 +1180,6 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 		m_SelectedServer = 0;
 		gs_NeedLogDraw = true;
 		m_NewInput = true;
-	}
-	else if(Key == 'c' && m_RenderServerList)
-	{
-		m_RenderServerList = false;
-		const CServerInfo *pItem = ServerBrowser()->SortedGet(m_SelectedServer);
-		if(pItem && m_pClient->Client()->State() != IClient::STATE_CONNECTING)
-		{
-			char aBuf[128];
-			str_format(aBuf, sizeof(aBuf), "connect %s", pItem->m_aAddress);
-			Console()->ExecuteLine(aBuf);
-		}
 	}
 	else
 		KeyPressed = false;
