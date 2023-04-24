@@ -2,8 +2,8 @@
 
 #include <base/curses.h>
 
-#include <base/system.h>
 #include <base/math.h>
+#include <base/system.h>
 
 #include "terminalui.h"
 
