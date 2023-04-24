@@ -3,6 +3,7 @@
 #include <base/curses.h>
 
 #include <base/system.h>
+#include <base/math.h>
 
 #include "terminalui.h"
 
@@ -24,6 +25,8 @@ char g_aInfoStr2[1024];
 char g_aInputStr[1024];
 bool gs_NeedLogDraw;
 int gs_LogsPushed = 0;
+int gs_LogScroll = 0;
+int gs_LogNumFilled = 0;
 IOHANDLE gs_Logfile = 0;
 
 void curses_init()
@@ -45,6 +48,25 @@ void curses_refresh_windows()
 	gs_NeedLogDraw = false;
 }
 
+int set_curses_log_scroll(int offset)
+{
+	int _x, y;
+	getmaxyx(g_LogWindow.m_pCursesWin, y, _x);
+	offset = clamp(offset, 0, gs_LogNumFilled - y);
+	gs_LogScroll = offset;
+	return gs_LogScroll;
+}
+
+int get_curses_log_scroll()
+{
+	return gs_LogScroll;
+}
+
+int scroll_curses_log(int offset)
+{
+	return set_curses_log_scroll(get_curses_log_scroll() + offset);
+}
+
 void log_draw()
 {
 	if(!gs_NeedLogDraw)
@@ -55,7 +77,28 @@ void log_draw()
 	Max -= 3;
 	// int Top = CHILLER_LOGGER_HEIGHT - 2;
 	// int line = 0;
-	for(int k = Max, i = Max; i >= 0; i--)
+
+	/*
+		Bottom
+
+		lowest index
+
+		be aware that we render from highest
+		index to lowest index
+	*/
+	int Bottom = gs_LogScroll;
+
+	/*
+		Top
+
+		highest index
+
+		be aware that we render from highest
+		index to lowest index
+	*/
+	int Top = Bottom + Max;
+
+	for(int k = Max, i = Top; i >= Bottom; i--)
 	{
 		if(gs_aChillerLogger[i].m_aMessage[0] == '\0')
 			continue;
@@ -242,6 +285,8 @@ void curses_log_push(const char *pStr, const SLOG_COLOR *pColor)
 		puts(pStr);
 		return;
 	}
+	if(gs_LogNumFilled < CHILLER_LOGGER_HEIGHT)
+		gs_LogNumFilled++;
 	str_copy(g_aInfoStr, "?=help", sizeof(g_aInfoStr));
 	gs_NeedLogDraw = true;
 	// shift all

@@ -8,7 +8,7 @@
 #include <base/curses.h>
 
 #define CHILLER_LOGGER_WIDTH 1024 * 4
-#define CHILLER_LOGGER_HEIGHT 128
+#define CHILLER_LOGGER_HEIGHT 2048
 
 class CTermWindow
 {
@@ -39,6 +39,14 @@ extern char g_aInfoStr2[1024];
 extern char g_aInputStr[1024];
 extern bool gs_NeedLogDraw;
 extern int gs_LogsPushed;
+/*
+	gs_LogScroll
+
+	print offset of the log.
+	to keep track of scrolling to older pages.
+*/
+extern int gs_LogScroll;
+extern int gs_LogNumFilled;
 extern IOHANDLE gs_Logfile;
 
 struct SLOG_COLOR
@@ -66,6 +74,18 @@ public:
 
 void curses_init();
 void log_draw();
+
+/*
+	set_curses_log_scroll
+
+	set the bottom offset of the log scroll
+	0 is latest message
+	and CHILLER_LOGGER_WIDTH - (terminal height)
+	is oldest message
+*/
+int set_curses_log_scroll(int offset);
+int get_curses_log_scroll();
+int scroll_curses_log(int offset);
 void curses_refresh_windows();
 void curses_log_push(const char *pStr, const SLOG_COLOR *pColor = nullptr);
 // void curses_logf(const char *sys, const char *fmt, ...);

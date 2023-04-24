@@ -45,6 +45,8 @@ void CTerminalUI::ConTerm(IConsole::IResult *pResult, void *pUserData)
 		dbg_msg("term-ux", "  help                show this help");
 		dbg_msg("term-ux", "  visual <on|off>     show this help");
 		dbg_msg("term-ux", "  hist <load|save>    load/save history");
+		dbg_msg("term-ux", "  page <up|down>      scroll in chat/console log");
+		dbg_msg("term-ux", "  scroll <offset>     scroll in chat/console log");
 		dbg_msg("term-ux", "\\----------------- term -------------/");
 		return;
 	}
@@ -76,6 +78,19 @@ void CTerminalUI::ConTerm(IConsole::IResult *pResult, void *pUserData)
 		else
 			dbg_msg("term-ux", "visual mode is now %s", TurnOn ? "on" : "off");
 		pSelf->m_RenderGame = TurnOn;
+	}
+	else if(!str_comp(pResult->GetString(0), "page"))
+	{
+		bool PageUp = !str_comp(pResult->GetString(1), "up") || !str_comp(pResult->GetString(1), "prev");
+		dbg_msg("term-ux", "scrolling page %s", PageUp ? "up" : "down");
+		int _x, y;
+		getmaxyx(g_LogWindow.m_pCursesWin, y, _x);
+		scroll_curses_log(PageUp ? -y : y);
+	}
+	else if(!str_comp(pResult->GetString(0), "scroll"))
+	{
+		int offset = atoi(pResult->GetString(1));
+		dbg_msg("term-ux", "setting scroll offset to %d after clamp [%d/%d]", offset, set_curses_log_scroll(offset), CHILLER_LOGGER_WIDTH);
 	}
 	else
 	{
@@ -1096,21 +1111,37 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	{
 		AimY = maximum(AimY - 10, -20);
 		if(m_RenderServerList && m_NumServers)
-		{
 			m_SelectedServer = clamp(m_SelectedServer - 1, 0, m_NumServers - 1);
-			gs_NeedLogDraw = true;
-			m_NewInput = true;
-		}
+		else
+			scroll_curses_log(1);
+		gs_NeedLogDraw = true;
+		m_NewInput = true;
 	}
 	else if(Key == KEY_DOWN)
 	{
 		AimY = minimum(AimY + 10, 20);
 		if(m_RenderServerList && m_NumServers)
-		{
 			m_SelectedServer = clamp(m_SelectedServer + 1, 0, m_NumServers - 1);
-			gs_NeedLogDraw = true;
-			m_NewInput = true;
-		}
+		else
+			scroll_curses_log(-1);
+		gs_NeedLogDraw = true;
+		m_NewInput = true;
+	}
+	else if(Key == KEY_NPAGE)
+	{
+		int _x, y;
+		getmaxyx(g_LogWindow.m_pCursesWin, y, _x);
+		scroll_curses_log(-y);
+		gs_NeedLogDraw = true;
+		m_NewInput = true;
+	}
+	else if(Key == KEY_PPAGE)
+	{
+		int _x, y;
+		getmaxyx(g_LogWindow.m_pCursesWin, y, _x);
+		scroll_curses_log(y);
+		gs_NeedLogDraw = true;
+		m_NewInput = true;
 	}
 	else if(Key == 'G' && m_RenderServerList && m_NumServers)
 	{
