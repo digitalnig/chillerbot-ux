@@ -288,7 +288,6 @@ void CInputWindow::DrawBorders()
 	}
 }
 
-
 void curses_log_push(const char *pStr, const SLOG_COLOR *pColor)
 {
 	// if ncurses is not intialized yet (terminalui.OnInit()) just print to stdout
