@@ -1104,17 +1104,23 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 			}
 		}
 	}
+	else if(Key == '/') // search key
+	{
+		if(m_RenderServerList)
+		{
+			m_InputMode = INPUT_BROWSER_SEARCH;
+			str_copy(g_aInputStr, g_Config.m_BrFilterString, sizeof(g_aInputStr));
+			gs_NeedLogDraw = true;
+			m_NewInput = true;
+		}
+	}
 	else if(Key == 'h' && m_LastKeyPress < time_get() - time_freq() / 2)
 	{
 		Console()->ExecuteLine("reply_to_last_ping");
 	}
 	else if(Key == 'b' && m_LastKeyPress < time_get() - time_freq() / 2)
 	{
-		if((m_RenderServerList = !m_RenderServerList))
-		{
-			m_InputMode = INPUT_BROWSER_SEARCH;
-			str_copy(g_aInputStr, g_Config.m_BrFilterString, sizeof(g_aInputStr));
-		}
+		m_RenderServerList = !m_RenderServerList;
 		gs_NeedLogDraw = true;
 		m_NewInput = true;
 	}
