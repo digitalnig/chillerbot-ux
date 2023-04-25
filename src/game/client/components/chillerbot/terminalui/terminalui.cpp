@@ -286,6 +286,14 @@ void CTerminalUI::OnInit()
 	if(g_Config.m_ClTermHistory)
 		for(int i = 0; i < NUM_INPUTS; i++)
 			LoadInputHistoryFile(i);
+
+	const char aaWeclomePopup[][128] = {
+		"Keybindings:",
+		"?       - opens a help page",
+		"b       - to open server list",
+		"return  - to close popups like this one"};
+
+	DoPopup(POPUP_NOT_IMPORTANT, "term-ux - chillerbot-ux in the terminal", aaWeclomePopup[0], 128, sizeof(aaWeclomePopup) / 128);
 }
 
 void CTerminalUI::OnReset()
@@ -1065,6 +1073,8 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 		/* m_pClient->m_Controls.SetCursesJump(1); */ return 0;
 	else if(Key == '?')
 	{
+		if(m_Popup == POPUP_NOT_IMPORTANT)
+			m_Popup = POPUP_NONE;
 		m_RenderHelpPage = !m_RenderHelpPage;
 		gs_NeedLogDraw = true;
 		m_NewInput = true;
@@ -1083,7 +1093,7 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	// }
 	else if(Key == 10) // return / enter
 	{
-		if(m_Popup == POPUP_MESSAGE || m_Popup == POPUP_DISCONNECTED)
+		if(m_Popup == POPUP_MESSAGE || m_Popup == POPUP_DISCONNECTED || m_Popup == POPUP_NOT_IMPORTANT)
 		{
 			// click "[ OK ]" on popups using enter
 			if(m_Popup == POPUP_DISCONNECTED && Client()->m_ReconnectTime > 0)
@@ -1120,6 +1130,8 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	}
 	else if(Key == 'b' && m_LastKeyPress < time_get() - time_freq() / 2)
 	{
+		if(m_Popup == POPUP_NOT_IMPORTANT)
+			m_Popup = POPUP_NONE;
 		m_RenderServerList = !m_RenderServerList;
 		gs_NeedLogDraw = true;
 		m_NewInput = true;

@@ -290,12 +290,34 @@ class CTerminalUI : public CComponent
 	*/
 	int m_Popup;
 	char m_aPopupTitle[128];
-	bool DoPopup(int Popup, const char *pTitle);
+	enum
+	{
+		MAX_POPUP_BODY_WIDTH = 1024,
+		MAX_POPUP_BODY_HEIGHT = 512,
+	};
+	char m_aaPopupBody[MAX_POPUP_BODY_HEIGHT][MAX_POPUP_BODY_WIDTH];
+	size_t m_PopupBodyWidth;
+	size_t m_PopupBodyHeight;
+	bool DoPopup(int Popup, const char *pTitle, const char *pBody = nullptr, size_t BodyWidth = -1, size_t BodyHeight = -1);
 	enum
 	{
 		POPUP_NONE = 0,
 		// POPUP_CONNECTING, // TODO: use this
+		/*
+			POPUP_MESSAGE
+
+			show a generic message that can be closed with an OK button
+		*/
 		POPUP_MESSAGE,
+		/*
+			POPUP_NOT_IMPORTANT
+
+			show a generic message that can be closed with an OK button
+			so very similar to POPUP_MESSAGE
+			but it also closes it self when the user gets otherwise
+			for example when the server browser is opend
+		*/
+		POPUP_NOT_IMPORTANT,
 		POPUP_DISCONNECTED, // TODO: implement
 		// POPUP_QUIT, // TODO: implement
 		POPUP_WARNING, // TODO: implement
