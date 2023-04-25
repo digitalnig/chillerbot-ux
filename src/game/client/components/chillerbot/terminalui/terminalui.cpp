@@ -136,7 +136,7 @@ void CTerminalUI::InputDraw()
 		aBuf[x - 2] = '\0'; // prevent line wrapping and cut on screen border
 	wattron(g_InputWin.m_pCursesWin, COLOR_PAIR(WHITE_ON_BLACK));
 	wattron(g_InputWin.m_pCursesWin, A_BOLD);
-	mvwprintw(g_InputWin.m_pCursesWin, 1, 1, "%s", aBuf);
+	mvwprintw(g_InputWin.m_pCursesWin, 1, 1 + g_InputWin.m_CurserOffset, "%s", aBuf);
 	refresh();
 	wattroff(g_InputWin.m_pCursesWin, A_BOLD);
 	wattroff(g_InputWin.m_pCursesWin, COLOR_PAIR(CYAN_ON_BLACK));

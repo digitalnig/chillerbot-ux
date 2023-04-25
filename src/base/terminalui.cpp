@@ -284,7 +284,9 @@ void CInputWindow::DrawBorders()
 	if(m_Search)
 	{
 		WINDOW *screen = m_pCursesWin;
-		mvwprintw(screen, 1, 0, "%s", "🔍");
+		mvwprintw(screen, 0, 0, "%s", "+--+");
+		mvwprintw(screen, 1, 0, "%s", "|🔍|");
+		mvwprintw(screen, 2, 0, "%s", "+--+");
 	}
 }
 

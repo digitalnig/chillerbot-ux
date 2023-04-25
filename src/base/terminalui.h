@@ -39,7 +39,7 @@ public:
 	void SetSearch(bool Search)
 	{
 		m_Search = Search;
-		m_CurserOffset = Search ? 1 : 0;
+		m_CurserOffset = Search ? 3 : 0;
 	}
 	void DrawBorders();
 };
