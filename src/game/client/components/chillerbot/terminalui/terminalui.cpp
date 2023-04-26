@@ -190,6 +190,8 @@ int CTerminalUI::CursesTick()
 		g_InfoWin.DrawBorders();
 		g_InputWin.DrawBorders();
 
+		InputDraw();
+
 		if(m_pClient->m_Snap.m_pLocalCharacter && m_RenderGame)
 		{
 			wresize(g_GameWindow.m_pCursesWin, g_NewY - g_InputWin.m_Height * 2, g_NewX); // TODO: fix this size
@@ -400,6 +402,11 @@ void CTerminalUI::OnInputModeChange(int Old, int New)
 	ResetCompletion();
 	g_aInputStr[0] = '\0';
 	m_InputCursor = 0;
+	if(New == INPUT_BROWSER_SEARCH)
+	{
+		str_copy(g_aInputStr, g_Config.m_BrFilterString, sizeof(g_aInputStr));
+		m_InputCursor = str_length(g_aInputStr);
+	}
 	m_aCompletionPreview[0] = '\0';
 	if(g_InputWin.IsActive())
 		wclear(g_InputWin.m_pCursesWin);
@@ -1139,12 +1146,7 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	else if(Key == '/') // search key
 	{
 		if(m_RenderServerList)
-		{
 			SetInputMode(INPUT_BROWSER_SEARCH);
-			str_copy(g_aInputStr, g_Config.m_BrFilterString, sizeof(g_aInputStr));
-			gs_NeedLogDraw = true;
-			m_NewInput = true;
-		}
 	}
 	else if(Key == 'h' && m_LastKeyPress < time_get() - time_freq() / 2)
 	{
