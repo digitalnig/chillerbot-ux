@@ -3467,8 +3467,6 @@ void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 	CUIRect Button, Label;
 	MainView.HSplitTop(10.0f, 0, &MainView);
 
-	char *pName = g_Config.m_ClFinishName;
-	char *pReplyMsg = g_Config.m_ClAutoReplyMsg;
 	char aBuf[128];
 
 	// finish name
@@ -3480,8 +3478,10 @@ void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 		Button.VSplitLeft(150.0f, &Button, 0);
 		str_format(aBuf, sizeof(aBuf), "%s:", "Finish name");
 		UI()->DoLabel(&Label, aBuf, 14.0f, -1);
-		static float s_OffsetName = 0.0f;
-		UI()->DoEditBox(pName, &Button, pName, sizeof(g_Config.m_ClFinishName), 14.0f, &s_OffsetName);
+		static CLineInput s_NameInput;
+		s_NameInput.SetBuffer(g_Config.m_ClFinishName, sizeof(g_Config.m_ClFinishName));
+		s_NameInput.SetEmptyText("chillerbot-ux");
+		UI()->DoEditBox(&s_NameInput, &Button, 14.0f);
 		if(DoButton_CheckBox(&g_Config.m_ClFinishRename, "Rename on finish", g_Config.m_ClFinishRename, &Checkbox))
 		{
 			g_Config.m_ClFinishRename ^= 1;
@@ -3500,8 +3500,10 @@ void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 		Button.VSplitLeft(150.0f, &Button, 0);
 		str_format(aBuf, sizeof(aBuf), "%s:", "auto reply msg");
 		UI()->DoLabel(&Label, aBuf, 14.0f, -1);
-		static float s_ReplyMsg = 0.0f;
-		UI()->DoEditBox(pReplyMsg, &Button, pReplyMsg, sizeof(g_Config.m_ClAutoReplyMsg), 14.0f, &s_ReplyMsg);
+		static CLineInput s_ReplyMsg;
+		s_ReplyMsg.SetBuffer(g_Config.m_ClAutoReplyMsg, sizeof(g_Config.m_ClAutoReplyMsg));
+		s_ReplyMsg.SetEmptyText("I use chillerbot-ux");
+		UI()->DoEditBox(&s_ReplyMsg, &Button, 14.0f);
 		if(DoButton_CheckBox(&g_Config.m_ClAutoReply, "Auto reply", g_Config.m_ClAutoReply, &Checkbox))
 		{
 			g_Config.m_ClAutoReply ^= 1;

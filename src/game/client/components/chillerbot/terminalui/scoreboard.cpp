@@ -73,10 +73,10 @@ void CTerminalUI::RenderScoreboard(int Team, CTermWindow *pWin)
 
 		char aLine[1024];
 		char aBuf[1024];
-		int NameSize;
-		int NameCount;
-		int ClanSize;
-		int ClanCount;
+		size_t NameSize;
+		size_t NameCount;
+		size_t ClanSize;
+		size_t ClanCount;
 		str_utf8_stats(m_pClient->m_aClients[pInfo->m_ClientID].m_aName, 60, 60, &NameSize, &NameCount);
 		str_utf8_stats(m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, 60, 60, &ClanSize, &ClanCount);
 		str_format(aBuf, sizeof(aBuf),
