@@ -125,7 +125,7 @@ void CTerminalUI::InputDraw()
 		return;
 
 	char aBuf[512];
-	if(m_InputMode == INPUT_REMOTE_CONSOLE && !RconAuthed())
+	if(InputMode() == INPUT_REMOTE_CONSOLE && !RconAuthed())
 	{
 		int i;
 		for(i = 0; i < 512 && g_aInputStr[i] != '\0'; i++)
@@ -235,7 +235,6 @@ void CTerminalUI::OnInit()
 	str_copy(m_aTileSolidTexture, "█", sizeof(m_aTileSolidTexture));
 	str_copy(m_aTileUnhookTexture, "▓", sizeof(m_aTileUnhookTexture));
 	m_UpdateCompletionBuffer = true;
-	m_LastInputMode = -1;
 	m_aCompletionPreview[0] = '\0';
 	m_CompletionEnumerationCount = -1;
 	m_CompletionChosen = -1;
@@ -362,13 +361,6 @@ void CTerminalUI::OnRender()
 	if(cl_InterruptSignaled)
 		Console()->ExecuteLine("quit");
 
-	if(m_InputMode != m_LastInputMode)
-	{
-		if(m_LastInputMode != -1)
-			OnInputModeChange(m_LastInputMode, m_InputMode);
-		m_LastInputMode = m_InputMode;
-	}
-
 	if(!m_pClient->m_Snap.m_pLocalCharacter)
 		return;
 	float X = m_pClient->m_Snap.m_pLocalCharacter->m_X;
@@ -377,6 +369,13 @@ void CTerminalUI::OnRender()
 		"%.2f %.2f scoreboard=%d",
 		X / 32, Y / 32,
 		m_ScoreboardActive);
+}
+
+void CTerminalUI::SetInputMode(int Mode)
+{
+	int Old = InputMode();
+	m_InputMode = Mode;
+	OnInputModeChange(Old, Mode);
 }
 
 void CTerminalUI::OnInputModeChange(int Old, int New)
@@ -434,18 +433,18 @@ int CTerminalUI::GetInput()
 
 	m_LockKeyUntilRelease = EOF;
 
-	if(m_InputMode == INPUT_NORMAL)
+	if(InputMode() == INPUT_NORMAL)
 	{
 		if(c == 'q')
 			return -1;
 		else if(c == KEY_F(1))
-			m_InputMode = INPUT_LOCAL_CONSOLE;
+			SetInputMode(INPUT_LOCAL_CONSOLE);
 		else if(c == KEY_F(2))
-			m_InputMode = INPUT_REMOTE_CONSOLE;
+			SetInputMode(INPUT_REMOTE_CONSOLE);
 		else if(c == 't')
-			m_InputMode = INPUT_CHAT;
+			SetInputMode(INPUT_CHAT);
 		else if(c == 'z')
-			m_InputMode = INPUT_CHAT_TEAM;
+			SetInputMode(INPUT_CHAT_TEAM);
 		else
 		{
 			InputDraw();
@@ -453,17 +452,17 @@ int CTerminalUI::GetInput()
 		}
 	}
 	else if(
-		m_InputMode == INPUT_LOCAL_CONSOLE ||
-		m_InputMode == INPUT_REMOTE_CONSOLE ||
-		m_InputMode == INPUT_CHAT ||
-		m_InputMode == INPUT_CHAT_TEAM ||
-		m_InputMode == INPUT_BROWSER_SEARCH ||
+		InputMode() == INPUT_LOCAL_CONSOLE ||
+		InputMode() == INPUT_REMOTE_CONSOLE ||
+		InputMode() == INPUT_CHAT ||
+		InputMode() == INPUT_CHAT_TEAM ||
+		InputMode() == INPUT_BROWSER_SEARCH ||
 
-		m_InputMode == INPUT_SEARCH_LOCAL_CONSOLE ||
-		m_InputMode == INPUT_SEARCH_REMOTE_CONSOLE ||
-		m_InputMode == INPUT_SEARCH_CHAT ||
-		m_InputMode == INPUT_SEARCH_CHAT_TEAM ||
-		m_InputMode == INPUT_SEARCH_BROWSER_SEARCH)
+		InputMode() == INPUT_SEARCH_LOCAL_CONSOLE ||
+		InputMode() == INPUT_SEARCH_REMOTE_CONSOLE ||
+		InputMode() == INPUT_SEARCH_CHAT ||
+		InputMode() == INPUT_SEARCH_CHAT_TEAM ||
+		InputMode() == INPUT_SEARCH_BROWSER_SEARCH)
 	{
 		if(c == ERR) // nonblocking empty read
 			return 0;
@@ -475,20 +474,20 @@ int CTerminalUI::GetInput()
 			if(c == 10)
 				m_LockKeyUntilRelease = c;
 
-			if(m_InputMode == INPUT_LOCAL_CONSOLE)
+			if(InputMode() == INPUT_LOCAL_CONSOLE)
 				m_pClient->Console()->ExecuteLine(g_aInputStr);
-			else if(m_InputMode == INPUT_REMOTE_CONSOLE)
+			else if(InputMode() == INPUT_REMOTE_CONSOLE)
 			{
 				if(m_pClient->Client()->RconAuthed())
 					m_pClient->Client()->Rcon(g_aInputStr);
 				else
 					m_pClient->Client()->RconAuth("", g_aInputStr);
 			}
-			else if(m_InputMode == INPUT_CHAT)
+			else if(InputMode() == INPUT_CHAT)
 				m_pClient->m_Chat.Say(0, g_aInputStr);
-			else if(m_InputMode == INPUT_CHAT_TEAM)
+			else if(InputMode() == INPUT_CHAT_TEAM)
 				m_pClient->m_Chat.Say(1, g_aInputStr);
-			else if(m_InputMode == INPUT_BROWSER_SEARCH)
+			else if(InputMode() == INPUT_BROWSER_SEARCH)
 			{
 				m_SelectedServer = 0;
 				str_copy(g_Config.m_BrFilterString, g_aInputStr, sizeof(g_Config.m_BrFilterString));
@@ -497,16 +496,16 @@ int CTerminalUI::GetInput()
 
 			if(IsSearchInputMode())
 			{
-				m_InputMode -= NUM_INPUTS - 1;
+				SetInputMode(InputMode() - (NUM_INPUTS - 1));
 				str_copy(g_aInputStr, m_aInputSearchMatch, sizeof(g_aInputStr));
 			}
 			else
 			{
-				AddInputHistory(m_InputMode, g_aInputStr);
-				m_InputHistory[m_InputMode] = 0;
+				AddInputHistory(InputMode(), g_aInputStr);
+				m_InputHistory[InputMode()] = 0;
 				g_aInputStr[0] = '\0';
-				if(m_InputMode != INPUT_LOCAL_CONSOLE && m_InputMode != INPUT_REMOTE_CONSOLE)
-					m_InputMode = INPUT_NORMAL;
+				if(InputMode() != INPUT_LOCAL_CONSOLE && InputMode() != INPUT_REMOTE_CONSOLE)
+					SetInputMode(INPUT_NORMAL);
 			}
 			m_InputCursor = 0;
 			wclear(g_InputWin.m_pCursesWin);
@@ -519,18 +518,18 @@ int CTerminalUI::GetInput()
 			g_aInputStr[0] = '\0';
 			wclear(g_InputWin.m_pCursesWin);
 			g_InputWin.DrawBorders();
-			m_InputMode = m_InputMode == INPUT_LOCAL_CONSOLE ? INPUT_NORMAL : INPUT_LOCAL_CONSOLE;
+			SetInputMode(InputMode() == INPUT_LOCAL_CONSOLE ? INPUT_NORMAL : INPUT_LOCAL_CONSOLE);
 		}
 		else if(c == KEY_F(2)) // f2 hard toggle local console
 		{
 			g_aInputStr[0] = '\0';
 			wclear(g_InputWin.m_pCursesWin);
 			g_InputWin.DrawBorders();
-			m_InputMode = m_InputMode == INPUT_REMOTE_CONSOLE ? INPUT_NORMAL : INPUT_REMOTE_CONSOLE;
+			SetInputMode(InputMode() == INPUT_REMOTE_CONSOLE ? INPUT_NORMAL : INPUT_REMOTE_CONSOLE);
 		}
 		else if(c == KEY_BTAB)
 		{
-			if(m_InputMode == INPUT_REMOTE_CONSOLE || m_InputMode == INPUT_LOCAL_CONSOLE)
+			if(InputMode() == INPUT_REMOTE_CONSOLE || InputMode() == INPUT_LOCAL_CONSOLE)
 				CompleteCommands(true);
 			else
 				CompleteNames(true);
@@ -539,7 +538,7 @@ int CTerminalUI::GetInput()
 		}
 		else if(keyname(c)[0] == '^' && keyname(c)[1] == 'I') // tab
 		{
-			if(m_InputMode == INPUT_REMOTE_CONSOLE || m_InputMode == INPUT_LOCAL_CONSOLE)
+			if(InputMode() == INPUT_REMOTE_CONSOLE || InputMode() == INPUT_LOCAL_CONSOLE)
 				CompleteCommands();
 			else
 				CompleteNames();
@@ -551,7 +550,7 @@ int CTerminalUI::GetInput()
 			c = getch();
 			if(c == EOF) // ESC
 			{
-				m_InputMode = INPUT_NORMAL;
+				SetInputMode(INPUT_NORMAL);
 				return 0;
 			}
 			// TODO: make this code nicer omg xd
@@ -571,7 +570,7 @@ int CTerminalUI::GetInput()
 							{
 								bool IsSpace = true;
 								const char *pInput = g_aInputStr;
-								if(m_InputMode > NUM_INPUTS) // reverse i search
+								if(InputMode() > NUM_INPUTS) // reverse i search
 									pInput = m_aInputSearch;
 								for(int i = m_InputCursor; i > 0; i--)
 								{
@@ -599,7 +598,7 @@ int CTerminalUI::GetInput()
 								bool IsSpace = true;
 								int InputLen = str_length(g_aInputStr);
 								const char *pInput = g_aInputStr;
-								if(m_InputMode > NUM_INPUTS) // reverse i search
+								if(InputMode() > NUM_INPUTS) // reverse i search
 								{
 									InputLen = str_length(m_aInputSearch);
 									pInput = m_aInputSearch;
@@ -646,7 +645,7 @@ int CTerminalUI::GetInput()
 			char aRight[1024];
 			char aLeft[1024];
 
-			if(m_InputMode > NUM_INPUTS) // reverse i search
+			if(InputMode() > NUM_INPUTS) // reverse i search
 			{
 				str_copy(aRight, m_aInputSearch + m_InputCursor, sizeof(aRight));
 				str_copy(aLeft, m_aInputSearch, sizeof(aLeft));
@@ -688,7 +687,7 @@ int CTerminalUI::GetInput()
 			{
 				ResetCompletion();
 				char aRight[1024];
-				if(m_InputMode > NUM_INPUTS) // reverse i search
+				if(InputMode() > NUM_INPUTS) // reverse i search
 				{
 					str_copy(aRight, m_aInputSearch + m_InputCursor, sizeof(aRight));
 					str_copy(m_aInputSearch, aRight, sizeof(m_aInputSearch));
@@ -710,7 +709,7 @@ int CTerminalUI::GetInput()
 			if(keyname(c)[1] == 'K') // ctrl+k
 			{
 				ResetCompletion();
-				if(m_InputMode > NUM_INPUTS) // reverse i search
+				if(InputMode() > NUM_INPUTS) // reverse i search
 				{
 					m_aInputSearch[m_InputCursor] = '\0';
 					RenderInputSearch();
@@ -726,9 +725,9 @@ int CTerminalUI::GetInput()
 				}
 				UpdateCursor();
 			}
-			if(keyname(c)[1] == 'R' && m_InputMode > INPUT_NORMAL && !IsSearchInputMode()) // ctrl+r
+			if(keyname(c)[1] == 'R' && InputMode() > INPUT_NORMAL && !IsSearchInputMode()) // ctrl+r
 			{
-				m_InputMode += NUM_INPUTS - 1;
+				SetInputMode(InputMode() + (NUM_INPUTS - 1));
 				m_aInputSearch[0] = '\0';
 				str_copy(g_aInputStr, "(reverse-i-search)`': ", sizeof(g_aInputStr));
 				wclear(g_InputWin.m_pCursesWin);
@@ -740,7 +739,7 @@ int CTerminalUI::GetInput()
 			{
 				ResetCompletion();
 				m_InputCursor = str_length(g_aInputStr);
-				if(m_InputMode > NUM_INPUTS) // reverse i search
+				if(InputMode() > NUM_INPUTS) // reverse i search
 					m_InputCursor = str_length(m_aInputSearch);
 				UpdateCursor();
 			}
@@ -752,23 +751,23 @@ int CTerminalUI::GetInput()
 			}
 			return 0;
 		}
-		if((c == 258 || c == 259) && m_InputMode >= 0) // up/down arrow scroll history
+		if((c == 258 || c == 259) && InputMode() >= 0) // up/down arrow scroll history
 		{
 			ResetCompletion();
-			str_copy(g_aInputStr, m_aaInputHistory[m_InputMode][m_InputHistory[m_InputMode]], sizeof(g_aInputStr));
+			str_copy(g_aInputStr, m_aaInputHistory[InputMode()][m_InputHistory[InputMode()]], sizeof(g_aInputStr));
 			wclear(g_InputWin.m_pCursesWin);
 			InputDraw();
 			g_InputWin.DrawBorders();
 			// update history index after using it because index 0 is already the last item
-			int OldHistory = m_InputHistory[m_InputMode];
+			int OldHistory = m_InputHistory[InputMode()];
 			if(c == 258) // down arrow
-				m_InputHistory[m_InputMode] = clamp(m_InputHistory[m_InputMode] - 1, 0, (int)(INPUT_HISTORY_MAX_LEN));
+				m_InputHistory[InputMode()] = clamp(m_InputHistory[InputMode()] - 1, 0, (int)(INPUT_HISTORY_MAX_LEN));
 			else if(c == 259) // up arrow
-				m_InputHistory[m_InputMode] = clamp(m_InputHistory[m_InputMode] + 1, 0, (int)(INPUT_HISTORY_MAX_LEN));
+				m_InputHistory[InputMode()] = clamp(m_InputHistory[InputMode()] + 1, 0, (int)(INPUT_HISTORY_MAX_LEN));
 
 			// stop scrolling and roll back when reached an empty history element
-			if(m_aaInputHistory[m_InputMode][m_InputHistory[m_InputMode]][0] == '\0')
-				m_InputHistory[m_InputMode] = OldHistory;
+			if(m_aaInputHistory[InputMode()][m_InputHistory[InputMode()]][0] == '\0')
+				m_InputHistory[InputMode()] = OldHistory;
 		}
 		else
 		{
@@ -781,7 +780,7 @@ int CTerminalUI::GetInput()
 			// str_append(g_aInputStr, aKey, sizeof(g_aInputStr));
 			char aRight[1024];
 			char aLeft[1024];
-			if(m_InputMode > NUM_INPUTS) // reverse i search
+			if(InputMode() > NUM_INPUTS) // reverse i search
 			{
 				str_copy(aRight, m_aInputSearch + m_InputCursor, sizeof(aRight));
 				str_copy(aLeft, m_aInputSearch, sizeof(aLeft));
@@ -824,11 +823,11 @@ void CTerminalUI::RefreshConsoleCmdHelpText()
 	g_InputWin.SetTextTopLeftYellow("");
 	g_InputWin.SetTextTopLeft("");
 
-	if(m_InputMode == INPUT_REMOTE_CONSOLE || m_InputMode == INPUT_LOCAL_CONSOLE)
+	if(InputMode() == INPUT_REMOTE_CONSOLE || InputMode() == INPUT_LOCAL_CONSOLE)
 	{
 		int CompletionFlagmask = CFGFLAG_CLIENT;
 		int Type = CGameConsole::CONSOLETYPE_LOCAL;
-		if(m_InputMode == INPUT_REMOTE_CONSOLE)
+		if(InputMode() == INPUT_REMOTE_CONSOLE)
 		{
 			CompletionFlagmask = CFGFLAG_SERVER;
 			Type = CGameConsole::CONSOLETYPE_REMOTE;
@@ -873,7 +872,7 @@ void CTerminalUI::RefreshConsoleCmdHelpText()
 void CTerminalUI::CompleteCommands(bool IsReverse)
 {
 	int CompletionFlagmask = 0;
-	if(m_InputMode == INPUT_LOCAL_CONSOLE)
+	if(InputMode() == INPUT_LOCAL_CONSOLE)
 		CompletionFlagmask = CFGFLAG_CLIENT;
 	else
 		CompletionFlagmask = CFGFLAG_SERVER;
@@ -889,14 +888,14 @@ void CTerminalUI::CompleteCommands(bool IsReverse)
 		m_CompletionChosen--;
 	else
 		m_CompletionChosen++;
-	Console()->PossibleCommands(m_aCompletionBuffer, CompletionFlagmask, m_InputMode != INPUT_LOCAL_CONSOLE && Client()->RconAuthed() && Client()->UseTempRconCommands(), PossibleCommandsCompleteCallback, this);
+	Console()->PossibleCommands(m_aCompletionBuffer, CompletionFlagmask, InputMode() != INPUT_LOCAL_CONSOLE && Client()->RconAuthed() && Client()->UseTempRconCommands(), PossibleCommandsCompleteCallback, this);
 
 	// handle wrapping
 	if(m_CompletionEnumerationCount && (m_CompletionChosen >= m_CompletionEnumerationCount || m_CompletionChosen < 0))
 	{
 		m_CompletionChosen = (m_CompletionChosen + m_CompletionEnumerationCount) % m_CompletionEnumerationCount;
 		m_CompletionEnumerationCount = 0;
-		Console()->PossibleCommands(m_aCompletionBuffer, CompletionFlagmask, m_InputMode != INPUT_LOCAL_CONSOLE && Client()->RconAuthed() && Client()->UseTempRconCommands(), PossibleCommandsCompleteCallback, this);
+		Console()->PossibleCommands(m_aCompletionBuffer, CompletionFlagmask, InputMode() != INPUT_LOCAL_CONSOLE && Client()->RconAuthed() && Client()->UseTempRconCommands(), PossibleCommandsCompleteCallback, this);
 	}
 
 	wclear(g_InputWin.m_pCursesWin);
@@ -932,7 +931,7 @@ void CTerminalUI::CompleteNames(bool IsReverse)
 		IsReverseEnd = true;
 	bool IsSpace = true;
 	const char *pInput = g_aInputStr;
-	if(m_InputMode > NUM_INPUTS) // reverse i search
+	if(InputMode() > NUM_INPUTS) // reverse i search
 		pInput = m_aInputSearch;
 	int Count = 0;
 	if(m_UpdateCompletionBuffer)
@@ -1035,7 +1034,7 @@ void CTerminalUI::_UpdateInputSearch()
 		return;
 	if(!m_aInputSearch[0])
 		return;
-	int Type = m_InputMode - NUM_INPUTS + 1;
+	int Type = InputMode() - NUM_INPUTS + 1;
 	for(auto &HistEntry : m_aaInputHistory[Type])
 	{
 		if(!HistEntry[0])
@@ -1141,7 +1140,7 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	{
 		if(m_RenderServerList)
 		{
-			m_InputMode = INPUT_BROWSER_SEARCH;
+			SetInputMode(INPUT_BROWSER_SEARCH);
 			str_copy(g_aInputStr, g_Config.m_BrFilterString, sizeof(g_aInputStr));
 			gs_NeedLogDraw = true;
 			m_NewInput = true;

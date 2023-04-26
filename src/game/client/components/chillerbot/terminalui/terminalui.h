@@ -327,8 +327,15 @@ class CTerminalUI : public CComponent
 	bool m_RenderServerList;
 	bool m_RenderHelpPage;
 	int m_SelectedServer;
+	/*
+		m_InputMode
+
+		do not set directly use
+		SetInputMode()
+	*/
 	int m_InputMode;
-	int m_LastInputMode;
+	void SetInputMode(int Mode);
+	int InputMode() { return m_InputMode; }
 	int64_t m_LastKeyPress;
 	char m_LastKeyPressed;
 	int m_NumServers;
