@@ -10,6 +10,8 @@
 #define CHILLER_LOGGER_WIDTH 1024 * 4
 #define CHILLER_LOGGER_HEIGHT 2048
 
+#define INFO_WIN_HEIGHT 3
+
 class CTermWindow
 {
 	char m_aTextTopYellow[128];
@@ -33,9 +35,24 @@ public:
 		CTermWindow();
 		m_Search = false;
 		m_CurserOffset = 0;
+		m_Height = 3;
+		m_Active = true;
 	}
 	bool m_Search;
 	int m_CurserOffset;
+	int m_Height;
+	bool m_Active;
+	void Open()
+	{
+		m_Height = 3;
+		m_Active = true;
+	}
+	void Close()
+	{
+		m_Height = 0;
+		m_Active = false;
+	}
+	bool IsActive() { return m_Active; }
 	void SetSearch(bool Search)
 	{
 		m_Search = Search;
@@ -53,6 +70,7 @@ extern int g_ParentX;
 extern int g_ParentY;
 extern int g_NewX;
 extern int g_NewY;
+extern bool g_TriggerResize;
 extern char g_aInfoStr[1024];
 extern char g_aInfoStr2[1024];
 extern char g_aInputStr[1024];

@@ -69,8 +69,6 @@ class CTerminalUI : public CComponent
 		INPUT_SEARCH_BROWSER_SEARCH,
 
 		INPUT_HISTORY_MAX_LEN = 16,
-
-		NC_INFO_SIZE = 3,
 	};
 	const char *GetInputMode()
 	{

@@ -121,6 +121,9 @@ void CTerminalUI::InfoDraw()
 
 void CTerminalUI::InputDraw()
 {
+	if(!g_InputWin.IsActive())
+		return;
+
 	char aBuf[512];
 	if(m_InputMode == INPUT_REMOTE_CONSOLE && !RconAuthed())
 	{
@@ -165,20 +168,23 @@ int CTerminalUI::CursesTick()
 	// g_NewX = w.ws_col;
 	// g_NewY = w.ws_row;
 
-	if(g_NewY != g_ParentY || g_NewX != g_ParentX)
+	if(g_NewY != g_ParentY || g_NewX != g_ParentX || g_TriggerResize)
 	{
+		g_TriggerResize = false;
+
 		g_ParentX = g_NewX;
 		g_ParentY = g_NewY;
 
-		wresize(g_LogWindow.m_pCursesWin, g_NewY - NC_INFO_SIZE * 2, g_NewX);
-		wresize(g_InfoWin.m_pCursesWin, NC_INFO_SIZE, g_NewX);
-		wresize(g_InputWin.m_pCursesWin, NC_INFO_SIZE, g_NewX);
-		mvwin(g_InfoWin.m_pCursesWin, g_NewY - NC_INFO_SIZE * 2, 0);
-		mvwin(g_InputWin.m_pCursesWin, g_NewY - NC_INFO_SIZE, 0);
+		wresize(g_LogWindow.m_pCursesWin, g_NewY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), g_NewX);
+		wresize(g_InfoWin.m_pCursesWin, INFO_WIN_HEIGHT, g_NewX);
+		wresize(g_InputWin.m_pCursesWin, g_InputWin.m_Height, g_NewX);
+		mvwin(g_InfoWin.m_pCursesWin, g_NewY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), 0);
+		mvwin(g_InputWin.m_pCursesWin, g_NewY - g_InputWin.m_Height, 0);
 
 		wclear(stdscr);
 		wclear(g_InfoWin.m_pCursesWin);
-		wclear(g_InputWin.m_pCursesWin);
+		if(g_InputWin.IsActive())
+			wclear(g_InputWin.m_pCursesWin);
 
 		g_LogWindow.DrawBorders();
 		g_InfoWin.DrawBorders();
@@ -186,7 +192,7 @@ int CTerminalUI::CursesTick()
 
 		if(m_pClient->m_Snap.m_pLocalCharacter && m_RenderGame)
 		{
-			wresize(g_GameWindow.m_pCursesWin, g_NewY - NC_INFO_SIZE * 2, g_NewX); // TODO: fix this size
+			wresize(g_GameWindow.m_pCursesWin, g_NewY - g_InputWin.m_Height * 2, g_NewX); // TODO: fix this size
 			wclear(g_LogWindow.m_pCursesWin);
 			g_GameWindow.DrawBorders();
 		}
@@ -265,10 +271,10 @@ void CTerminalUI::OnInit()
 	// set up initial windows
 	getmaxyx(stdscr, g_ParentY, g_ParentX);
 
-	g_LogWindow.m_pCursesWin = newwin(g_ParentY - NC_INFO_SIZE * 2, g_ParentX, 0, 0);
-	g_GameWindow.m_pCursesWin = newwin(g_ParentY - NC_INFO_SIZE * 2, g_ParentX, 0, 0); // TODO: fix this size
-	g_InfoWin.m_pCursesWin = newwin(NC_INFO_SIZE, g_ParentX, g_ParentY - NC_INFO_SIZE * 2, 0);
-	g_InputWin.m_pCursesWin = newwin(NC_INFO_SIZE, g_ParentX, g_ParentY - NC_INFO_SIZE, 0);
+	g_LogWindow.m_pCursesWin = newwin(g_ParentY - g_InputWin.m_Height * 2, g_ParentX, 0, 0);
+	g_GameWindow.m_pCursesWin = newwin(g_ParentY - g_InputWin.m_Height * 2, g_ParentX, 0, 0); // TODO: fix this size
+	g_InfoWin.m_pCursesWin = newwin(g_InputWin.m_Height, g_ParentX, g_ParentY - g_InputWin.m_Height * 2, 0);
+	g_InputWin.m_pCursesWin = newwin(g_InputWin.m_Height, g_ParentX, g_ParentY - g_InputWin.m_Height, 0);
 
 	g_LogWindow.DrawBorders();
 	g_InfoWin.DrawBorders();
@@ -376,11 +382,28 @@ void CTerminalUI::OnRender()
 void CTerminalUI::OnInputModeChange(int Old, int New)
 {
 	g_InputWin.SetSearch(New == INPUT_BROWSER_SEARCH);
+	if(New == INPUT_NORMAL)
+	{
+		if(g_InputWin.IsActive())
+		{
+			g_InputWin.Close();
+			g_TriggerResize = true;
+		}
+	}
+	else
+	{
+		if(!g_InputWin.IsActive())
+		{
+			g_InputWin.Open();
+			g_TriggerResize = true;
+		}
+	}
 	ResetCompletion();
 	g_aInputStr[0] = '\0';
 	m_InputCursor = 0;
 	m_aCompletionPreview[0] = '\0';
-	wclear(g_InputWin.m_pCursesWin);
+	if(g_InputWin.IsActive())
+		wclear(g_InputWin.m_pCursesWin);
 	InputDraw();
 	g_InputWin.DrawBorders();
 	UpdateCursor();

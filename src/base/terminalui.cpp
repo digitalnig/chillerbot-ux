@@ -20,6 +20,7 @@ int g_ParentX;
 int g_ParentY;
 int g_NewX;
 int g_NewY;
+bool g_TriggerResize;
 char g_aInfoStr[1024];
 char g_aInfoStr2[1024];
 char g_aInputStr[1024];
@@ -44,7 +45,8 @@ void curses_refresh_windows()
 		g_LogWindow.DrawBorders();
 	}
 	wrefresh(g_InfoWin.m_pCursesWin);
-	wrefresh(g_InputWin.m_pCursesWin);
+	if(g_InputWin.IsActive())
+		wrefresh(g_InputWin.m_pCursesWin);
 	gs_NeedLogDraw = false;
 }
 
@@ -242,15 +244,15 @@ void CTermWindow::DrawBorders()
 	{
 		if(m_aTextTopYellow[0] != '\0')
 		{
-			wattron(g_InputWin.m_pCursesWin, COLOR_PAIR(YELLOW_ON_BLACK));
-			wattron(g_InputWin.m_pCursesWin, A_BOLD);
+			wattron(screen, COLOR_PAIR(YELLOW_ON_BLACK));
+			wattron(screen, A_BOLD);
 			str_copy(aBuf, m_aTextTopYellow, sizeof(aBuf));
 			aBuf[std::clamp(AvailableWidth - TitleOffset, 0, (int)sizeof(aBuf))] = '\0';
 			mvwprintw(screen, 0, TitleOffset, "%s", aBuf);
 			TitleOffset += str_length(aBuf);
 			refresh();
-			wattroff(g_InputWin.m_pCursesWin, A_BOLD);
-			wattroff(g_InputWin.m_pCursesWin, COLOR_PAIR(CYAN_ON_BLACK));
+			wattroff(screen, A_BOLD);
+			wattroff(screen, COLOR_PAIR(CYAN_ON_BLACK));
 			if(TitleOffset >= AvailableWidth)
 			{
 				TitleOffset = AvailableWidth - 1;
@@ -279,6 +281,9 @@ void CTermWindow::DrawBorders()
 
 void CInputWindow::DrawBorders()
 {
+	if(!IsActive())
+		return;
+
 	CTermWindow::DrawBorders();
 
 	if(m_Search)
