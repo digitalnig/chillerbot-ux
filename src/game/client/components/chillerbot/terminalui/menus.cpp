@@ -64,8 +64,9 @@ void CTerminalUI::RenderHelpPage()
 		" ?     - toggle this help",
 		"",
 		"** serverbrowser",
-		" b     - toggle server browser. Opens search prompt then waits for navigation.",
-		" c     - connect to currently selected server",
+		" b     - toggle server browser",
+		" enter - connect to currently selected server",
+		" /     - to search",
 		" down  - select next server",
 		" up    - select previous server",
 		" right - switch to next tab (internet/lan/favorites/ddnet/kog)",
@@ -78,8 +79,10 @@ void CTerminalUI::RenderHelpPage()
 		" f2    - remote console",
 		" h     - auto reply to known chat messages",
 		" v     - toggle visual mode (render game world)",
+		" tab   - show scoreboard",
 		" a     - walk left",
 		" d     - walk right",
+		" space - to jump",
 		" k     - selfkill"};
 
 	g_LogWindow.DrawBorders(offX, offY - 1, width, sizeof(aHelpLines) / 128 + 2);

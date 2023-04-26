@@ -297,7 +297,7 @@ void CTerminalUI::OnInit()
 		"Keybindings:",
 		"?       - opens a help page",
 		"b       - to open server list",
-		"return  - to close popups like this one"};
+		"enter   - to close popups like this one"};
 
 	DoPopup(POPUP_NOT_IMPORTANT, "term-ux - chillerbot-ux in the terminal", aaWeclomePopup[0], 128, sizeof(aaWeclomePopup) / 128);
 }
@@ -1155,6 +1155,7 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	{
 		if(m_Popup == POPUP_NOT_IMPORTANT)
 			m_Popup = POPUP_NONE;
+		m_RenderHelpPage = false;
 		m_RenderServerList = !m_RenderServerList;
 		gs_NeedLogDraw = true;
 		m_NewInput = true;
