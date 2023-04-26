@@ -7,6 +7,9 @@
 #include <base/chillerbot/curses_colors.h>
 #include <base/terminalui.h>
 
+#include "pad_utf8.h"
+#include <rust-bridge-chillerbot/unicode.h>
+
 #include "terminalui.h"
 
 #if defined(CONF_CURSES_CLIENT)
@@ -71,25 +74,27 @@ void CTerminalUI::RenderScoreboard(int Team, CTermWindow *pWin)
 		else
 			str_format(aScore, sizeof(aScore), "%d", clamp(pInfo->m_Score, -999, 99999));
 
-		char aLine[1024];
+		static const int NAME_COL_SIZE = 20;
+		static const int CLAN_COL_SIZE = 20;
+
 		char aBuf[1024];
-		size_t NameSize;
-		size_t NameCount;
-		size_t ClanSize;
-		size_t ClanCount;
-		str_utf8_stats(m_pClient->m_aClients[pInfo->m_ClientID].m_aName, 60, 60, &NameSize, &NameCount);
-		str_utf8_stats(m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, 60, 60, &ClanSize, &ClanCount);
+		char aName[64];
+		char aClan[64];
+		str_copy(aName, m_pClient->m_aClients[pInfo->m_ClientID].m_aName, sizeof(aName));
+		str_copy(aClan, m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, sizeof(aClan));
+
+		str_pad_right_utf8(aName, sizeof(aName), NAME_COL_SIZE);
+		str_pad_right_utf8(aClan, sizeof(aClan), CLAN_COL_SIZE);
+
 		str_format(aBuf, sizeof(aBuf),
-			"%8s| %-*s | %-*s |",
+			"%8s| %s | %s |",
 			aScore,
-			20 + (NameSize - NameCount),
-			m_pClient->m_aClients[pInfo->m_ClientID].m_aName,
-			20 + (ClanSize - ClanCount),
-			m_pClient->m_aClients[pInfo->m_ClientID].m_aClan);
-		str_format(aLine, sizeof(aLine), "|%-*s|", (width - 2) + (NameSize - NameCount) + (ClanSize - ClanCount), aBuf);
-		if(sizeof(aBuf) > (unsigned long)(mx - 2))
-			aLine[mx - 2] = '\0'; // ensure no line wrapping
-		mvwprintw(pWin->m_pCursesWin, offY + k, offX, "%s", aLine);
+			aName,
+			aClan);
+		str_pad_right_utf8(aBuf, sizeof(aBuf), width - 2);
+		// if(sizeof(aBuf) > (unsigned long)(mx - 2))
+		// 	aLine[mx - 2] = '\0'; // ensure no line wrapping
+		mvwprintw(pWin->m_pCursesWin, offY + k, offX, "|%s|", aBuf);
 
 		if(k++ >= height - 1)
 			break;
