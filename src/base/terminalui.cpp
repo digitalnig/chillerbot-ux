@@ -286,12 +286,20 @@ void CInputWindow::DrawBorders()
 
 	CTermWindow::DrawBorders();
 
-	if(m_Search)
+	WINDOW *screen = m_pCursesWin;
+	if(IsSearch())
 	{
-		WINDOW *screen = m_pCursesWin;
 		mvwprintw(screen, 0, 0, "%s", "+--+");
 		mvwprintw(screen, 1, 0, "%s", "|🔍|");
 		mvwprintw(screen, 2, 0, "%s", "+--+");
+	}
+	else if(IsMenu())
+	{
+		char aBuf[1024];
+		aBuf[0] = '\0';
+		str_append(aBuf, m_SelectedMenuItem == MENU_ITEM_BROWSER ? " [BROWSER]" : " [browser]", sizeof(aBuf));
+		str_append(aBuf, m_SelectedMenuItem == MENU_ITEM_QUIT ? " [QUIT]" : " [quit]", sizeof(aBuf));
+		mvwprintw(screen, 1, 1, "%s", aBuf);
 	}
 }
 

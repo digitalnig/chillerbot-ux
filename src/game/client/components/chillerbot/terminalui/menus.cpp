@@ -16,6 +16,38 @@
 
 #if defined(CONF_CURSES_CLIENT)
 
+bool CTerminalUI::PickMenuItem()
+{
+	if(!g_InputWin.IsMenu())
+		return false;
+
+	g_InputWin.CloseMenu();
+
+	switch(g_InputWin.Item())
+	{
+	case CInputWindow::MENU_ITEM_BROWSER:
+		OpenServerList();
+		break;
+	case CInputWindow::MENU_ITEM_QUIT:
+		m_pClient->Client()->Quit();
+		break;
+	default:
+		break;
+	}
+	return true;
+}
+
+void CTerminalUI::OpenServerList()
+{
+	g_InputWin.CloseMenu();
+	if(m_Popup == POPUP_NOT_IMPORTANT)
+		m_Popup = POPUP_NONE;
+	m_RenderHelpPage = false;
+	m_RenderServerList = !m_RenderServerList;
+	gs_NeedLogDraw = true;
+	m_NewInput = true;
+}
+
 bool CTerminalUI::DoPopup(int Popup, const char *pTitle, const char *pBody, size_t BodyWidth, size_t BodyHeight)
 {
 	if(m_Popup != POPUP_NONE)

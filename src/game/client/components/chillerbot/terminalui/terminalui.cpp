@@ -438,6 +438,8 @@ int CTerminalUI::GetInput()
 	if(c == m_LockKeyUntilRelease)
 		return EOF;
 
+	// always skip
+	// nonblocking empty read
 	m_LockKeyUntilRelease = EOF;
 
 	if(InputMode() == INPUT_NORMAL)
@@ -471,15 +473,11 @@ int CTerminalUI::GetInput()
 		InputMode() == INPUT_SEARCH_CHAT_TEAM ||
 		InputMode() == INPUT_SEARCH_BROWSER_SEARCH)
 	{
-		if(c == ERR) // nonblocking empty read
-			return 0;
-
-		if(c == EOF || c == 10) // return
+		if(c == 10) // return / enter
 		{
 			// do not repeat return input
 			// if the enter key is being held
-			if(c == 10)
-				m_LockKeyUntilRelease = c;
+			m_LockKeyUntilRelease = c;
 
 			if(InputMode() == INPUT_LOCAL_CONSOLE)
 				m_pClient->Console()->ExecuteLine(g_aInputStr);
@@ -676,6 +674,7 @@ int CTerminalUI::GetInput()
 		}
 		else if(c == 260) // left arrow
 		{
+			g_InputWin.NextMenuItem();
 			// could be used for cursor movement
 			m_InputCursor = clamp(m_InputCursor - 1, 0, str_length(g_aInputStr));
 			UpdateCursor();
@@ -683,6 +682,7 @@ int CTerminalUI::GetInput()
 		}
 		else if(c == 261) // right arrow
 		{
+			g_InputWin.PrevMenuItem();
 			// could be used for cursor movement
 			m_InputCursor = clamp(m_InputCursor + 1, 0, str_length(g_aInputStr));
 			UpdateCursor();
@@ -1122,6 +1122,8 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	// }
 	else if(Key == 10) // return / enter
 	{
+		m_LockKeyUntilRelease = Key;
+
 		if(m_Popup == POPUP_MESSAGE || m_Popup == POPUP_DISCONNECTED || m_Popup == POPUP_NOT_IMPORTANT)
 		{
 			// click "[ OK ]" on popups using enter
@@ -1130,6 +1132,9 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 			m_Popup = POPUP_NONE;
 			gs_NeedLogDraw = true;
 			m_NewInput = true;
+		}
+		else if(PickMenuItem())
+		{
 		}
 		else if(m_RenderServerList)
 		{
@@ -1154,12 +1159,7 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	}
 	else if(Key == 'b' && m_LastKeyPress < time_get() - time_freq() / 2)
 	{
-		if(m_Popup == POPUP_NOT_IMPORTANT)
-			m_Popup = POPUP_NONE;
-		m_RenderHelpPage = false;
-		m_RenderServerList = !m_RenderServerList;
-		gs_NeedLogDraw = true;
-		m_NewInput = true;
+		OpenServerList();
 	}
 	else if((Key == KEY_F(5) || (keyname(Key)[0] == '^' && keyname(Key)[1] == 'R')) && m_RenderServerList)
 	{
@@ -1167,12 +1167,14 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	}
 	else if(Key == KEY_LEFT)
 	{
+		g_InputWin.PrevMenuItem();
 		AimX = maximum(AimX - 10, -20);
 		if(m_RenderServerList)
 			SetServerBrowserPage(g_Config.m_UiPage - 1);
 	}
 	else if(Key == KEY_RIGHT)
 	{
+		g_InputWin.NextMenuItem();
 		AimX = minimum(AimX + 10, 20);
 		if(m_RenderServerList)
 			SetServerBrowserPage(g_Config.m_UiPage + 1);

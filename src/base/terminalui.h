@@ -6,6 +6,7 @@
 #if defined(CONF_CURSES_CLIENT)
 
 #include <base/curses.h>
+#include <base/math.h>
 
 #define CHILLER_LOGGER_WIDTH 1024 * 4
 #define CHILLER_LOGGER_HEIGHT 2048
@@ -36,22 +37,64 @@ public:
 		m_Search = false;
 		m_CurserOffset = 0;
 		Open();
+		m_Menu = false; // TODO: set to true when it closes fine
+		m_SelectedMenuItem = MENU_ITEM_BROWSER;
 	}
 	bool m_Search;
 	int m_CurserOffset;
 	int m_Height;
 	bool m_Active;
+	bool m_Menu;
+	int m_SelectedMenuItem;
+	enum
+	{
+		MENU_ITEM_BROWSER,
+		MENU_ITEM_QUIT,
+		NUM_MENU_ITEMS,
+	};
+	void CloseMenu()
+	{
+		if(!IsMenu())
+			return;
+		dbg_msg("chiller", "closing menu");
+		m_Menu = false;
+		refresh();
+		wclear(m_pCursesWin);
+		refresh();
+		Close();
+	}
 	void Open()
 	{
 		m_Height = 3;
 		m_Active = true;
+		CloseMenu();
 	}
 	void Close()
 	{
 		m_Height = 0;
 		m_Active = false;
+		CloseMenu();
 	}
+	void NextMenuItem()
+	{
+		if(!IsMenu())
+			return;
+		m_SelectedMenuItem = clamp(m_SelectedMenuItem + 1, 0, (int)NUM_MENU_ITEMS);
+		DrawBorders();
+		refresh();
+	}
+	void PrevMenuItem()
+	{
+		if(!IsMenu())
+			return;
+		m_SelectedMenuItem = clamp(m_SelectedMenuItem - 1, 0, (int)NUM_MENU_ITEMS);
+		DrawBorders();
+		refresh();
+	}
+	int Item() { return m_SelectedMenuItem; }
 	bool IsActive() { return m_Active; }
+	bool IsMenu() { return m_Menu; }
+	bool IsSearch() { return m_Search; }
 	void SetSearch(bool Search)
 	{
 		m_Search = Search;
