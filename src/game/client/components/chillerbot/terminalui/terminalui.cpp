@@ -134,7 +134,7 @@ void CTerminalUI::InputDraw()
 	}
 	else
 		str_copy(aBuf, g_aInputStr, sizeof(aBuf));
-	int x = getmaxx(g_InfoWin.m_pCursesWin);
+	int x = getmaxx(g_InputWin.m_pCursesWin);
 	if(x < (int)sizeof(aBuf))
 		aBuf[x - 2] = '\0'; // prevent line wrapping and cut on screen border
 	wattron(g_InputWin.m_pCursesWin, COLOR_PAIR(WHITE_ON_BLACK));
@@ -194,7 +194,7 @@ int CTerminalUI::CursesTick()
 
 		if(m_pClient->m_Snap.m_pLocalCharacter && m_RenderGame)
 		{
-			wresize(g_GameWindow.m_pCursesWin, g_NewY - g_InputWin.m_Height * 2, g_NewX); // TODO: fix this size
+			wresize(g_GameWindow.m_pCursesWin, g_NewY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), g_NewX); // TODO: fix this size
 			wclear(g_LogWindow.m_pCursesWin);
 			g_GameWindow.DrawBorders();
 		}
@@ -272,9 +272,9 @@ void CTerminalUI::OnInit()
 	// set up initial windows
 	getmaxyx(stdscr, g_ParentY, g_ParentX);
 
-	g_LogWindow.m_pCursesWin = newwin(g_ParentY - g_InputWin.m_Height * 2, g_ParentX, 0, 0);
-	g_GameWindow.m_pCursesWin = newwin(g_ParentY - g_InputWin.m_Height * 2, g_ParentX, 0, 0); // TODO: fix this size
-	g_InfoWin.m_pCursesWin = newwin(g_InputWin.m_Height, g_ParentX, g_ParentY - g_InputWin.m_Height * 2, 0);
+	g_LogWindow.m_pCursesWin = newwin(g_ParentY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), g_ParentX, 0, 0);
+	g_GameWindow.m_pCursesWin = newwin(g_ParentY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), g_ParentX, 0, 0); // TODO: fix this size
+	g_InfoWin.m_pCursesWin = newwin(g_InputWin.m_Height, g_ParentX, g_ParentY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), 0);
 	g_InputWin.m_pCursesWin = newwin(g_InputWin.m_Height, g_ParentX, g_ParentY - g_InputWin.m_Height, 0);
 
 	g_LogWindow.DrawBorders();

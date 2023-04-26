@@ -35,8 +35,7 @@ public:
 		CTermWindow();
 		m_Search = false;
 		m_CurserOffset = 0;
-		m_Height = 3;
-		m_Active = true;
+		Open();
 	}
 	bool m_Search;
 	int m_CurserOffset;
