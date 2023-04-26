@@ -34,10 +34,7 @@ bool CTerminalUI::DoPopup(int Popup, const char *pTitle, const char *pBody, size
 		dbg_assert(BodyWidth < MAX_POPUP_BODY_WIDTH, "popup body too wide");
 		dbg_assert(BodyHeight <= MAX_POPUP_BODY_HEIGHT, "popup body too high");
 		for(size_t y = 0; y < BodyHeight; y++)
-		{
-			dbg_msg("popup", "y=%d str=%s", y, &pBody[y * BodyWidth]);
 			str_copy(m_aaPopupBody[y], &pBody[y * BodyWidth], sizeof(m_aaPopupBody[y]));
-		}
 	}
 
 	m_NewInput = false;
@@ -261,7 +258,7 @@ void CTerminalUI::RenderPopup()
 	mvwprintw(g_LogWindow.m_pCursesWin, offY++, offX, "|%-*s|", width - 2, aBuf);
 	if(m_aaPopupBody[0][0] != '\0')
 		for(size_t y = 0; y < m_PopupBodyHeight; y++)
-			mvwprintw(g_LogWindow.m_pCursesWin, offY++, offX, "| %-*s|", width - 2, m_aaPopupBody[y]);
+			mvwprintw(g_LogWindow.m_pCursesWin, offY++, offX, "| %-*s|", width - 3, m_aaPopupBody[y]);
 	if(m_Popup == POPUP_DISCONNECTED)
 		str_format(aBuf, sizeof(aBuf), "%*s", (width - 9) < 1 ? 0 : ((width - 9) / 2), "[ ABORT ]");
 	else
