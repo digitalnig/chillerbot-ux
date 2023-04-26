@@ -16,14 +16,30 @@
 
 #if defined(CONF_CURSES_CLIENT)
 
-bool CTerminalUI::DoPopup(int Popup, const char *pTitle)
+bool CTerminalUI::DoPopup(int Popup, const char *pTitle, const char *pBody, size_t BodyWidth, size_t BodyHeight)
 {
 	if(m_Popup != POPUP_NONE)
 		return false;
 
 	m_Popup = Popup;
 	str_copy(m_aPopupTitle, pTitle, sizeof(m_aPopupTitle));
-	// TODO: m_NewInput, gs_NeedLogDraw do not really work here
+
+	m_aaPopupBody[0][0] = '\0';
+	if(pBody)
+	{
+		m_PopupBodyWidth = BodyWidth;
+		m_PopupBodyHeight = BodyHeight;
+		dbg_assert(BodyWidth > 0, "popup body width too low");
+		dbg_assert(BodyHeight > 0, "popup body height too low");
+		dbg_assert(BodyWidth < MAX_POPUP_BODY_WIDTH, "popup body too wide");
+		dbg_assert(BodyHeight <= MAX_POPUP_BODY_HEIGHT, "popup body too high");
+		for(size_t y = 0; y < BodyHeight; y++)
+		{
+			dbg_msg("popup", "y=%d str=%s", y, &pBody[y * BodyWidth]);
+			str_copy(m_aaPopupBody[y], &pBody[y * BodyWidth], sizeof(m_aaPopupBody[y]));
+		}
+	}
+
 	m_NewInput = false;
 	gs_NeedLogDraw = true;
 	return true;
@@ -203,7 +219,7 @@ void CTerminalUI::RenderPopup()
 	if(my < 20)
 		offY = 2;
 	int width = minimum(128, mx - 3);
-	int height = minimum(3, my - 2);
+	int height = minimum(3 + (int)m_PopupBodyHeight, my - 2);
 	if(height < 2)
 		return;
 	g_LogWindow.DrawBorders(offX, offY - 1, width, height + 2);
@@ -240,6 +256,9 @@ void CTerminalUI::RenderPopup()
 	mvwprintw(g_LogWindow.m_pCursesWin, offY++, offX, "|%-*s|", width - 2, aBuf);
 	str_format(aBuf, sizeof(aBuf), "%*s", (width - ExtraTextLen) < 1 ? 0 : ((width - ExtraTextMid) / 2), aExtraText);
 	mvwprintw(g_LogWindow.m_pCursesWin, offY++, offX, "|%-*s|", width - 2, aBuf);
+	if(m_aaPopupBody[0][0] != '\0')
+		for(size_t y = 0; y < m_PopupBodyHeight; y++)
+			mvwprintw(g_LogWindow.m_pCursesWin, offY++, offX, "| %-*s|", width - 2, m_aaPopupBody[y]);
 	if(m_Popup == POPUP_DISCONNECTED)
 		str_format(aBuf, sizeof(aBuf), "%*s", (width - 9) < 1 ? 0 : ((width - 9) / 2), "[ ABORT ]");
 	else
