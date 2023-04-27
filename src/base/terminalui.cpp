@@ -294,8 +294,6 @@ void CInputWindow::DrawBorders()
 	}
 	else if(IsMenu())
 	{
-		char aBuf[1024];
-		aBuf[0] = '\0';
 		int offset = 1;
 		offset = RenderMenuItem("browser", m_SelectedMenuItem == MENU_ITEM_BROWSER, offset);
 		offset = RenderMenuItem("help", m_SelectedMenuItem == MENU_ITEM_HELP, offset);

@@ -46,6 +46,7 @@ MACRO_CONFIG_STR(ClPenTestFile, cl_pentest_file, 128, "pentest.txt", CFGFLAG_CLI
 MACRO_CONFIG_INT(ClDbgIntersect, cl_dbg_intersect, 0, 0, 1, CFGFLAG_CLIENT, "Show graphical output for CCollsion::IntersectLine")
 #if defined(CONF_CURSES_CLIENT)
 MACRO_CONFIG_INT(ClTermHistory, cl_term_history, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Persist input history in filesystem for curses client")
+MACRO_CONFIG_INT(ClTermBrowserSearchTop, cl_term_browser_search_top, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "When opening the search (/) in server browser show it on the top")
 #endif
 
 // skin stealer

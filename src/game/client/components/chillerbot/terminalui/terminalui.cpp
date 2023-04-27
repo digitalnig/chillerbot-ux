@@ -175,22 +175,41 @@ int CTerminalUI::CursesTick()
 		g_ParentX = g_NewX;
 		g_ParentY = g_NewY;
 
-		wresize(g_LogWindow.m_pCursesWin, g_NewY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), g_NewX);
 		wresize(g_InfoWin.m_pCursesWin, INFO_WIN_HEIGHT, g_NewX);
 		wresize(g_InputWin.m_pCursesWin, g_InputWin.m_Height, g_NewX);
-		mvwin(g_InfoWin.m_pCursesWin, g_NewY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), 0);
-		mvwin(g_InputWin.m_pCursesWin, g_NewY - g_InputWin.m_Height, 0);
+
+		// search bar on top
+		if(InputMode() == INPUT_BROWSER_SEARCH && g_Config.m_ClTermBrowserSearchTop)
+		{
+			// this works if you want to move the log down instead of overlap
+			// mvwin(g_LogWindow.m_pCursesWin, g_InputWin.m_Height, 0);
+
+			wresize(g_LogWindow.m_pCursesWin, g_NewY - INFO_WIN_HEIGHT, g_NewX);
+			mvwin(g_LogWindow.m_pCursesWin, 0, 0);
+
+			mvwin(g_InfoWin.m_pCursesWin, g_NewY - INFO_WIN_HEIGHT, 0);
+			mvwin(g_InputWin.m_pCursesWin, 1, 0);
+		}
+		else // search bar on bottom
+		{
+			// mvwin(g_LogWindow.m_pCursesWin, 0, 0);
+			wresize(g_LogWindow.m_pCursesWin, g_NewY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), g_NewX);
+
+			mvwin(g_InfoWin.m_pCursesWin, g_NewY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), 0);
+			mvwin(g_InputWin.m_pCursesWin, g_NewY - g_InputWin.m_Height, 0);
+		}
 
 		wclear(stdscr);
 		wclear(g_InfoWin.m_pCursesWin);
 		if(g_InputWin.IsActive())
+		{
 			wclear(g_InputWin.m_pCursesWin);
+			g_InputWin.DrawBorders();
+			InputDraw();
+		}
 
 		g_LogWindow.DrawBorders();
 		g_InfoWin.DrawBorders();
-		g_InputWin.DrawBorders();
-
-		InputDraw();
 
 		if(m_pClient->m_Snap.m_pLocalCharacter && m_RenderGame)
 		{
