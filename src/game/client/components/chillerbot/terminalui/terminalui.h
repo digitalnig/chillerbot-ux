@@ -22,6 +22,23 @@ class CTerminalUI : public CComponent
 		KEY_HISTORY_LEN = 20
 	};
 
+	class WindowInfo
+	{
+		public:
+		WindowInfo()
+		{
+			m_X = 0;
+			m_Y = 0;
+			m_Width = 0;
+			m_Height = 0;
+		}
+		int m_X;
+		int m_Y;
+		int m_Width;
+		int m_Height;
+	};
+	WindowInfo m_WinServerBrowser;
+
 	void RenderScoreboard(int Team, class CTermWindow *pWin);
 	void OpenServerList();
 	void RenderServerList();

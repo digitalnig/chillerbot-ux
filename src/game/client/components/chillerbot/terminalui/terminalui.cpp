@@ -176,7 +176,6 @@ int CTerminalUI::CursesTick()
 		g_ParentY = g_NewY;
 
 		wresize(g_InfoWin.m_pCursesWin, INFO_WIN_HEIGHT, g_NewX);
-		wresize(g_InputWin.m_pCursesWin, g_InputWin.m_Height, g_NewX);
 
 		// search bar on top
 		if(InputMode() == INPUT_BROWSER_SEARCH && g_Config.m_ClTermBrowserSearchTop)
@@ -188,12 +187,16 @@ int CTerminalUI::CursesTick()
 			mvwin(g_LogWindow.m_pCursesWin, 0, 0);
 
 			mvwin(g_InfoWin.m_pCursesWin, g_NewY - INFO_WIN_HEIGHT, 0);
-			mvwin(g_InputWin.m_pCursesWin, 1, 0);
+			wresize(g_InputWin.m_pCursesWin, g_InputWin.m_Height, m_WinServerBrowser.m_Width);
+			// dbg_msg("chiller", "%d %d", m_WinServerBrowser.m_Y - g_InputWin.m_Height, m_WinServerBrowser.m_X);
+			// mvwin(g_InputWin.m_pCursesWin, m_WinServerBrowser.m_Y - g_InputWin.m_Height, m_WinServerBrowser.m_X);
+			mvwin(g_InputWin.m_pCursesWin, m_WinServerBrowser.m_Y - (g_InputWin.m_Height + 1), m_WinServerBrowser.m_X);
 		}
 		else // search bar on bottom
 		{
 			// mvwin(g_LogWindow.m_pCursesWin, 0, 0);
 			wresize(g_LogWindow.m_pCursesWin, g_NewY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), g_NewX);
+			wresize(g_InputWin.m_pCursesWin, g_InputWin.m_Height, g_NewX);
 
 			mvwin(g_InfoWin.m_pCursesWin, g_NewY - (g_InputWin.m_Height + INFO_WIN_HEIGHT), 0);
 			mvwin(g_InputWin.m_pCursesWin, g_NewY - g_InputWin.m_Height, 0);

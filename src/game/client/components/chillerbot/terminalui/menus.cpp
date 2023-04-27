@@ -180,6 +180,10 @@ void CTerminalUI::RenderServerList()
 	mvwprintw(g_LogWindow.m_pCursesWin, offY - 1, offX + 3, "[ %s ]", aTab);
 	int From = 0;
 	int To = height;
+	m_WinServerBrowser.m_X = offX;
+	m_WinServerBrowser.m_Y = offY;
+	m_WinServerBrowser.m_Width = width;
+	m_WinServerBrowser.m_Height = height;
 	if(To > 1 && m_SelectedServer >= To - 1)
 	{
 		From = m_SelectedServer - (To - 1);
