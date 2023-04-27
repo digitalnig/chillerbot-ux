@@ -405,6 +405,7 @@ void CTerminalUI::SetInputMode(int Mode)
 void CTerminalUI::OnInputModeChange(int Old, int New)
 {
 	g_InputWin.SetSearch(New == INPUT_BROWSER_SEARCH);
+	CloseMenu();
 	if(New == INPUT_NORMAL)
 	{
 		if(g_InputWin.IsActive())
