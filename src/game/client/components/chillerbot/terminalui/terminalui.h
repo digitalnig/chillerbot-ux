@@ -249,6 +249,16 @@ class CTerminalUI : public CComponent
 	void InfoDraw();
 	void InputDraw();
 	int CursesTick();
+	/*
+		ClearInput
+
+		Do not run `g_aInputStr[0] = '\0';`
+		and call it a day
+
+		Clearing the input cleanly is a bit more effort
+		call this helper instead
+	*/
+	void ClearInput();
 	void ResetCompletion();
 	/*
 		Function: ClearCompletionPreview

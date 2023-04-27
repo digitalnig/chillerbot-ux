@@ -423,8 +423,7 @@ void CTerminalUI::OnInputModeChange(int Old, int New)
 		}
 	}
 	ResetCompletion();
-	g_aInputStr[0] = '\0';
-	m_InputCursor = 0;
+	ClearInput();
 	if(New == INPUT_BROWSER_SEARCH)
 	{
 		str_copy(g_aInputStr, g_Config.m_BrFilterString, sizeof(g_aInputStr));
@@ -533,7 +532,7 @@ int CTerminalUI::GetInput()
 				if(!(InputMode() == INPUT_REMOTE_CONSOLE && !RconAuthed()))
 					AddInputHistory(InputMode(), g_aInputStr);
 				m_InputHistory[InputMode()] = 0;
-				g_aInputStr[0] = '\0';
+				ClearInput();
 				if(InputMode() != INPUT_LOCAL_CONSOLE && InputMode() != INPUT_REMOTE_CONSOLE)
 					SetInputMode(INPUT_NORMAL);
 			}
@@ -545,14 +544,14 @@ int CTerminalUI::GetInput()
 		}
 		else if(c == KEY_F(1)) // f1 hard toggle local console
 		{
-			g_aInputStr[0] = '\0';
+			ClearInput();
 			wclear(g_InputWin.m_pCursesWin);
 			g_InputWin.DrawBorders();
 			SetInputMode(InputMode() == INPUT_LOCAL_CONSOLE ? INPUT_NORMAL : INPUT_LOCAL_CONSOLE);
 		}
 		else if(c == KEY_F(2)) // f2 hard toggle local console
 		{
-			g_aInputStr[0] = '\0';
+			ClearInput();
 			wclear(g_InputWin.m_pCursesWin);
 			g_InputWin.DrawBorders();
 			SetInputMode(InputMode() == INPUT_REMOTE_CONSOLE ? INPUT_NORMAL : INPUT_REMOTE_CONSOLE);
@@ -1040,6 +1039,12 @@ void CTerminalUI::CompleteNames(bool IsReverse)
 		m_CompletionIndex = 0;
 	if(IsReverseEnd)
 		m_CompletionIndex = Matches - 1;
+}
+
+void CTerminalUI::ClearInput()
+{
+	g_aInputStr[0] = '\0';
+	m_InputCursor = 0;
 }
 
 void CTerminalUI::ResetCompletion()
