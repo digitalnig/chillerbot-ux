@@ -24,7 +24,7 @@ class CTerminalUI : public CComponent
 
 	class WindowInfo
 	{
-		public:
+	public:
 		WindowInfo()
 		{
 			m_X = 0;
