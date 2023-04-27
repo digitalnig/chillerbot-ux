@@ -528,7 +528,9 @@ int CTerminalUI::GetInput()
 			}
 			else
 			{
-				AddInputHistory(InputMode(), g_aInputStr);
+				// do not store rcon password in history
+				if(!(InputMode() == INPUT_REMOTE_CONSOLE && !RconAuthed()))
+					AddInputHistory(InputMode(), g_aInputStr);
 				m_InputHistory[InputMode()] = 0;
 				g_aInputStr[0] = '\0';
 				if(InputMode() != INPUT_LOCAL_CONSOLE && InputMode() != INPUT_REMOTE_CONSOLE)
