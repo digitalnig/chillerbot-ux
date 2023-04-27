@@ -27,6 +27,7 @@ class CTerminalUI : public CComponent
 	void RenderServerList();
 	void RenderHelpPage();
 	bool PickMenuItem();
+	void CloseMenu();
 	int m_aLastPressedKey[KEY_HISTORY_LEN];
 	bool KeyInHistory(int Key, int Ticks = KEY_HISTORY_LEN)
 	{

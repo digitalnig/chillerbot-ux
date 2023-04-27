@@ -21,7 +21,7 @@ bool CTerminalUI::PickMenuItem()
 	if(!g_InputWin.IsMenu())
 		return false;
 
-	g_InputWin.CloseMenu();
+	CloseMenu();
 
 	switch(g_InputWin.Item())
 	{
@@ -37,9 +37,16 @@ bool CTerminalUI::PickMenuItem()
 	return true;
 }
 
-void CTerminalUI::OpenServerList()
+void CTerminalUI::CloseMenu()
 {
 	g_InputWin.CloseMenu();
+	g_InputWin.Close();
+	g_TriggerResize = true;
+}
+
+void CTerminalUI::OpenServerList()
+{
+	CloseMenu();
 	if(m_Popup == POPUP_NOT_IMPORTANT)
 		m_Popup = POPUP_NONE;
 	m_RenderHelpPage = false;

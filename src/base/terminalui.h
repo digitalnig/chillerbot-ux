@@ -37,7 +37,7 @@ public:
 		m_Search = false;
 		m_CurserOffset = 0;
 		Open();
-		m_Menu = false; // TODO: set to true when it closes fine
+		m_Menu = true;
 		m_SelectedMenuItem = MENU_ITEM_BROWSER;
 	}
 	bool m_Search;
@@ -54,14 +54,7 @@ public:
 	};
 	void CloseMenu()
 	{
-		if(!IsMenu())
-			return;
-		dbg_msg("chiller", "closing menu");
 		m_Menu = false;
-		refresh();
-		wclear(m_pCursesWin);
-		refresh();
-		Close();
 	}
 	void Open()
 	{
