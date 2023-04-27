@@ -1102,11 +1102,7 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 		/* m_pClient->m_Controls.SetCursesJump(1); */ return 0;
 	else if(Key == '?')
 	{
-		if(m_Popup == POPUP_NOT_IMPORTANT)
-			m_Popup = POPUP_NONE;
-		m_RenderHelpPage = !m_RenderHelpPage;
-		gs_NeedLogDraw = true;
-		m_NewInput = true;
+		OpenHelpPopup();
 	}
 	else if(Key == 'v')
 	{

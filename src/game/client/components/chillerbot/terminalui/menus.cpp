@@ -28,6 +28,9 @@ bool CTerminalUI::PickMenuItem()
 	case CInputWindow::MENU_ITEM_BROWSER:
 		OpenServerList();
 		break;
+	case CInputWindow::MENU_ITEM_HELP:
+		OpenHelpPopup();
+		break;
 	case CInputWindow::MENU_ITEM_QUIT:
 		m_pClient->Client()->Quit();
 		break;
@@ -42,6 +45,15 @@ void CTerminalUI::CloseMenu()
 	g_InputWin.CloseMenu();
 	g_InputWin.Close();
 	g_TriggerResize = true;
+}
+
+void CTerminalUI::OpenHelpPopup()
+{
+	if(m_Popup == POPUP_NOT_IMPORTANT)
+		m_Popup = POPUP_NONE;
+	m_RenderHelpPage = !m_RenderHelpPage;
+	gs_NeedLogDraw = true;
+	m_NewInput = true;
 }
 
 void CTerminalUI::OpenServerList()

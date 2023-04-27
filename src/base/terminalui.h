@@ -37,7 +37,7 @@ public:
 		m_Search = false;
 		m_CurserOffset = 0;
 		Open();
-		m_Menu = true;
+		OpenMenu();
 		m_SelectedMenuItem = MENU_ITEM_BROWSER;
 	}
 	bool m_Search;
@@ -49,9 +49,24 @@ public:
 	enum
 	{
 		MENU_ITEM_BROWSER,
+		MENU_ITEM_HELP,
 		MENU_ITEM_QUIT,
 		NUM_MENU_ITEMS,
 	};
+	void OpenMenu()
+	{
+		m_Menu = true;
+		// curs_set(0); // hiding cursor does not work
+	}
+	/*
+		CloseMenu
+
+		do not call directly if you want to
+		see the result instantly
+
+		call the wrapper CTerminalUI::CloseMenu()
+		instead
+	*/
 	void CloseMenu()
 	{
 		m_Menu = false;
@@ -68,11 +83,16 @@ public:
 		m_Active = false;
 		CloseMenu();
 	}
+	// TODO: move the whole menu thing out of base
+	//       into components
+	//       only search needs to be here
+	//       since it is part of the border
+	//       the menu is content
 	void NextMenuItem()
 	{
 		if(!IsMenu())
 			return;
-		m_SelectedMenuItem = clamp(m_SelectedMenuItem + 1, 0, (int)NUM_MENU_ITEMS);
+		m_SelectedMenuItem = clamp(m_SelectedMenuItem + 1, 0, (int)(NUM_MENU_ITEMS - 1));
 		DrawBorders();
 		refresh();
 	}
@@ -87,6 +107,18 @@ public:
 	int Item() { return m_SelectedMenuItem; }
 	bool IsActive() { return m_Active; }
 	bool IsMenu() { return m_Menu; }
+	/**
+	 * Draw menu option in the input window
+	 * 
+	 * @param pName name of the menu item
+	 * @param Active is the item selected?
+	 * @param Offset current render offset
+	 * 
+	 * @return returns the x coordinate on the screen
+	 *         of the end. Which can be used by the next
+	 *         item to start drawing there.
+	 */
+	int RenderMenuItem(const char *pName, bool Active, int Offset);
 	bool IsSearch() { return m_Search; }
 	void SetSearch(bool Search)
 	{

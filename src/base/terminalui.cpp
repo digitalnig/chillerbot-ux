@@ -286,21 +286,38 @@ void CInputWindow::DrawBorders()
 
 	CTermWindow::DrawBorders();
 
-	WINDOW *screen = m_pCursesWin;
 	if(IsSearch())
 	{
-		mvwprintw(screen, 0, 0, "%s", "+--+");
-		mvwprintw(screen, 1, 0, "%s", "|🔍|");
-		mvwprintw(screen, 2, 0, "%s", "+--+");
+		mvwprintw(m_pCursesWin, 0, 0, "%s", "+--+");
+		mvwprintw(m_pCursesWin, 1, 0, "%s", "|🔍|");
+		mvwprintw(m_pCursesWin, 2, 0, "%s", "+--+");
 	}
 	else if(IsMenu())
 	{
 		char aBuf[1024];
 		aBuf[0] = '\0';
-		str_append(aBuf, m_SelectedMenuItem == MENU_ITEM_BROWSER ? " [BROWSER]" : " [browser]", sizeof(aBuf));
-		str_append(aBuf, m_SelectedMenuItem == MENU_ITEM_QUIT ? " [QUIT]" : " [quit]", sizeof(aBuf));
-		mvwprintw(screen, 1, 1, "%s", aBuf);
+		int offset = 1;
+		offset = RenderMenuItem("browser", m_SelectedMenuItem == MENU_ITEM_BROWSER, offset);
+		offset = RenderMenuItem("help", m_SelectedMenuItem == MENU_ITEM_HELP, offset);
+		RenderMenuItem("quit", m_SelectedMenuItem == MENU_ITEM_QUIT, offset);
 	}
+}
+
+int CInputWindow::RenderMenuItem(const char *pName, bool Active, int Offset)
+{
+	if(Active)
+	{
+		wattron(m_pCursesWin, COLOR_PAIR(YELLOW_ON_BLACK));
+		wattron(m_pCursesWin, A_BOLD);
+	}
+	mvwprintw(m_pCursesWin, 1, Offset, " [%s]", pName);
+	if(Active)
+	{
+		refresh();
+		wattroff(m_pCursesWin, A_BOLD);
+		wattroff(m_pCursesWin, COLOR_PAIR(CYAN_ON_BLACK));
+	}
+	return str_length(pName) + Offset + 3;
 }
 
 void curses_log_push(const char *pStr, const SLOG_COLOR *pColor)
