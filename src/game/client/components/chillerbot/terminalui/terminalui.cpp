@@ -548,6 +548,8 @@ int CTerminalUI::GetInput()
 			wclear(g_InputWin.m_pCursesWin);
 			g_InputWin.DrawBorders();
 			SetInputMode(InputMode() == INPUT_LOCAL_CONSOLE ? INPUT_NORMAL : INPUT_LOCAL_CONSOLE);
+			InputDraw();
+			return 0;
 		}
 		else if(c == KEY_F(2)) // f2 hard toggle local console
 		{
@@ -555,6 +557,8 @@ int CTerminalUI::GetInput()
 			wclear(g_InputWin.m_pCursesWin);
 			g_InputWin.DrawBorders();
 			SetInputMode(InputMode() == INPUT_REMOTE_CONSOLE ? INPUT_NORMAL : INPUT_REMOTE_CONSOLE);
+			InputDraw();
+			return 0;
 		}
 		else if(c == KEY_BTAB)
 		{
