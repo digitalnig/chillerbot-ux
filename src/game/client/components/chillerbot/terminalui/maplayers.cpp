@@ -7,6 +7,8 @@
 
 #include <base/terminalui.h>
 
+#include <base/chillerbot/dbg_print.h>
+
 #include <game/mapitems.h>
 
 #include <csignal>
@@ -183,7 +185,9 @@ void CTerminalUI::RenderPlayers(int offX, int offY, int w, int h)
 				if(!m_pClient->m_Snap.m_aCharacters[ClientID].m_Active || !IsPlayerInfoAvailable(ClientID))
 					continue;
 
-				// dbg_msg("chiller", "%d / %d", m_pClient->m_aClients[ClientID].m_RenderCur.m_X, mx);
+				// int curX = m_pClient->m_aClients[ClientID].m_RenderCur.m_X;
+				// DBG_II(curX, mx);
+
 				int PlayerX = m_pClient->m_aClients[ClientID].m_RenderCur.m_X;
 				int PlayerY = m_pClient->m_aClients[ClientID].m_RenderCur.m_Y;
 				const char *pPlayerSkin = "o";
