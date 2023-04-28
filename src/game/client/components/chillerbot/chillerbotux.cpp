@@ -488,6 +488,20 @@ bool CChillerBotUX::OnInput(const IInput::CEvent &Event)
 {
 	ReturnFromAfk();
 	SelectCampArea(Event.m_Key);
+
+	if(Event.m_Flags & IInput::FLAG_PRESS && Event.m_Key == KEY_ESCAPE)
+	{
+		dbg_msg("chiler", "press da esc");
+		if(g_Config.m_ClReleaseMouse)
+		{
+			if(m_MouseModeAbs)
+				Input()->MouseModeRelative();
+			else
+				Input()->MouseModeAbsolute();
+			m_MouseModeAbs = !m_MouseModeAbs;
+		}
+	}
+
 	return false;
 }
 
