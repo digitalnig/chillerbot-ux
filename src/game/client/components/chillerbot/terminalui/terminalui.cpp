@@ -1188,8 +1188,9 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	{
 		Console()->ExecuteLine("reply_to_last_ping");
 	}
-	else if(Key == 'b' && m_LastKeyPress < time_get() - time_freq() / 2)
+	else if(Key == 'b')
 	{
+		m_LockKeyUntilRelease = Key;
 		OpenServerList();
 	}
 	else if((Key == KEY_F(5) || (keyname(Key)[0] == '^' && keyname(Key)[1] == 'R')) && m_RenderServerList)
