@@ -1140,6 +1140,7 @@ int CTerminalUI::OnKeyPress(int Key, WINDOW *pWin)
 	}
 	else if(Key == 'v')
 	{
+		m_LockKeyUntilRelease = Key;
 		m_RenderGame = !m_RenderGame;
 		gs_NeedLogDraw = true;
 		m_NewInput = true;
