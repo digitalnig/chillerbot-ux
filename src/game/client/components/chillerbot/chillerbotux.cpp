@@ -491,7 +491,6 @@ bool CChillerBotUX::OnInput(const IInput::CEvent &Event)
 
 	if(Event.m_Flags & IInput::FLAG_PRESS && Event.m_Key == KEY_ESCAPE)
 	{
-		dbg_msg("chiler", "press da esc");
 		if(g_Config.m_ClReleaseMouse)
 		{
 			if(m_MouseModeAbs)
