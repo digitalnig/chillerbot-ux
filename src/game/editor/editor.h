@@ -811,7 +811,8 @@ public:
 		m_AnimateTime = 0;
 		m_AnimateSpeed = 1;
 
-		m_ShowEnvelopeEditor = 0;
+		m_ShowEnvelopeEditor = false;
+		m_EnvelopeEditorSplit = 250.0f;
 		m_ShowServerSettingsEditor = false;
 
 		m_ShowEnvelopePreview = SHOWENV_NONE;
@@ -1063,7 +1064,8 @@ public:
 	float m_AnimateTime;
 	float m_AnimateSpeed;
 
-	int m_ShowEnvelopeEditor;
+	bool m_ShowEnvelopeEditor;
+	float m_EnvelopeEditorSplit;
 
 	enum EShowEnvelope
 	{
@@ -1116,7 +1118,7 @@ public:
 	void UpdateTooltip(const void *pID, const CUIRect *pRect, const char *pToolTip);
 	int DoButton_Editor_Common(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
 	int DoButton_Editor(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
-	int DoButton_Env(const void *pID, const char *pText, int Checked, const CUIRect *pRect, const char *pToolTip, ColorRGBA Color);
+	int DoButton_Env(const void *pID, const char *pText, int Checked, const CUIRect *pRect, const char *pToolTip, ColorRGBA Color, int Corners);
 
 	int DoButton_Tab(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip);
 	int DoButton_Ex(const void *pID, const char *pText, int Checked, const CUIRect *pRect, int Flags, const char *pToolTip, int Corners, float FontSize = 10.0f);

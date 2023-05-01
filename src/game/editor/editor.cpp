@@ -336,6 +336,8 @@ ColorRGBA CEditor::GetButtonColor(const void *pID, int Checked)
 
 	switch(Checked)
 	{
+	case 8: // invisible
+		return ColorRGBA(0, 0, 0, 0);
 	case 7: // selected + game layers
 		if(UI()->HotItem() == pID)
 			return ColorRGBA(1, 0, 0, 0.4f);
@@ -405,13 +407,13 @@ int CEditor::DoButton_Editor(const void *pID, const char *pText, int Checked, co
 	return DoButton_Editor_Common(pID, pText, Checked, pRect, Flags, pToolTip);
 }
 
-int CEditor::DoButton_Env(const void *pID, const char *pText, int Checked, const CUIRect *pRect, const char *pToolTip, ColorRGBA BaseColor)
+int CEditor::DoButton_Env(const void *pID, const char *pText, int Checked, const CUIRect *pRect, const char *pToolTip, ColorRGBA BaseColor, int Corners)
 {
 	float Bright = Checked ? 1.0f : 0.5f;
 	float Alpha = UI()->HotItem() == pID ? 1.0f : 0.75f;
 	ColorRGBA Color = ColorRGBA(BaseColor.r * Bright, BaseColor.g * Bright, BaseColor.b * Bright, Alpha);
 
-	pRect->Draw(Color, IGraphics::CORNER_ALL, 3.0f);
+	pRect->Draw(Color, Corners, 3.0f);
 	UI()->DoLabel(pRect, pText, 10.0f, TEXTALIGN_MC);
 	Checked %= 2;
 	return DoButton_Editor_Common(pID, pText, Checked, pRect, 0, pToolTip);
@@ -2357,14 +2359,7 @@ void CEditor::DoMapEditor(CUIRect View)
 			m_Map.m_pGameGroup->MapScreen();
 			for(auto &pLayer : m_Map.m_pGameGroup->m_vpLayers)
 			{
-				if(
-					pLayer->m_Visible &&
-					(pLayer == m_Map.m_pGameLayer ||
-						pLayer == m_Map.m_pFrontLayer ||
-						pLayer == m_Map.m_pTeleLayer ||
-						pLayer == m_Map.m_pSpeedupLayer ||
-						pLayer == m_Map.m_pSwitchLayer ||
-						pLayer == m_Map.m_pTuneLayer))
+				if(pLayer->m_Visible && pLayer->IsEntitiesLayer())
 					pLayer->Render();
 			}
 		}
@@ -3607,6 +3602,10 @@ void CEditor::RenderLayers(CUIRect LayersBox)
 				if(s_Operation == OP_GROUP_DRAG && Clicked)
 					MoveGroup = true;
 			}
+			else if(s_pDraggedButton == &m_Map.m_vpGroups[g])
+			{
+				s_Operation = OP_NONE;
+			}
 		}
 
 		for(int i = 0; i < (int)m_Map.m_vpGroups[g]->m_vpLayers.size(); i++)
@@ -3699,12 +3698,7 @@ void CEditor::RenderLayers(CUIRect LayersBox)
 				FontSize--;
 
 			int Checked = IsLayerSelected ? 1 : 0;
-			if(m_Map.m_vpGroups[g]->m_vpLayers[i] == m_Map.m_pGameLayer ||
-				m_Map.m_vpGroups[g]->m_vpLayers[i] == m_Map.m_pFrontLayer ||
-				m_Map.m_vpGroups[g]->m_vpLayers[i] == m_Map.m_pSwitchLayer ||
-				m_Map.m_vpGroups[g]->m_vpLayers[i] == m_Map.m_pTuneLayer ||
-				m_Map.m_vpGroups[g]->m_vpLayers[i] == m_Map.m_pSpeedupLayer ||
-				m_Map.m_vpGroups[g]->m_vpLayers[i] == m_Map.m_pTeleLayer)
+			if(m_Map.m_vpGroups[g]->m_vpLayers[i]->IsEntitiesLayer())
 			{
 				Checked += 6;
 			}
@@ -3801,6 +3795,10 @@ void CEditor::RenderLayers(CUIRect LayersBox)
 				{
 					MoveLayers = true;
 				}
+			}
+			else if(s_pDraggedButton == m_Map.m_vpGroups[g]->m_vpLayers[i])
+			{
+				s_Operation = OP_NONE;
 			}
 		}
 
@@ -5215,14 +5213,9 @@ void CEditor::RenderStatusbar(CUIRect View)
 	CUIRect Button;
 	View.VSplitRight(60.0f, &View, &Button);
 	static int s_EnvelopeButton = 0;
-	int MouseButton = DoButton_Editor(&s_EnvelopeButton, "Envelopes", m_ShowEnvelopeEditor, &Button, 0, "Toggles the envelope editor.");
-	if(MouseButton == 2)
-		m_ShowEnvelopeEditor = (m_ShowEnvelopeEditor + 3) % 4;
-	else if(MouseButton == 1)
-		m_ShowEnvelopeEditor = (m_ShowEnvelopeEditor + 1) % 4;
-
-	if(MouseButton)
+	if(DoButton_Editor(&s_EnvelopeButton, "Envelopes", m_ShowEnvelopeEditor, &Button, 0, "Toggles the envelope editor."))
 	{
+		m_ShowEnvelopeEditor ^= 1;
 		m_ShowServerSettingsEditor = false;
 	}
 
@@ -5231,7 +5224,7 @@ void CEditor::RenderStatusbar(CUIRect View)
 	static int s_SettingsButton = 0;
 	if(DoButton_Editor(&s_SettingsButton, "Server settings", m_ShowServerSettingsEditor, &Button, 0, "Toggles the server settings editor."))
 	{
-		m_ShowEnvelopeEditor = 0;
+		m_ShowEnvelopeEditor = false;
 		m_ShowServerSettingsEditor ^= 1;
 	}
 
@@ -5315,6 +5308,12 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 	if(m_SelectedEnvelope >= 0 && m_SelectedEnvelope < (int)m_Map.m_vpEnvelopes.size())
 		pEnvelope = m_Map.m_vpEnvelopes[m_SelectedEnvelope];
 
+	CUIRect DragBar = {
+		View.x,
+		View.y - 2.0f, // use margin
+		View.w,
+		22.0f,
+	};
 	CUIRect ToolBar, CurveBar, ColorBar;
 	View.HSplitTop(15.0f, &ToolBar, &View);
 	View.HSplitTop(15.0f, &CurveBar, &View);
@@ -5322,6 +5321,47 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 	CurveBar.Margin(2.0f, &CurveBar);
 
 	bool CurrentEnvelopeSwitched = false;
+
+	// do the dragbar
+	{
+		enum
+		{
+			OP_NONE,
+			OP_DRAG_HEADER,
+			OP_CLICK_HEADER
+		};
+		static int s_Operation = 0;
+		static float s_InitialMouseY = 0.0f;
+		static float s_InitialMouseOffsetY = 0.0f;
+
+		static int s_DragBar = 0;
+		bool Clicked;
+		bool Abrupted;
+		if(int Result = DoButton_DraggableEx(&s_DragBar, "", 8, &DragBar, &Clicked, &Abrupted, 0, "Change the size of the editor by dragging."))
+		{
+			if(s_Operation == OP_NONE && Result == 1)
+			{
+				s_InitialMouseY = UI()->MouseY();
+				s_InitialMouseOffsetY = UI()->MouseY() - DragBar.y;
+				s_Operation = OP_CLICK_HEADER;
+			}
+
+			if(Abrupted)
+				s_Operation = OP_NONE;
+
+			if(s_Operation == OP_CLICK_HEADER && absolute(UI()->MouseY() - s_InitialMouseY) > 5)
+				s_Operation = OP_DRAG_HEADER;
+
+			if(s_Operation == OP_DRAG_HEADER)
+			{
+				if(Clicked)
+					s_Operation = OP_NONE;
+
+				m_EnvelopeEditorSplit = s_InitialMouseOffsetY + View.y + View.h - UI()->MouseY();
+				m_EnvelopeEditorSplit = clamp(m_EnvelopeEditorSplit, 100.0f, 400.0f);
+			}
+		}
+	}
 
 	// do the toolbar
 	{
@@ -5511,7 +5551,15 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 			ToolBar.VSplitLeft(15.0f, &Button, &ToolBar);
 			if(i < pEnvelope->m_Channels)
 			{
-				if(DoButton_Env(&s_aChannelButtons[i], s_aapNames[pEnvelope->m_Channels - 1][i], s_ActiveChannels & Bit, &Button, s_aapDescriptions[pEnvelope->m_Channels - 1][i], aColors[i]))
+				int Corners = IGraphics::CORNER_NONE;
+				if(pEnvelope->m_Channels == 1)
+					Corners = IGraphics::CORNER_ALL;
+				else if(i == 0)
+					Corners = IGraphics::CORNER_L;
+				else if(i == pEnvelope->m_Channels - 1)
+					Corners = IGraphics::CORNER_R;
+
+				if(DoButton_Env(&s_aChannelButtons[i], s_aapNames[pEnvelope->m_Channels - 1][i], s_ActiveChannels & Bit, &Button, s_aapDescriptions[pEnvelope->m_Channels - 1][i], aColors[i], Corners))
 					s_ActiveChannels ^= Bit;
 			}
 		}
@@ -6060,14 +6108,7 @@ void CEditor::Render()
 		View.HSplitBottom(16.0f, &View, &StatusBar);
 
 		if(m_ShowEnvelopeEditor && !m_ShowPicker)
-		{
-			float Size = 125.0f;
-			if(m_ShowEnvelopeEditor == 2)
-				Size *= 2.0f;
-			else if(m_ShowEnvelopeEditor == 3)
-				Size *= 3.0f;
-			View.HSplitBottom(Size, &View, &ExtraEditor);
-		}
+			View.HSplitBottom(m_EnvelopeEditorSplit, &View, &ExtraEditor);
 
 		if(m_ShowServerSettingsEditor && !m_ShowPicker)
 			View.HSplitBottom(250.0f, &View, &ExtraEditor);
