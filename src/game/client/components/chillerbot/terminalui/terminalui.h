@@ -14,6 +14,8 @@
 
 extern CGameClient *g_pClient;
 
+#define HEIGHT_NEEDED_FOR_SERVER_BROWSER_OFFSET_TOP 60
+
 class CTerminalUI : public CComponent
 {
 #if defined(CONF_CURSES_CLIENT)

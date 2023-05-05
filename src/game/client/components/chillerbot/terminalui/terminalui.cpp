@@ -177,8 +177,10 @@ int CTerminalUI::CursesTick()
 
 		wresize(g_InfoWin.m_pCursesWin, INFO_WIN_HEIGHT, g_NewX);
 
+		bool ForceBottomBecauseNoSpace = getmaxy(g_LogWindow.m_pCursesWin) < HEIGHT_NEEDED_FOR_SERVER_BROWSER_OFFSET_TOP;
+		bool SearchBarOnTop = InputMode() == INPUT_BROWSER_SEARCH && g_Config.m_ClTermBrowserSearchTop;
 		// search bar on top
-		if(InputMode() == INPUT_BROWSER_SEARCH && g_Config.m_ClTermBrowserSearchTop)
+		if(!ForceBottomBecauseNoSpace && SearchBarOnTop)
 		{
 			// this works if you want to move the log down instead of overlap
 			// mvwin(g_LogWindow.m_pCursesWin, g_InputWin.m_Height, 0);

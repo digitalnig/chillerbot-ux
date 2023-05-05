@@ -167,7 +167,7 @@ void CTerminalUI::RenderServerList()
 	int my = getmaxy(g_LogWindow.m_pCursesWin);
 	int offY = 5;
 	int offX = 40;
-	if(my < 60)
+	if(my < HEIGHT_NEEDED_FOR_SERVER_BROWSER_OFFSET_TOP)
 		offY = 2;
 	int width = minimum(128, mx - 3);
 	if(mx < width + 2 + offX)
