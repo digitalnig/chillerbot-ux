@@ -115,9 +115,9 @@ class CMenus : public CComponent
 		Text.HMargin(pRect->h >= 20.0f ? 2.0f : 1.0f, &Text);
 		Text.HMargin((Text.h * FontFactor) / 2.0f, &Text);
 
-		if(!UIElement.AreRectsInit() || HintRequiresStringCheck || HintCanChangePositionOrSize || UIElement.Rect(0)->m_UITextContainer == -1)
+		if(!UIElement.AreRectsInit() || HintRequiresStringCheck || HintCanChangePositionOrSize || !UIElement.Rect(0)->m_UITextContainer.Valid())
 		{
-			bool NeedsRecalc = !UIElement.AreRectsInit() || UIElement.Rect(0)->m_UITextContainer == -1;
+			bool NeedsRecalc = !UIElement.AreRectsInit() || !UIElement.Rect(0)->m_UITextContainer.Valid();
 			if(HintCanChangePositionOrSize)
 			{
 				if(UIElement.AreRectsInit())
@@ -188,7 +188,7 @@ class CMenus : public CComponent
 		Graphics()->RenderQuadContainer(UIElement.Rect(Index)->m_UIRectQuadContainer, -1);
 		ColorRGBA ColorText(TextRender()->DefaultTextColor());
 		ColorRGBA ColorTextOutline(TextRender()->DefaultTextOutlineColor());
-		if(UIElement.Rect(0)->m_UITextContainer != -1)
+		if(UIElement.Rect(0)->m_UITextContainer.Valid())
 			TextRender()->RenderTextContainer(UIElement.Rect(0)->m_UITextContainer, ColorText, ColorTextOutline);
 		return UI()->DoButtonLogic(pID, Checked, pRect);
 	}
@@ -355,6 +355,9 @@ protected:
 	int m_DownloadLastCheckSize;
 	float m_DownloadSpeed;
 
+	// for password popup
+	CLineInput m_PasswordInput;
+
 	// for call vote
 	int m_CallvoteSelectedOption;
 	int m_CallvoteSelectedPlayer;
@@ -505,7 +508,7 @@ protected:
 	void RenderStartMenu(CUIRect MainView);
 
 	// found in menus_ingame.cpp
-	int m_MotdTextContainerIndex = -1;
+	STextContainerIndex m_MotdTextContainerIndex;
 	void RenderGame(CUIRect MainView);
 	void PopupConfirmDisconnect();
 	void PopupConfirmDisconnectDummy();
@@ -686,7 +689,6 @@ public:
 	void UpdateOwnGhost(CGhostItem Item);
 	void DeleteGhostItem(int Index);
 
-	void setPopup(int Popup) { m_Popup = Popup; }
 	int GetCurPopup() { return m_Popup; }
 	bool CanDisplayWarning();
 

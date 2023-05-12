@@ -18,7 +18,8 @@ struct SChillerNamePlate
 
 	void Reset()
 	{
-		m_NameTextContainerIndex = m_WarReasonTextContainerIndex = -1;
+		m_NameTextContainerIndex.Reset();
+		m_WarReasonTextContainerIndex.Reset();
 		m_aName[0] = 0;
 		m_aWarReason[0] = 0;
 		m_NameTextWidth = m_WarReasonTextWidth = 0.f;
@@ -27,12 +28,12 @@ struct SChillerNamePlate
 
 	char m_aName[MAX_NAME_LENGTH];
 	float m_NameTextWidth;
-	int m_NameTextContainerIndex;
+	STextContainerIndex m_NameTextContainerIndex;
 	float m_NameTextFontSize;
 
 	char m_aWarReason[128];
 	float m_WarReasonTextWidth;
-	int m_WarReasonTextContainerIndex;
+	STextContainerIndex m_WarReasonTextContainerIndex;
 	float m_WarReasonTextFontSize;
 };
 

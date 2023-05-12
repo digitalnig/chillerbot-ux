@@ -163,7 +163,7 @@ void CPlayerPics::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 				mem_copy(m_aNamePlates[ClientID].m_aWarReason, aWarReason, sizeof(m_aNamePlates[ClientID].m_aWarReason));
 				m_aNamePlates[ClientID].m_WarReasonTextFontSize = FontSizeClan;
 
-				if(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex != -1)
+				if(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex.Valid())
 					TextRender()->DeleteTextContainer(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex);
 
 				CTextCursor Cursor;
@@ -183,7 +183,7 @@ void CPlayerPics::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 			YOffset += FontSizeClan;
 			ColorRGBA TColor = ColorRGBA(0.0f, 0.0f, 0.0f, 0.6f);
 			ColorRGBA TOutlineColor = ColorRGBA(1.0f, 0.0f, 0.0f, 0.7f);
-			if(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex != -1)
+			if(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex.Valid())
 				TextRender()->RenderTextContainer(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex, TColor, TOutlineColor, Position.x - m_aNamePlates[ClientID].m_WarReasonTextWidth / 2.0f, YOffset);
 		}
 	}
@@ -245,8 +245,8 @@ void CPlayerPics::ResetNamePlates()
 {
 	for(auto &NamePlate : m_aNamePlates)
 	{
-		if(NamePlate.m_NameTextContainerIndex != -1)
-			TextRender()->DeleteTextContainer(NamePlate.m_NameTextContainerIndex);
+		TextRender()->DeleteTextContainer(NamePlate.m_NameTextContainerIndex);
+		TextRender()->DeleteTextContainer(NamePlate.m_WarReasonTextContainerIndex);
 
 		NamePlate.Reset();
 	}

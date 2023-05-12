@@ -288,6 +288,14 @@ public:
 	virtual void ShellUnregister() = 0;
 #endif
 
+	enum EMessageBoxType
+	{
+		MESSAGE_BOX_TYPE_ERROR,
+		MESSAGE_BOX_TYPE_WARNING,
+		MESSAGE_BOX_TYPE_INFO,
+	};
+	virtual void ShowMessageBox(const char *pTitle, const char *pMessage, EMessageBoxType Type = MESSAGE_BOX_TYPE_ERROR) = 0;
+
 	// chillerbot
 
 	virtual void ChillerBotLoadMap(const char *pMap) = 0;

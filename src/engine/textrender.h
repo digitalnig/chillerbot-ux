@@ -212,6 +212,23 @@ public:
 	}
 };
 
+struct STextContainerIndex
+{
+	int m_Index;
+
+	STextContainerIndex() { Reset(); }
+	bool Valid() const { return m_Index >= 0; }
+	void Reset() { m_Index = -1; }
+};
+
+struct STextSizeProperties
+{
+	float *m_pHeight = nullptr;
+	float *m_pAlignedFontSize = nullptr;
+	float *m_pMaxCharacterHeightInLine = nullptr;
+	int *m_pLineCount = nullptr;
+};
+
 class ITextRender : public IInterface
 {
 	MACRO_INTERFACE("textrender", 0)
@@ -237,21 +254,21 @@ public:
 
 	//
 	virtual void TextEx(CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
-	virtual bool CreateTextContainer(int &TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
-	virtual void AppendTextContainer(int TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
+	virtual bool CreateTextContainer(STextContainerIndex &TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
+	virtual void AppendTextContainer(STextContainerIndex TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
 	// either creates a new text container or appends to a existing one
-	virtual bool CreateOrAppendTextContainer(int &TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
+	virtual bool CreateOrAppendTextContainer(STextContainerIndex &TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
 	// just deletes and creates text container
-	virtual void RecreateTextContainer(int &TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
-	virtual void RecreateTextContainerSoft(int &TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
-	virtual void DeleteTextContainer(int &TextContainerIndex) = 0;
+	virtual void RecreateTextContainer(STextContainerIndex &TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
+	virtual void RecreateTextContainerSoft(STextContainerIndex &TextContainerIndex, CTextCursor *pCursor, const char *pText, int Length = -1) = 0;
+	virtual void DeleteTextContainer(STextContainerIndex &TextContainerIndex) = 0;
 
-	virtual void UploadTextContainer(int TextContainerIndex) = 0;
+	virtual void UploadTextContainer(STextContainerIndex TextContainerIndex) = 0;
 
-	virtual void RenderTextContainer(int TextContainerIndex, const ColorRGBA &TextColor, const ColorRGBA &TextOutlineColor) = 0;
-	virtual void RenderTextContainer(int TextContainerIndex, const ColorRGBA &TextColor, const ColorRGBA &TextOutlineColor, float X, float Y) = 0;
+	virtual void RenderTextContainer(STextContainerIndex TextContainerIndex, const ColorRGBA &TextColor, const ColorRGBA &TextOutlineColor) = 0;
+	virtual void RenderTextContainer(STextContainerIndex TextContainerIndex, const ColorRGBA &TextColor, const ColorRGBA &TextOutlineColor, float X, float Y) = 0;
 
-	virtual STextBoundingBox GetBoundingBoxTextContainer(int TextContainerIndex) = 0;
+	virtual STextBoundingBox GetBoundingBoxTextContainer(STextContainerIndex TextContainerIndex) = 0;
 
 	virtual void UploadEntityLayerText(void *pTexBuff, size_t ImageColorChannelCount, int TexWidth, int TexHeight, int TexSubWidth, int TexSubHeight, const char *pText, int Length, float x, float y, int FontHeight) = 0;
 	virtual int AdjustFontSize(const char *pText, int TextLength, int MaxSize, int MaxWidth) const = 0;
@@ -270,7 +287,7 @@ public:
 	virtual void TextSelectionColor(float r, float g, float b, float a) = 0;
 	virtual void TextSelectionColor(ColorRGBA rgb) = 0;
 	virtual void Text(float x, float y, float Size, const char *pText, float LineWidth = -1.0f) = 0;
-	virtual float TextWidth(float Size, const char *pText, int StrLength = -1, float LineWidth = -1.0f, int Flags = 0, float *pHeight = nullptr, float *pAlignedFontSize = nullptr, float *pMaxCharacterHeightInLine = nullptr) = 0;
+	virtual float TextWidth(float Size, const char *pText, int StrLength = -1, float LineWidth = -1.0f, int Flags = 0, const STextSizeProperties &TextSizeProps = {}) = 0;
 	virtual STextBoundingBox TextBoundingBox(float Size, const char *pText, int StrLength = -1, float LineWidth = -1.0f, int Flags = 0) = 0;
 
 	virtual ColorRGBA GetTextColor() const = 0;

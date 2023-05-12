@@ -29,7 +29,7 @@ CChat::CChat()
 	for(auto &Line : m_aLines)
 	{
 		// reset the container indices, so the text containers can be deleted on reset
-		Line.m_TextContainerIndex = -1;
+		Line.m_TextContainerIndex.Reset();
 		Line.m_QuadContainerIndex = -1;
 	}
 
@@ -871,7 +871,7 @@ void CChat::OnPrepareLines()
 		if(Now > m_aLines[r].m_Time + 16 * time_freq() && !m_PrevShowChat)
 			break;
 
-		if(m_aLines[r].m_TextContainerIndex != -1 && !ForceRecreate)
+		if(m_aLines[r].m_TextContainerIndex.Valid() && !ForceRecreate)
 			continue;
 
 		TextRender()->DeleteTextContainer(m_aLines[r].m_TextContainerIndex);
@@ -1037,7 +1037,7 @@ void CChat::OnPrepareLines()
 		}
 
 		TextRender()->SetRenderFlags(CurRenderFlags);
-		if(m_aLines[r].m_TextContainerIndex != -1)
+		if(m_aLines[r].m_TextContainerIndex.Valid())
 			TextRender()->UploadTextContainer(m_aLines[r].m_TextContainerIndex);
 	}
 
@@ -1163,7 +1163,7 @@ void CChat::OnRender()
 			}
 		}
 
-		if(m_aLines[r].m_TextContainerIndex != -1)
+		if(m_aLines[r].m_TextContainerIndex.Valid())
 		{
 			if(!g_Config.m_ClChatOld && m_aLines[r].m_HasRenderTee)
 			{
