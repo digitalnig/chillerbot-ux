@@ -818,10 +818,9 @@ void CGameTeams::OnFinish(CPlayer *Player, float Time, const char *pTimestamp)
 	}
 
 	int TTime = 0 - (int)Time;
-	if(Player->m_Score < TTime || !Player->m_HasFinishScore)
+	if(Player->m_Score == -1 || Player->m_Score < TTime)
 	{
 		Player->m_Score = TTime;
-		Player->m_HasFinishScore = true;
 	}
 }
 
@@ -1062,14 +1061,15 @@ void CGameTeams::OnCharacterDeath(int ClientID, int Weapon)
 		{
 			ChangeTeamState(Team, CGameTeams::TEAMSTATE_OPEN);
 
-			char aBuf[512];
-			str_format(aBuf, sizeof(aBuf), "Everyone in your locked team was killed because '%s' %s.", Server()->ClientName(ClientID), Weapon == WEAPON_SELF ? "killed" : "died");
-
 			m_aPractice[Team] = false;
 
-			KillTeam(Team, Weapon == WEAPON_SELF ? ClientID : -1, ClientID);
 			if(Count(Team) > 1)
 			{
+				KillTeam(Team, Weapon == WEAPON_SELF ? ClientID : -1, ClientID);
+
+				char aBuf[512];
+				str_format(aBuf, sizeof(aBuf), "Everyone in your locked team was killed because '%s' %s.", Server()->ClientName(ClientID), Weapon == WEAPON_SELF ? "killed" : "died");
+
 				GameServer()->SendChatTeam(Team, aBuf);
 			}
 		}
