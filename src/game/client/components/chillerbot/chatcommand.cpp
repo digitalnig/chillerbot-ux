@@ -49,9 +49,10 @@ bool CChatCommand::OnChatCmd(char Prefix, int ClientID, int Team, const char *pC
 
 bool CChatCommand::ParseChatCmd(char Prefix, int ClientID, int Team, const char *pCmdWithArgs)
 {
-	char aCmd[128];
+	const int MAX_ARG_LEN = 256;
+	char aCmd[MAX_ARG_LEN];
 	int i;
-	for(i = 0; pCmdWithArgs[i]; i++)
+	for(i = 0; pCmdWithArgs[i] && i < MAX_ARG_LEN; i++)
 	{
 		if(pCmdWithArgs[i] == ' ')
 			break;
@@ -62,7 +63,6 @@ bool CChatCommand::ParseChatCmd(char Prefix, int ClientID, int Team, const char 
 
 	// max 8 args of 128 len each
 	const int MAX_ARGS = 16;
-	const int MAX_ARG_LEN = 256;
 	char **ppArgs = new char *[MAX_ARGS];
 	for(int x = 0; x < MAX_ARGS; ++x)
 	{
