@@ -13,16 +13,16 @@
 #include <engine/console.h>
 #include <engine/demo.h>
 #include <engine/friends.h>
+#include <engine/serverbrowser.h>
 #include <engine/shared/config.h>
 #include <engine/shared/linereader.h>
 #include <engine/textrender.h>
-#include <game/client/components/mapimages.h>
 
 #include <game/client/component.h>
+#include <game/client/components/mapimages.h>
+#include <game/client/render.h>
 #include <game/client/ui.h>
 #include <game/voting.h>
-
-#include <game/client/render.h>
 
 struct CServerProcess
 {
@@ -109,7 +109,7 @@ class CMenus : public CComponent
 
 	// new gui with gui elements
 	template<typename T>
-	int DoButtonMenu(CUIElement &UIElement, const void *pID, T &&GetTextLambda, int Checked, const CUIRect *pRect, bool HintRequiresStringCheck, bool HintCanChangePositionOrSize = false, int Corners = IGraphics::CORNER_ALL, float r = 5.0f, float FontFactor = 0.0f, vec4 ColorHot = vec4(1.0f, 1.0f, 1.0f, 0.75f), vec4 Color = vec4(1, 1, 1, 0.5f))
+	int DoButtonMenu(CUIElement &UIElement, const CButtonContainer *pID, T &&GetTextLambda, int Checked, const CUIRect *pRect, bool HintRequiresStringCheck, bool HintCanChangePositionOrSize = false, int Corners = IGraphics::CORNER_ALL, float r = 5.0f, float FontFactor = 0.0f, vec4 ColorHot = vec4(1.0f, 1.0f, 1.0f, 0.75f), vec4 Color = vec4(1, 1, 1, 0.5f))
 	{
 		CUIRect Text = *pRect;
 		Text.HMargin(pRect->h >= 20.0f ? 2.0f : 1.0f, &Text);
@@ -193,15 +193,6 @@ class CMenus : public CComponent
 		return UI()->DoButtonLogic(pID, Checked, pRect);
 	}
 
-	/**
-	 * Places and renders a tooltip near pNearRect.
-	 * For now only works correctly with single line tooltips, since Text width calculation gets broken when there are multiple lines.
-	 *
-	 * @param pID The ID of the tooltip. Usually a reference to some g_Config value.
-	 * @param pNearTo Place the tooltip near this rect.
-	 * @param pText The text to display in the tooltip
-	 */
-	void DoToolTip(const void *pID, const CUIRect *pNearRect, const char *pText, float WidthHint = -1.0f);
 	// menus_settings_assets.cpp
 public:
 	struct SCustomItem
@@ -459,21 +450,37 @@ protected:
 		const CServerInfo *m_pServerInfo;
 		int m_FriendState;
 		bool m_IsPlayer;
+		// skin
+		char m_aSkin[24 + 1];
+		bool m_CustomSkinColors;
+		int m_CustomSkinColorBody;
+		int m_CustomSkinColorFeet;
 
 	public:
 		CFriendItem() {}
 		CFriendItem(const CFriendInfo *pFriendInfo) :
-			m_pServerInfo(nullptr), m_IsPlayer(false)
+			m_pServerInfo(nullptr),
+			m_IsPlayer(false),
+			m_CustomSkinColors(false),
+			m_CustomSkinColorBody(0),
+			m_CustomSkinColorFeet(0)
 		{
 			str_copy(m_aName, pFriendInfo->m_aName);
 			str_copy(m_aClan, pFriendInfo->m_aClan);
 			m_FriendState = m_aName[0] == '\0' ? IFriends::FRIEND_CLAN : IFriends::FRIEND_PLAYER;
+			m_aSkin[0] = '\0';
 		}
-		CFriendItem(const char *pName, const char *pClan, const CServerInfo *pServerInfo, int FriendState, bool IsPlayer) :
-			m_pServerInfo(pServerInfo), m_FriendState(FriendState), m_IsPlayer(IsPlayer)
+		CFriendItem(const CServerInfo::CClient &CurrentClient, const CServerInfo *pServerInfo) :
+			m_pServerInfo(pServerInfo),
+			m_FriendState(CurrentClient.m_FriendState),
+			m_IsPlayer(CurrentClient.m_Player),
+			m_CustomSkinColors(CurrentClient.m_CustomSkinColors),
+			m_CustomSkinColorBody(CurrentClient.m_CustomSkinColorBody),
+			m_CustomSkinColorFeet(CurrentClient.m_CustomSkinColorFeet)
 		{
-			str_copy(m_aName, pName);
-			str_copy(m_aClan, pClan);
+			str_copy(m_aName, CurrentClient.m_aName);
+			str_copy(m_aClan, CurrentClient.m_aClan);
+			str_copy(m_aSkin, CurrentClient.m_aSkin);
 		}
 
 		const char *Name() const { return m_aName; }
@@ -481,6 +488,10 @@ protected:
 		const CServerInfo *ServerInfo() const { return m_pServerInfo; }
 		int FriendState() const { return m_FriendState; }
 		bool IsPlayer() const { return m_IsPlayer; }
+		const char *Skin() const { return m_aSkin; }
+		bool CustomSkinColors() const { return m_CustomSkinColors; }
+		int CustomSkinColorBody() const { return m_CustomSkinColorBody; }
+		int CustomSkinColorFeet() const { return m_CustomSkinColorFeet; }
 
 		const void *ListItemId() const { return &m_aName; }
 		const void *RemoveButtonId() const { return &m_FriendState; }
@@ -546,6 +557,13 @@ protected:
 	void PopupConfirmSwitchServer();
 	void RenderServerbrowserServerDetail(CUIRect View);
 	void RenderServerbrowserFilters(CUIRect View);
+	struct SPopupCountrySelectionContext
+	{
+		CMenus *m_pMenus;
+		int m_Selection;
+		bool m_New;
+	};
+	static CUI::EPopupMenuFunctionResult PopupCountrySelection(void *pContext, CUIRect View, bool Active);
 	void RenderServerbrowserFriends(CUIRect View);
 	void PopupConfirmRemoveFriend();
 	void RenderServerbrowser(CUIRect MainView);
@@ -729,7 +747,6 @@ public:
 		POPUP_CONNECTING,
 		POPUP_DISCONNECTED,
 		POPUP_LANGUAGE,
-		POPUP_COUNTRY,
 		POPUP_RENAME_DEMO,
 		POPUP_RENDER_DEMO,
 		POPUP_PASSWORD,

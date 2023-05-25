@@ -26,7 +26,7 @@ using namespace std::chrono_literals;
 
 typedef void (*INDEX_MODIFY_FUNC)(int *pIndex);
 
-//CRenderTools m_RenderTools;
+// CRenderTools m_RenderTools;
 
 // CEditor SPECIFIC
 enum
@@ -799,12 +799,11 @@ public:
 		m_MouseDeltaWy = 0;
 
 		m_GuiActive = true;
-		m_ProofBorders = false;
-		m_MenuProofBorders = false;
+		m_ProofBorders = PROOF_BORDER_OFF;
 		m_CurrentMenuProofIndex = 0;
 		m_PreviewZoom = false;
 
-		m_ShowTileInfo = false;
+		m_ShowTileInfo = SHOW_TILE_OFF;
 		m_ShowDetail = true;
 		m_Animate = false;
 		m_AnimateStart = 0;
@@ -841,7 +840,6 @@ public:
 		m_PreventUnusedTilesWasWarned = false;
 		m_AllowPlaceUnusedTiles = 1;
 		m_BrushDrawDestructive = true;
-		m_ShowTileHexInfo = false;
 
 		m_Mentions = 0;
 	}
@@ -922,7 +920,6 @@ public:
 	bool m_PreventUnusedTilesWasWarned;
 	int m_AllowPlaceUnusedTiles;
 	bool m_BrushDrawDestructive;
-	bool m_ShowTileHexInfo;
 
 	int m_Mentions;
 
@@ -1037,8 +1034,15 @@ public:
 	bool m_LockMouse;
 	bool m_ShowMousePointer;
 	bool m_GuiActive;
-	bool m_ProofBorders;
-	bool m_MenuProofBorders;
+
+	enum EProofBorder
+	{
+		PROOF_BORDER_OFF,
+		PROOF_BORDER_INGAME,
+		PROOF_BORDER_MENU
+	};
+
+	EProofBorder m_ProofBorders;
 	int m_CurrentMenuProofIndex;
 	std::vector<vec2> m_vMenuBackgroundPositions;
 	std::vector<const char *> m_vpMenuBackgroundPositionNames;
@@ -1057,7 +1061,13 @@ public:
 	float m_MouseDeltaWx;
 	float m_MouseDeltaWy;
 
-	bool m_ShowTileInfo;
+	enum EShowTile
+	{
+		SHOW_TILE_OFF,
+		SHOW_TILE_DECIMAL,
+		SHOW_TILE_HEXADECIMAL
+	};
+	EShowTile m_ShowTileInfo;
 	bool m_ShowDetail;
 	bool m_Animate;
 	int64_t m_AnimateStart;
@@ -1237,7 +1247,7 @@ public:
 	void SortImages();
 	bool SelectLayerByTile();
 
-	//Tile Numbers For Explanations - TODO: Add/Improve tiles and explanations
+	// Tile Numbers For Explanations - TODO: Add/Improve tiles and explanations
 	enum
 	{
 		TILE_PUB_AIR,
@@ -1302,7 +1312,7 @@ public:
 		TILE_VANILLA_LASER,
 	};
 
-	//Explanations
+	// Explanations
 	enum
 	{
 		EXPLANATION_DDNET,

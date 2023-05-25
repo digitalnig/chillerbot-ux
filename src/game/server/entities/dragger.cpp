@@ -218,3 +218,12 @@ void CDragger::Snap(int SnappingClient)
 	GameServer()->SnapLaserObject(CSnapContext(SnappingClientVersion), GetID(),
 		m_Pos, m_Pos, StartTick, -1, LASERTYPE_DRAGGER, Subtype, m_Number);
 }
+
+void CDragger::SwapClients(int Client1, int Client2)
+{
+	std::swap(m_apDraggerBeam[Client1], m_apDraggerBeam[Client2]);
+	for(int &TargetId : m_aTargetIdInTeam)
+	{
+		TargetId = TargetId == Client1 ? Client2 : TargetId == Client2 ? Client1 : TargetId;
+	}
+}
