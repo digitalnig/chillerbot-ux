@@ -296,6 +296,8 @@ public:
 	};
 	virtual void ShowMessageBox(const char *pTitle, const char *pMessage, EMessageBoxType Type = MESSAGE_BOX_TYPE_ERROR) = 0;
 
+	virtual void GetGPUInfoString(char (&aGPUInfo)[256]) = 0;
+
 	// chillerbot
 
 	virtual void ChillerBotLoadMap(const char *pMap) = 0;
