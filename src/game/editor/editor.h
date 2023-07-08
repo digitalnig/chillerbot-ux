@@ -12,13 +12,17 @@
 #include <game/mapitems_ex.h>
 
 #include <engine/editor.h>
+#include <engine/engine.h>
 #include <engine/graphics.h>
+#include <engine/shared/datafile.h>
+#include <engine/shared/jobs.h>
 
 #include "auto_map.h"
 
 #include "chillerbot/chillereditor.h"
 
 #include <chrono>
+#include <deque>
 #include <string>
 #include <vector>
 
@@ -317,7 +321,6 @@ class CEditorMap
 
 public:
 	CEditor *m_pEditor;
-	bool m_Modified;
 
 	CEditorMap()
 	{
@@ -328,6 +331,13 @@ public:
 	{
 		Clean();
 	}
+
+	bool m_Modified; // unsaved changes in manual save
+	bool m_ModifiedAuto; // unsaved changes in autosave
+	float m_LastModifiedTime;
+	float m_LastSaveTime;
+	float m_LastAutosaveUpdateTime;
+	void OnModify();
 
 	std::vector<CLayerGroup *> m_vpGroups;
 	std::vector<CEditorImage *> m_vpImages;
@@ -372,7 +382,7 @@ public:
 
 	CEnvelope *NewEnvelope(int Channels)
 	{
-		m_Modified = true;
+		OnModify();
 		CEnvelope *pEnv = new CEnvelope(Channels);
 		m_vpEnvelopes.push_back(pEnv);
 		return pEnv;
@@ -385,7 +395,7 @@ public:
 
 	CLayerGroup *NewGroup()
 	{
-		m_Modified = true;
+		OnModify();
 		CLayerGroup *pGroup = new CLayerGroup;
 		pGroup->m_pMap = this;
 		m_vpGroups.push_back(pGroup);
@@ -400,7 +410,7 @@ public:
 			return Index0;
 		if(Index0 == Index1)
 			return Index0;
-		m_Modified = true;
+		OnModify();
 		std::swap(m_vpGroups[Index0], m_vpGroups[Index1]);
 		return Index1;
 	}
@@ -409,28 +419,28 @@ public:
 	{
 		if(Index < 0 || Index >= (int)m_vpGroups.size())
 			return;
-		m_Modified = true;
+		OnModify();
 		delete m_vpGroups[Index];
 		m_vpGroups.erase(m_vpGroups.begin() + Index);
 	}
 
 	void ModifyImageIndex(INDEX_MODIFY_FUNC pfnFunc)
 	{
-		m_Modified = true;
+		OnModify();
 		for(auto &pGroup : m_vpGroups)
 			pGroup->ModifyImageIndex(pfnFunc);
 	}
 
 	void ModifyEnvelopeIndex(INDEX_MODIFY_FUNC pfnFunc)
 	{
-		m_Modified = true;
+		OnModify();
 		for(auto &pGroup : m_vpGroups)
 			pGroup->ModifyEnvelopeIndex(pfnFunc);
 	}
 
 	void ModifySoundIndex(INDEX_MODIFY_FUNC pfnFunc)
 	{
-		m_Modified = true;
+		OnModify();
 		for(auto &pGroup : m_vpGroups)
 			pGroup->ModifySoundIndex(pfnFunc);
 	}
@@ -439,8 +449,8 @@ public:
 	void CreateDefault(IGraphics::CTextureHandle EntitiesTexture);
 
 	// io
-	bool Save(class IStorage *pStorage, const char *pFilename);
-	bool Load(class IStorage *pStorage, const char *pFilename, int StorageType);
+	bool Save(const char *pFilename);
+	bool Load(const char *pFilename, int StorageType);
 
 	// DDRace
 
@@ -687,16 +697,37 @@ public:
 	CUI::EPopupMenuFunctionResult RenderProperties(CUIRect *pToolbox) override;
 };
 
+class CDataFileWriterFinishJob : public IJob
+{
+	char m_aFileName[IO_MAX_PATH_LENGTH];
+	CDataFileWriter m_Writer;
+
+	void Run() override
+	{
+		m_Writer.Finish();
+	}
+
+public:
+	CDataFileWriterFinishJob(const char *pFileName, CDataFileWriter &&Writer) :
+		m_Writer(std::move(Writer))
+	{
+		str_copy(m_aFileName, pFileName);
+	}
+
+	const char *GetFileName() const { return m_aFileName; }
+};
+
 class CEditor : public IEditor
 {
-	class IInput *m_pInput;
-	class IClient *m_pClient;
-	class CConfig *m_pConfig;
-	class IConsole *m_pConsole;
-	class IGraphics *m_pGraphics;
-	class ITextRender *m_pTextRender;
-	class ISound *m_pSound;
-	class IStorage *m_pStorage;
+	class IInput *m_pInput = nullptr;
+	class IClient *m_pClient = nullptr;
+	class CConfig *m_pConfig = nullptr;
+	class IConsole *m_pConsole = nullptr;
+	class IEngine *m_pEngine = nullptr;
+	class IGraphics *m_pGraphics = nullptr;
+	class ITextRender *m_pTextRender = nullptr;
+	class ISound *m_pSound = nullptr;
+	class IStorage *m_pStorage = nullptr;
 	CRenderTools m_RenderTools;
 	CUI m_UI;
 	CChillerEditor m_ChillerEditor;
@@ -713,11 +744,11 @@ class CEditor : public IEditor
 
 	int GetTextureUsageFlag();
 
-	enum EPreviewImageState
+	enum EPreviewState
 	{
-		PREVIEWIMAGE_UNLOADED,
-		PREVIEWIMAGE_LOADED,
-		PREVIEWIMAGE_ERROR,
+		PREVIEW_UNLOADED,
+		PREVIEW_LOADED,
+		PREVIEW_ERROR,
 	};
 
 public:
@@ -725,6 +756,7 @@ public:
 	class IClient *Client() { return m_pClient; }
 	class CConfig *Config() { return m_pConfig; }
 	class IConsole *Console() { return m_pConsole; }
+	class IEngine *Engine() { return m_pEngine; }
 	class IGraphics *Graphics() { return m_pGraphics; }
 	class ISound *Sound() { return m_pSound; }
 	class ITextRender *TextRender() { return m_pTextRender; }
@@ -735,12 +767,6 @@ public:
 	CEditor() :
 		m_TilesetPicker(16, 16)
 	{
-		m_pInput = nullptr;
-		m_pClient = nullptr;
-		m_pGraphics = nullptr;
-		m_pTextRender = nullptr;
-		m_pSound = nullptr;
-
 		m_EntitiesTexture.Invalidate();
 		m_FrontTexture.Invalidate();
 		m_TeleTexture.Invalidate();
@@ -778,7 +804,8 @@ public:
 		m_FilesSelectedIndex = -1;
 
 		m_FilePreviewImage.Invalidate();
-		m_PreviewImageState = PREVIEWIMAGE_UNLOADED;
+		m_FilePreviewSound = -1;
+		m_FilePreviewState = PREVIEW_UNLOADED;
 
 		m_SelectEntitiesImage = "DDNet";
 
@@ -851,6 +878,11 @@ public:
 	void UpdateMentions() override { m_Mentions++; }
 	void ResetMentions() override { m_Mentions = 0; }
 
+	void HandleCursorMovement();
+	void HandleAutosave();
+	bool PerformAutosave();
+	void HandleWriterFinishJobs();
+
 	CLayerGroup *m_apSavedBrushes[10];
 
 	void RefreshFilteredFileList();
@@ -868,6 +900,10 @@ public:
 	void LoadCurrentMap();
 	void Render();
 
+	void RenderPressedKeys(CUIRect View);
+	void RenderSavingIndicator(CUIRect View);
+	void RenderMousePointer();
+
 	void ResetMenuBackgroundPositions();
 
 	std::vector<CQuad *> GetSelectedQuads();
@@ -882,7 +918,6 @@ public:
 	bool IsQuadSelected(int Index) const;
 	int FindSelectedQuadIndex(int Index) const;
 
-	float ScaleFontSize(char *pText, int TextSize, float FontSize, int Width);
 	int DoProperties(CUIRect *pToolbox, CProperty *pProps, int *pIDs, int *pNewVal, ColorRGBA Color = ColorRGBA(1, 1, 1, 0.5f));
 
 	int m_Mode;
@@ -906,6 +941,7 @@ public:
 		POPEVENT_LOADCURRENT,
 		POPEVENT_NEW,
 		POPEVENT_SAVE,
+		POPEVENT_SAVE_COPY,
 		POPEVENT_LARGELAYER,
 		POPEVENT_PREVENTUNUSEDTILES,
 		POPEVENT_IMAGEDIV16,
@@ -928,6 +964,7 @@ public:
 		FILETYPE_MAP,
 		FILETYPE_IMG,
 		FILETYPE_SOUND,
+		NUM_FILETYPES
 	};
 
 	int m_FileDialogStorageType;
@@ -943,10 +980,14 @@ public:
 	CLineInputBuffered<IO_MAX_PATH_LENGTH> m_FileDialogFilterInput;
 	char *m_pFileDialogPath;
 	int m_FileDialogFileType;
+	bool m_FileDialogMultipleStorages = false;
+	bool m_FileDialogShowingRoot = false;
 	int m_FilesSelectedIndex;
 	CLineInputBuffered<IO_MAX_PATH_LENGTH> m_FileDialogNewFolderNameInput;
+
 	IGraphics::CTextureHandle m_FilePreviewImage;
-	EPreviewImageState m_PreviewImageState;
+	int m_FilePreviewSound;
+	EPreviewState m_FilePreviewState;
 	CImageInfo m_FilePreviewImageInfo;
 	bool m_FileDialogOpening;
 
@@ -968,6 +1009,8 @@ public:
 			return true;
 		if(str_comp(pRhs->m_aFilename, "..") == 0)
 			return false;
+		if(pLhs->m_IsLink != pRhs->m_IsLink)
+			return pLhs->m_IsLink;
 		if(pLhs->m_IsDir != pRhs->m_IsDir)
 			return pLhs->m_IsDir;
 		return str_comp_filenames(pLhs->m_aName, pRhs->m_aName) < 0;
@@ -979,6 +1022,8 @@ public:
 			return true;
 		if(str_comp(pRhs->m_aFilename, "..") == 0)
 			return false;
+		if(pLhs->m_IsLink != pRhs->m_IsLink)
+			return pLhs->m_IsLink;
 		if(pLhs->m_IsDir != pRhs->m_IsDir)
 			return pLhs->m_IsDir;
 		return str_comp_filenames(pLhs->m_aName, pRhs->m_aName) > 0;
@@ -1117,6 +1162,8 @@ public:
 	static const void *ms_pUiGotContext;
 
 	CEditorMap m_Map;
+	std::deque<std::shared_ptr<CDataFileWriterFinishJob>> m_WriterFinishJobs;
+
 	int m_ShiftBy;
 
 	static void EnvelopeEval(int TimeOffsetMillis, int Env, ColorRGBA &Channels, void *pUser);
@@ -1212,7 +1259,8 @@ public:
 	void DoSoundSource(CSoundSource *pSource, int Index);
 
 	void DoMapEditor(CUIRect View);
-	void DoToolbar(CUIRect Toolbar);
+	void DoToolbarLayers(CUIRect Toolbar);
+	void DoToolbarSounds(CUIRect Toolbar);
 	void DoQuad(CQuad *pQuad, int Index);
 	ColorRGBA GetButtonColor(const void *pID, int Checked);
 
