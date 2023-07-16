@@ -91,10 +91,10 @@ void CChillerEditor::DoMapEditor()
 {
 	// debug
 	if(m_pEditor->Input()->KeyPress(KEY_D))
-		dbg_msg("chillerbot", "editormode=%d dialog=%d editbox=%d", m_EditorMode, m_pEditor->m_Dialog, m_pEditor->m_EditBoxActive);
+		dbg_msg("chillerbot", "editormode=%d dialog=%d editbox=%p", m_EditorMode, m_pEditor->m_Dialog, CLineInput::GetActiveInput());
 	if(m_pEditor->UI()->MouseButton(0))
 		SetCursor();
-	if(m_pEditor->Input()->KeyPress(KEY_T) && m_EditorMode != CE_MODE_TEXT && m_pEditor->m_Dialog == DIALOG_NONE && m_pEditor->m_EditBoxActive == 0)
+	if(m_pEditor->Input()->KeyPress(KEY_T) && m_EditorMode != CE_MODE_TEXT && m_pEditor->m_Dialog == DIALOG_NONE && CLineInput::GetActiveInput() == nullptr)
 	{
 		m_EditorMode = CE_MODE_TEXT;
 		m_pEditor->m_Dialog = -1; // hack to not close editor when pressing Escape
@@ -115,7 +115,7 @@ void CChillerEditor::DoMapEditor()
 			return;
 		}
 		// exit if dialog or edit box pops up
-		if(m_pEditor->m_Dialog != -1 || m_pEditor->m_EditBoxActive)
+		if(m_pEditor->m_Dialog != -1 || CLineInput::GetActiveInput())
 		{
 			ExitTextMode();
 			return;
