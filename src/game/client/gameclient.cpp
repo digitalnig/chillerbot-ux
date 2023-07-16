@@ -622,6 +622,9 @@ void CGameClient::OnReset()
 	m_LastDummyConnected = false;
 
 	m_ReceivedDDNetPlayer = false;
+
+	Editor()->ResetMentions();
+	Editor()->ResetIngameMoved();
 }
 
 void CGameClient::UpdatePositions()
@@ -697,10 +700,13 @@ void CGameClient::OnRender()
 		if(m_Snap.m_SpecInfo.m_SpectatorID >= 0)
 			TeamId = m_Teams.Team(m_Snap.m_SpecInfo.m_SpectatorID);
 
-		if(!InitMultiViewFromFreeview(TeamId))
+		if(TeamId > MAX_CLIENTS || TeamId < 0)
+			TeamId = 0;
+
+		if(!InitMultiView(TeamId))
 		{
 			dbg_msg("MultiView", "No players found to spectate");
-			m_MultiViewActivated = false;
+			ResetMultiView();
 		}
 	}
 
@@ -923,13 +929,29 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, int Conn, bool Dumm
 		// if we are spectating a static id set (team 0) and somebody killed, we remove him from the list
 		if(IsMultiViewIdSet() && m_aMultiViewId[pMsg->m_Victim] && !m_aClients[pMsg->m_Victim].m_Spec)
 		{
-			// is multi view even activated and we are not spectating a solo guy
-			if(m_MultiViewActivated && !m_MultiView.m_Solo && m_MultiView.m_Team == 0)
+			// is multi-view even activated and we are not spectating a solo guy
+			if(m_MultiViewActivated && !m_MultiView.m_Solo)
+			{
 				m_aMultiViewId[pMsg->m_Victim] = false;
 
-			// if everyone of a team killed, we have no ids to spectate anymore, so we disable multi view
-			if(!IsMultiViewIdSet())
-				m_MultiViewActivated = false;
+				// if everyone of a team killed, we have no ids to spectate anymore, so we disable multi-view
+				if(!IsMultiViewIdSet())
+					m_MultiViewActivated = false;
+				else
+				{
+					// the "main" tee killed, search a new one
+					if(m_Snap.m_SpecInfo.m_SpectatorID == pMsg->m_Victim)
+					{
+						int NewClientID = FindFirstMultiViewId();
+						if(NewClientID < MAX_CLIENTS && NewClientID >= 0)
+						{
+							CleanMultiViewId(NewClientID);
+							m_aMultiViewId[NewClientID] = true;
+							m_Spectator.Spectate(NewClientID);
+						}
+					}
+				}
+			}
 		}
 	}
 }
@@ -1505,21 +1527,19 @@ void CGameClient::OnNewSnapshot()
 			}
 			else if(Item.m_Type == NETOBJTYPE_GAMEINFO)
 			{
-				static bool s_GameOver = false;
-				static bool s_GamePaused = false;
 				m_Snap.m_pGameInfoObj = (const CNetObj_GameInfo *)pData;
 				bool CurrentTickGameOver = (bool)(m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_GAMEOVER);
-				if(!s_GameOver && CurrentTickGameOver)
+				if(!m_GameOver && CurrentTickGameOver)
 					OnGameOver();
-				else if(s_GameOver && !CurrentTickGameOver)
+				else if(m_GameOver && !CurrentTickGameOver)
 					OnStartGame();
 				// Handle case that a new round is started (RoundStartTick changed)
 				// New round is usually started after `restart` on server
-				if(m_Snap.m_pGameInfoObj->m_RoundStartTick != m_LastRoundStartTick && !(CurrentTickGameOver || m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED || s_GamePaused))
+				if(m_Snap.m_pGameInfoObj->m_RoundStartTick != m_LastRoundStartTick && !(CurrentTickGameOver || m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED || m_GamePaused))
 					OnStartRound();
 				m_LastRoundStartTick = m_Snap.m_pGameInfoObj->m_RoundStartTick;
-				s_GameOver = CurrentTickGameOver;
-				s_GamePaused = (bool)(m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED);
+				m_GameOver = CurrentTickGameOver;
+				m_GamePaused = (bool)(m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED);
 			}
 			else if(Item.m_Type == NETOBJTYPE_GAMEINFOEX)
 			{
@@ -1767,7 +1787,7 @@ void CGameClient::OnNewSnapshot()
 		m_aDDRaceMsgSent[i] = true;
 	}
 
-	if(m_MultiViewActivated)
+	if(m_Snap.m_SpecInfo.m_Active && m_MultiViewActivated)
 	{
 		// dont show other teams while spectating in multi view
 		CNetMsg_Cl_ShowOthers Msg;
@@ -1820,6 +1840,9 @@ void CGameClient::OnNewSnapshot()
 	for(auto &pComponent : m_vpAll)
 		pComponent->OnNewSnapshot();
 
+	// notify editor when local character moved
+	UpdateEditorIngameMoved();
+
 	// detect air jump for other players
 	for(int i = 0; i < MAX_CLIENTS; i++)
 		if(m_Snap.m_aCharacters[i].m_Active && (m_Snap.m_aCharacters[i].m_Cur.m_Jumped & 2) && !(m_Snap.m_aCharacters[i].m_Prev.m_Jumped & 2))
@@ -1835,10 +1858,9 @@ void CGameClient::OnNewSnapshot()
 				m_Effects.AirJump(Pos, Alpha);
 			}
 
-	static int PrevLocalID = -1;
-	if(m_Snap.m_LocalClientID != PrevLocalID)
-		m_PredictedDummyID = PrevLocalID;
-	PrevLocalID = m_Snap.m_LocalClientID;
+	if(m_Snap.m_LocalClientID != m_PrevLocalID)
+		m_PredictedDummyID = m_PrevLocalID;
+	m_PrevLocalID = m_Snap.m_LocalClientID;
 	m_IsDummySwapping = 0;
 
 	SnapCollectEntities(); // creates a collection that associates EntityEx snap items with the entities they belong to
@@ -1846,6 +1868,23 @@ void CGameClient::OnNewSnapshot()
 	// update prediction data
 	if(Client()->State() != IClient::STATE_DEMOPLAYBACK)
 		UpdatePrediction();
+}
+
+void CGameClient::UpdateEditorIngameMoved()
+{
+	const bool LocalCharacterMoved = m_Snap.m_pLocalCharacter && m_Snap.m_pLocalPrevCharacter && (m_Snap.m_pLocalCharacter->m_X != m_Snap.m_pLocalPrevCharacter->m_X || m_Snap.m_pLocalCharacter->m_Y != m_Snap.m_pLocalPrevCharacter->m_Y);
+	if(!g_Config.m_ClEditor)
+	{
+		m_EditorMovementDelay = 5;
+	}
+	else if(m_EditorMovementDelay > 0 && !LocalCharacterMoved)
+	{
+		--m_EditorMovementDelay;
+	}
+	if(m_EditorMovementDelay == 0 && LocalCharacterMoved)
+	{
+		Editor()->OnIngameMoved();
+	}
 }
 
 void CGameClient::OnPredict()
@@ -1990,9 +2029,6 @@ void CGameClient::OnPredict()
 	}
 
 	// detect mispredictions of other players and make corrections smoother when possible
-	static vec2 s_aLastPos[MAX_CLIENTS] = {{0, 0}};
-	static bool s_aLastActive[MAX_CLIENTS] = {false};
-
 	if(g_Config.m_ClAntiPingSmooth && Predict() && AntiPingPlayers() && m_NewTick && absolute(m_PredictedTick - Client()->PredGameTick(g_Config.m_ClDummy)) <= 1 && absolute(Client()->GameTick(g_Config.m_ClDummy) - Client()->PrevGameTick(g_Config.m_ClDummy)) <= 2)
 	{
 		int PredTime = clamp(Client()->GetPredictionTime(), 0, 800);
@@ -2001,10 +2037,10 @@ void CGameClient::OnPredict()
 
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if(!m_Snap.m_aCharacters[i].m_Active || i == m_Snap.m_LocalClientID || !s_aLastActive[i])
+			if(!m_Snap.m_aCharacters[i].m_Active || i == m_Snap.m_LocalClientID || !m_aLastActive[i])
 				continue;
 			vec2 NewPos = (m_PredictedTick == Client()->PredGameTick(g_Config.m_ClDummy)) ? m_aClients[i].m_Predicted.m_Pos : m_aClients[i].m_PrevPredicted.m_Pos;
-			vec2 PredErr = (s_aLastPos[i] - NewPos) / (float)minimum(Client()->GetPredictionTime(), 200);
+			vec2 PredErr = (m_aLastPos[i] - NewPos) / (float)minimum(Client()->GetPredictionTime(), 200);
 			if(in_range(length(PredErr), 0.05f, 5.f))
 			{
 				vec2 PredPos = mix(m_aClients[i].m_PrevPredicted.m_Pos, m_aClients[i].m_Predicted.m_Pos, Client()->PredIntraGameTick(g_Config.m_ClDummy));
@@ -2053,11 +2089,11 @@ void CGameClient::OnPredict()
 	{
 		if(m_Snap.m_aCharacters[i].m_Active)
 		{
-			s_aLastPos[i] = m_aClients[i].m_Predicted.m_Pos;
-			s_aLastActive[i] = true;
+			m_aLastPos[i] = m_aClients[i].m_Predicted.m_Pos;
+			m_aLastActive[i] = true;
 		}
 		else
-			s_aLastActive[i] = false;
+			m_aLastActive[i] = false;
 	}
 
 	if(g_Config.m_Debug && g_Config.m_ClPredict && m_PredictedTick == Client()->PredGameTick(g_Config.m_ClDummy))
@@ -2644,7 +2680,6 @@ void CGameClient::UpdateRenderedCharacters()
 
 void CGameClient::DetectStrongHook()
 {
-	static int s_aLastUpdateTick[MAX_CLIENTS] = {0};
 	// attempt to detect strong/weak between players
 	for(int FromPlayer = 0; FromPlayer < MAX_CLIENTS; FromPlayer++)
 	{
@@ -2653,7 +2688,7 @@ void CGameClient::DetectStrongHook()
 		int ToPlayer = m_Snap.m_aCharacters[FromPlayer].m_Prev.m_HookedPlayer;
 		if(ToPlayer < 0 || ToPlayer >= MAX_CLIENTS || !m_Snap.m_aCharacters[ToPlayer].m_Active || ToPlayer != m_Snap.m_aCharacters[FromPlayer].m_Cur.m_HookedPlayer)
 			continue;
-		if(absolute(minimum(s_aLastUpdateTick[ToPlayer], s_aLastUpdateTick[FromPlayer]) - Client()->GameTick(g_Config.m_ClDummy)) < SERVER_TICK_SPEED / 4)
+		if(absolute(minimum(m_aLastUpdateTick[ToPlayer], m_aLastUpdateTick[FromPlayer]) - Client()->GameTick(g_Config.m_ClDummy)) < SERVER_TICK_SPEED / 4)
 			continue;
 		if(m_Snap.m_aCharacters[FromPlayer].m_Prev.m_Direction != m_Snap.m_aCharacters[FromPlayer].m_Cur.m_Direction || m_Snap.m_aCharacters[ToPlayer].m_Prev.m_Direction != m_Snap.m_aCharacters[ToPlayer].m_Cur.m_Direction)
 			continue;
@@ -2663,7 +2698,7 @@ void CGameClient::DetectStrongHook()
 		if(!pFromCharWorld || !pToCharWorld)
 			continue;
 
-		s_aLastUpdateTick[ToPlayer] = s_aLastUpdateTick[FromPlayer] = Client()->GameTick(g_Config.m_ClDummy);
+		m_aLastUpdateTick[ToPlayer] = m_aLastUpdateTick[FromPlayer] = Client()->GameTick(g_Config.m_ClDummy);
 
 		float aPredictErr[2];
 		CCharacterCore ToCharCur;
@@ -3507,7 +3542,7 @@ void CGameClient::HandleMultiView()
 			continue;
 
 		// the player is not in the team we are spectating
-		if(m_Teams.Team(i) != m_MultiView.m_Team)
+		if(m_Teams.Team(i) != m_MultiViewTeam)
 			continue;
 
 		vec2 PlayerPos;
@@ -3525,7 +3560,12 @@ void CGameClient::HandleMultiView()
 			if(m_MultiView.m_aLastFreeze[i] == 0.0f)
 				m_MultiView.m_aLastFreeze[i] = Client()->LocalTime();
 			else if(m_MultiView.m_aLastFreeze[i] + 3.0f <= Client()->LocalTime())
+			{
 				m_MultiView.m_aVanish[i] = true;
+				// player we want to be vanished is our "main" tee, so lets switch the tee
+				if(i == m_Snap.m_SpecInfo.m_SpectatorID)
+					m_Spectator.Spectate(FindFirstMultiViewId());
+			}
 		}
 		else if(m_MultiView.m_aLastFreeze[i] != 0)
 			m_MultiView.m_aLastFreeze[i] = 0;
@@ -3554,9 +3594,17 @@ void CGameClient::HandleMultiView()
 	// if we have found no players, we disable multi view
 	if(AmountPlayers == 0)
 	{
-		m_MultiViewActivated = false;
+		if(m_MultiView.m_SecondChance == 0.0f)
+			m_MultiView.m_SecondChance = Client()->LocalTime() + 0.3f;
+		else if(m_MultiView.m_SecondChance < Client()->LocalTime())
+		{
+			m_MultiViewActivated = false;
+			return;
+		}
 		return;
 	}
+	else if(m_MultiView.m_SecondChance != 0.0f)
+		m_MultiView.m_SecondChance = 0.0f;
 
 	vec2 TargetPos = vec2((Minpos.x + Maxpos.x) / 2.0f, (Minpos.y + Maxpos.y) / 2.0f);
 	// dont hide the position hud if its only one player
@@ -3574,7 +3622,7 @@ void CGameClient::HandleMultiView()
 	m_Snap.m_SpecInfo.m_UsePosition = true;
 }
 
-bool CGameClient::InitMultiViewFromFreeview(int Team)
+bool CGameClient::InitMultiView(int Team)
 {
 	float Width, Height;
 	CleanMultiViewIds();
@@ -3585,10 +3633,13 @@ bool CGameClient::InitMultiViewFromFreeview(int Team)
 	vec2 AxisX = vec2(m_Camera.m_Center.x - (Width / 2), m_Camera.m_Center.x + (Width / 2));
 	vec2 AxisY = vec2(m_Camera.m_Center.y - (Height / 2), m_Camera.m_Center.y + (Height / 2));
 
-	m_MultiView.m_Team = Team;
+	m_MultiViewTeam = Team;
 
 	if(Team > 0)
-		return true; // spectating a team, not necessary to search the players in view
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+			m_aMultiViewId[i] = m_Teams.Team(i) == Team;
+	}
 	else
 	{
 		int Count = 0;
@@ -3621,22 +3672,71 @@ bool CGameClient::InitMultiViewFromFreeview(int Team)
 
 		// we are spectating only one player
 		m_MultiView.m_Solo = Count == 1;
-
-		// found players to spectate
-		return Count > 0;
 	}
+
+	if(!g_Config.m_ClMultiViewUseFreeView && IsMultiViewIdSet())
+	{
+		int SpectatorID = m_Snap.m_SpecInfo.m_SpectatorID;
+		int NewSpectatorID = -1;
+
+		vec2 CurPosition(m_Camera.m_Center);
+		if(SpectatorID != SPEC_FREEVIEW)
+		{
+			const CNetObj_Character &CurCharacter = m_Snap.m_aCharacters[SpectatorID].m_Cur;
+			CurPosition.x = CurCharacter.m_X;
+			CurPosition.y = CurCharacter.m_Y;
+		}
+
+		int ClosestDistance = INT_MAX;
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!m_Snap.m_apPlayerInfos[i] || m_Snap.m_apPlayerInfos[i]->m_Team == TEAM_SPECTATORS || m_Teams.Team(i) != Team)
+				continue;
+
+			vec2 PlayerPos;
+			if(m_Snap.m_aCharacters[i].m_Active)
+				PlayerPos = vec2(m_aClients[i].m_RenderPos.x, m_aClients[i].m_RenderPos.y);
+			else if(m_aClients[i].m_Spec) // tee is in spec
+				PlayerPos = m_aClients[i].m_SpecChar;
+			else
+				continue;
+
+			int Distance = distance(CurPosition, PlayerPos);
+			if(NewSpectatorID == -1 || Distance < ClosestDistance)
+			{
+				NewSpectatorID = i;
+				ClosestDistance = Distance;
+			}
+		}
+
+		if(NewSpectatorID > -1)
+			m_Spectator.Spectate(NewSpectatorID);
+	}
+
+	return IsMultiViewIdSet();
 }
 
-float CGameClient::CalculateMultiViewMultiplier(vec2 CameraPos)
+float CGameClient::CalculateMultiViewMultiplier(vec2 TargetPos)
 {
 	float MaxCameraDist = 200.0f;
 	float MinCameraDist = 20.0f;
-	float MaxVel = 0.1f;
+	float MaxVel = g_Config.m_ClMultiViewSensitivity / 150.0f;
 	float MinVel = 0.007f;
+	float CurrentCameraDistance = distance(m_MultiView.m_OldPos, TargetPos);
+	float UpperLimit = 1.0f;
 
-	float CurrentCameraDistance = distance(m_MultiView.m_OldPos, CameraPos);
+	if(m_MultiView.m_Teleported && CurrentCameraDistance <= 100)
+		m_MultiView.m_Teleported = false;
 
-	return clamp(MapValue(MaxCameraDist, MinCameraDist, MaxVel, MinVel, CurrentCameraDistance), MinVel, 1.0f);
+	// somebody got teleported very likely
+	if((m_MultiView.m_Teleported || CurrentCameraDistance - m_MultiView.m_OldCameraDistance > 100) && m_MultiView.m_OldCameraDistance != 0.0f)
+	{
+		UpperLimit = 0.1f; // dont try to compensate it by flickering
+		m_MultiView.m_Teleported = true;
+	}
+	m_MultiView.m_OldCameraDistance = CurrentCameraDistance;
+
+	return clamp(MapValue(MaxCameraDist, MinCameraDist, MaxVel, MinVel, CurrentCameraDistance), MinVel, UpperLimit);
 }
 
 float CGameClient::CalculateMultiViewZoom(vec2 MinPos, vec2 MaxPos, float Vel)
@@ -3657,7 +3757,7 @@ float CGameClient::CalculateMultiViewZoom(vec2 MinPos, vec2 MaxPos, float Vel)
 	// zoom should stay inbetween 1.1 and 20.0
 	Zoom = clamp(Zoom + Diff, 1.1f, 20.0f);
 	// add the user preference
-	Zoom -= (Zoom * 0.075f) * m_MultiViewPersonalZoom;
+	Zoom -= (Zoom * 0.1f) * m_MultiViewPersonalZoom;
 	m_MultiView.m_OldPersonalZoom = m_MultiViewPersonalZoom;
 
 	return Zoom;
@@ -3670,10 +3770,12 @@ float CGameClient::MapValue(float MaxValue, float MinValue, float MaxRange, floa
 
 void CGameClient::ResetMultiView()
 {
+	m_MultiViewPersonalZoom = 0;
+	m_MultiViewActivated = false;
 	m_MultiView.m_Solo = false;
 	m_MultiView.m_IsInit = false;
-	m_MultiViewActivated = false;
-	m_MultiViewPersonalZoom = 0;
+	m_MultiView.m_Teleported = false;
+	m_MultiView.m_OldCameraDistance = 0.0f;
 }
 
 void CGameClient::CleanMultiViewIds()
@@ -3683,7 +3785,28 @@ void CGameClient::CleanMultiViewIds()
 	std::fill(std::begin(m_MultiView.m_aVanish), std::end(m_MultiView.m_aVanish), false);
 }
 
+void CGameClient::CleanMultiViewId(int ClientID)
+{
+	if(ClientID >= MAX_CLIENTS || ClientID < 0)
+		return;
+
+	m_aMultiViewId[ClientID] = false;
+	m_MultiView.m_aLastFreeze[ClientID] = 0.0f;
+	m_MultiView.m_aVanish[ClientID] = false;
+}
+
 bool CGameClient::IsMultiViewIdSet()
 {
 	return std::any_of(std::begin(m_aMultiViewId), std::end(m_aMultiViewId), [](bool IsSet) { return IsSet; });
+}
+
+int CGameClient::FindFirstMultiViewId()
+{
+	int ClientID = -1;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(m_aMultiViewId[i] && !m_MultiView.m_aVanish[i])
+			return i;
+	}
+	return ClientID;
 }
