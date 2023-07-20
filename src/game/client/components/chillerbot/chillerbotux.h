@@ -72,12 +72,6 @@ class CChillerBotUX : public CComponent
 	int m_CampClick;
 	int m_ForceDir;
 	int m_LastForceDir;
-	int m_GotoSwitchOffset;
-	int m_GotoSwitchLastX;
-	int m_GotoSwitchLastY;
-	int m_GotoTeleOffset;
-	int m_GotoTeleLastX;
-	int m_GotoTeleLastY;
 	int64_t m_LastNotification;
 	int64_t m_NextSkinSteal;
 
@@ -103,8 +97,6 @@ class CChillerBotUX : public CComponent
 	void RenderSpeedHud();
 	void RenderWeaponHud();
 	void RenderEnabledComponents();
-	void GotoSwitch(int Number, int Offset = -1);
-	void GotoTele(int Number, int Offset = -1);
 	void TraceSpikes();
 	void DumpPlayers(const char *pSearch = 0);
 	void RenderDbgIntersect();
@@ -124,8 +116,6 @@ class CChillerBotUX : public CComponent
 	static void ConCampHack(IConsole::IResult *pResult, void *pUserData);
 	static void ConCampHackAbs(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnCampHack(IConsole::IResult *pResult, void *pUserData);
-	static void ConGotoSwitch(IConsole::IResult *pResult, void *pUserData);
-	static void ConGotoTele(IConsole::IResult *pResult, void *pUserData);
 	static void ConLoadMap(IConsole::IResult *pResult, void *pUserData);
 	static void ConDumpPlayers(IConsole::IResult *pResult, void *pUserData);
 	static void ConForceQuit(IConsole::IResult *pResult, void *pUserData);

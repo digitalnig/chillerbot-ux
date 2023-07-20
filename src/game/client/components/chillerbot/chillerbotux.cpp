@@ -601,12 +601,6 @@ void CChillerBotUX::OnInit()
 		c.m_aNoteLong[0] = '\0';
 	}
 	UpdateComponents();
-	m_GotoSwitchOffset = 0;
-	m_GotoSwitchLastX = -1;
-	m_GotoSwitchLastY = -1;
-	m_GotoTeleOffset = 0;
-	m_GotoTeleLastX = -1;
-	m_GotoTeleLastY = -1;
 	m_aLastKiller[0][0] = '\0';
 	m_aLastKiller[1][0] = '\0';
 	m_aLastKillerTime[0][0] = '\0';
@@ -677,8 +671,6 @@ void CChillerBotUX::OnConsoleInit()
 	Console()->Register("camp", "?i[left]i[right]?s[tile|raw]", CFGFLAG_CLIENT, ConCampHack, this, "Activate camp mode relative to tee");
 	Console()->Register("camp_abs", "i[x1]i[y1]i[x2]i[y2]?s[tile|raw]", CFGFLAG_CLIENT, ConCampHackAbs, this, "Activate camp mode absolute in the map");
 	Console()->Register("uncamp", "", CFGFLAG_CLIENT, ConUnCampHack, this, "Same as cl_camp_hack 0 but resets walk input");
-	Console()->Register("goto_switch", "i[number]?i[offset]", CFGFLAG_CLIENT, ConGotoSwitch, this, "Pause switch found (at offset) with given number");
-	Console()->Register("goto_tele", "i[number]?i[offset]", CFGFLAG_CLIENT, ConGotoTele, this, "Pause tele found (at offset) with given number");
 	Console()->Register("load_map", "s[file]", CFGFLAG_CLIENT, ConLoadMap, this, "Load mapfile");
 	Console()->Register("dump_players", "?s[search]", CFGFLAG_CLIENT, ConDumpPlayers, this, "Prints players to console");
 	Console()->Register("force_quit", "", CFGFLAG_CLIENT, ConForceQuit, this, "Forces a dirty client quit all data will be lost");
@@ -1003,64 +995,10 @@ void CChillerBotUX::ConUnCampHack(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_pClient->m_Controls.m_aInputDirectionLeft[g_Config.m_ClDummy] = 0;
 }
 
-void CChillerBotUX::ConGotoSwitch(IConsole::IResult *pResult, void *pUserData)
-{
-	CChillerBotUX *pSelf = (CChillerBotUX *)pUserData;
-	pSelf->GotoSwitch(pResult->GetInteger(0), pResult->NumArguments() > 1 ? pResult->GetInteger(1) : -1);
-}
-
-void CChillerBotUX::ConGotoTele(IConsole::IResult *pResult, void *pUserData)
-{
-	CChillerBotUX *pSelf = (CChillerBotUX *)pUserData;
-	pSelf->GotoTele(pResult->GetInteger(0), pResult->NumArguments() > 1 ? pResult->GetInteger(1) : -1);
-}
-
 void CChillerBotUX::ConLoadMap(IConsole::IResult *pResult, void *pUserData)
 {
 	CChillerBotUX *pSelf = (CChillerBotUX *)pUserData;
 	pSelf->m_pClient->Client()->ChillerBotLoadMap(pResult->GetString(0));
-}
-
-void CChillerBotUX::GotoSwitch(int Number, int Offset)
-{
-	int Match = -1;
-	int MatchX = -1;
-	int MatchY = -1;
-	for(int x = 0; x < Collision()->GetWidth(); x++)
-	{
-		for(int y = 0; y < Collision()->GetHeight(); y++)
-		{
-			int i = y * Collision()->GetWidth() + x;
-			if(Number == Collision()->GetSwitchNumber(i))
-			{
-				Match++;
-				if(Offset != -1)
-				{
-					if(Match == Offset)
-					{
-						MatchX = x;
-						MatchY = y;
-						m_GotoSwitchOffset = Match;
-						goto set_view;
-					}
-					continue;
-				}
-				MatchX = x;
-				MatchY = y;
-				if(Match == m_GotoSwitchOffset)
-					goto set_view;
-			}
-		}
-	}
-set_view:
-	if(MatchX == -1 || MatchY == -1)
-		return;
-	if(Match < m_GotoSwitchOffset)
-		m_GotoSwitchOffset = -1;
-	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "set_view %d %d", MatchX, MatchY);
-	Console()->ExecuteLine(aBuf);
-	m_GotoSwitchOffset++;
 }
 
 void CChillerBotUX::TraceSpikes()
@@ -1111,59 +1049,6 @@ void CChillerBotUX::TraceSpikes()
 		}
 	}
 	Graphics()->MapScreen(m_ScreenX0, m_ScreenY0, m_ScreenX1, m_ScreenY1);
-}
-
-void CChillerBotUX::GotoTele(int Number, int Offset)
-{
-	int Match = -1;
-	int MatchX = -1;
-	int MatchY = -1;
-	for(int x = 0; x < Collision()->GetWidth(); x++)
-	{
-		for(int y = 0; y < Collision()->GetHeight(); y++)
-		{
-			int i = y * Collision()->GetWidth() + x;
-			int Tele = Collision()->TeleLayer()[i].m_Number;
-			if(Number == Tele)
-			{
-				Match++;
-				if(Offset != -1)
-				{
-					if(Match == Offset)
-					{
-						MatchX = x;
-						MatchY = y;
-						m_GotoTeleOffset = Match;
-						goto set_view;
-					}
-					continue;
-				}
-				MatchX = x;
-				MatchY = y;
-				if(m_GotoTeleLastX != -1 && m_GotoTeleLastY != -1)
-				{
-					if(distance(vec2(m_GotoTeleLastX, m_GotoTeleLastY), vec2(x, y)) < 10.0f)
-					{
-						m_GotoTeleOffset++;
-						continue;
-					}
-				}
-				m_GotoTeleLastX = x;
-				m_GotoTeleLastY = y;
-				if(Match == m_GotoTeleOffset)
-					goto set_view;
-			}
-		}
-	}
-set_view:
-	if(MatchX == -1 || MatchY == -1)
-		return;
-	if(Match < m_GotoTeleOffset)
-		m_GotoTeleOffset = -1;
-	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "set_view %d %d", MatchX, MatchY);
-	Console()->ExecuteLine(aBuf);
-	m_GotoTeleOffset++;
 }
 
 void CChillerBotUX::OnMessage(int MsgType, void *pRawMsg)
