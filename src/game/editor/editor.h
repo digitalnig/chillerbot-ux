@@ -771,7 +771,8 @@ public:
 
 class CDataFileWriterFinishJob : public IJob
 {
-	char m_aFileName[IO_MAX_PATH_LENGTH];
+	char m_aRealFileName[IO_MAX_PATH_LENGTH];
+	char m_aTempFileName[IO_MAX_PATH_LENGTH];
 	CDataFileWriter m_Writer;
 
 	void Run() override
@@ -780,13 +781,15 @@ class CDataFileWriterFinishJob : public IJob
 	}
 
 public:
-	CDataFileWriterFinishJob(const char *pFileName, CDataFileWriter &&Writer) :
+	CDataFileWriterFinishJob(const char *pRealFileName, const char *pTempFileName, CDataFileWriter &&Writer) :
 		m_Writer(std::move(Writer))
 	{
-		str_copy(m_aFileName, pFileName);
+		str_copy(m_aRealFileName, pRealFileName);
+		str_copy(m_aTempFileName, pTempFileName);
 	}
 
-	const char *GetFileName() const { return m_aFileName; }
+	const char *GetRealFileName() const { return m_aRealFileName; }
+	const char *GetTempFileName() const { return m_aTempFileName; }
 };
 
 class CEditor : public IEditor
@@ -989,6 +992,7 @@ public:
 	void ResetMenuBackgroundPositions();
 
 	std::vector<CQuad *> GetSelectedQuads();
+	std::vector<std::pair<CQuad *, int>> GetSelectedQuadPoints();
 	CLayer *GetSelectedLayerType(int Index, int Type) const;
 	CLayer *GetSelectedLayer(int Index) const;
 	CLayerGroup *GetSelectedGroup() const;
@@ -996,9 +1000,16 @@ public:
 	void SelectLayer(int LayerIndex, int GroupIndex = -1);
 	void AddSelectedLayer(int LayerIndex);
 	void SelectQuad(int Index);
+	void ToggleSelectQuad(int Index);
+	void DeselectQuads();
+	void DeselectQuadPoints();
+	void SelectQuadPoint(int QuadIndex, int Index);
+	void ToggleSelectQuadPoint(int QuadIndex, int Index);
 	void DeleteSelectedQuads();
 	bool IsQuadSelected(int Index) const;
+	bool IsQuadPointSelected(int QuadIndex, int Index) const;
 	int FindSelectedQuadIndex(int Index) const;
+	int FindSelectedQuadPointIndex(int QuadIndex) const;
 
 	int DoProperties(CUIRect *pToolbox, CProperty *pProps, int *pIDs, int *pNewVal, ColorRGBA Color = ColorRGBA(1, 1, 1, 0.5f));
 
@@ -1219,13 +1230,15 @@ public:
 	int m_SelectedQuadPoint;
 	int m_SelectedQuadIndex;
 	int m_SelectedGroup;
-	int m_SelectedPoints;
+	std::vector<std::pair<int, int>> m_vSelectedQuadPoints;
 	int m_SelectedEnvelope;
 	int m_SelectedEnvelopePoint;
 	int m_SelectedQuadEnvelope;
 	int m_SelectedImage;
 	int m_SelectedSound;
 	int m_SelectedSource;
+
+	std::vector<CQuad> m_vCopyBuffer;
 
 	bool m_QuadKnifeActive;
 	int m_QuadKnifeCount;
