@@ -1117,6 +1117,11 @@ void CChillerBotUX::OnMessage(int MsgType, void *pRawMsg)
 		m_BroadcastTick = Client()->GameTick(g_Config.m_ClDummy) + Client()->GameTickSpeed() * 10;
 		m_IsLeftSidedBroadcast = str_find(m_aBroadcastText, "                                ") != NULL;
 	}
+	else if(MsgType == NETMSGTYPE_SV_VOTESET)
+	{
+		if(g_Config.m_ClRunOnVoteStart[0])
+			Console()->ExecuteLine(g_Config.m_ClRunOnVoteStart);
+	}
 }
 
 void CChillerBotUX::GoAfk(int Minutes, const char *pMsg)
