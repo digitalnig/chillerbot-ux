@@ -143,106 +143,110 @@ void CChillerEditor::DoMapEditor()
 			m_pEditor->Graphics()->MapScreen(m_pEditor->UI()->Screen()->x, m_pEditor->UI()->Screen()->y, m_pEditor->UI()->Screen()->w, m_pEditor->UI()->Screen()->h);
 		}
 		// handle key presses
-		IInput::CEvent e = m_pEditor->Input()->GetEvent(0);
-		if(!m_pEditor->Input()->IsEventValid(e))
-			return;
-		if(m_pEditor->Input()->KeyPress(e.m_Key))
-			return;
-		// escape -> end text mode
-		if(e.m_Key == KEY_ESCAPE)
+		for(size_t i = 0; i < m_pEditor->Input()->NumEvents(); i++)
 		{
-			ExitTextMode();
-			return;
-		}
-		// letters
-		if(e.m_Key > 3 && e.m_Key < 30)
-		{
-			CTile Tile;
-			Tile.m_Index = e.m_Key - 3 + m_LetterOffset;
-			pLayer->SetTile(m_TextIndexX++, m_TextIndexY, Tile);
-			m_TextLineLen++;
-		}
-		// numbers
-		if(e.m_Key >= 30 && e.m_Key < 40)
-		{
-			CTile Tile;
-			Tile.m_Index = e.m_Key - 29 + m_NumberOffset;
-			pLayer->SetTile(m_TextIndexX++, m_TextIndexY, Tile);
-			m_TextLineLen++;
-		}
-		// deletion
-		if(e.m_Key == KEY_BACKSPACE)
-		{
-			CTile Tile;
-			Tile.m_Index = 0;
-			pLayer->SetTile(--m_TextIndexX, m_TextIndexY, Tile);
-			m_TextLineLen--;
-		}
-		// space
-		if(e.m_Key == KEY_SPACE)
-		{
-			CTile Tile;
-			Tile.m_Index = 0;
-			pLayer->SetTile(m_TextIndexX++, m_TextIndexY, Tile);
-			m_TextLineLen++;
-		}
-		// newline
-		if(e.m_Key == KEY_RETURN)
-		{
-			m_TextIndexY++;
-			m_TextIndexX -= m_TextLineLen;
-			m_TextLineLen = 0;
-		}
-		// arrow key navigation
-		if(e.m_Key == KEY_LEFT)
-		{
-			m_TextIndexX--;
-			m_TextLineLen--;
-			if(m_pEditor->Input()->KeyIsPressed(KEY_LCTRL))
+			const IInput::CEvent &e = m_pEditor->Input()->GetEvent(i);
+			if(!m_pEditor->Input()->IsEventValid(e))
+				continue;
+			if(m_pEditor->Input()->KeyPress(e.m_Key))
+				continue;
+
+			// escape -> end text mode
+			if(e.m_Key == KEY_ESCAPE)
 			{
-				while(pLayer->GetTile(m_TextIndexX, m_TextIndexY).m_Index)
+				ExitTextMode();
+				return;
+			}
+			// letters
+			if(e.m_Key > 3 && e.m_Key < 30)
+			{
+				CTile Tile;
+				Tile.m_Index = e.m_Key - 3 + m_LetterOffset;
+				pLayer->SetTile(m_TextIndexX++, m_TextIndexY, Tile);
+				m_TextLineLen++;
+			}
+			// numbers
+			if(e.m_Key >= 30 && e.m_Key < 40)
+			{
+				CTile Tile;
+				Tile.m_Index = e.m_Key - 29 + m_NumberOffset;
+				pLayer->SetTile(m_TextIndexX++, m_TextIndexY, Tile);
+				m_TextLineLen++;
+			}
+			// deletion
+			if(e.m_Key == KEY_BACKSPACE)
+			{
+				CTile Tile;
+				Tile.m_Index = 0;
+				pLayer->SetTile(--m_TextIndexX, m_TextIndexY, Tile);
+				m_TextLineLen--;
+			}
+			// space
+			if(e.m_Key == KEY_SPACE)
+			{
+				CTile Tile;
+				Tile.m_Index = 0;
+				pLayer->SetTile(m_TextIndexX++, m_TextIndexY, Tile);
+				m_TextLineLen++;
+			}
+			// newline
+			if(e.m_Key == KEY_RETURN)
+			{
+				m_TextIndexY++;
+				m_TextIndexX -= m_TextLineLen;
+				m_TextLineLen = 0;
+			}
+			// arrow key navigation
+			if(e.m_Key == KEY_LEFT)
+			{
+				m_TextIndexX--;
+				m_TextLineLen--;
+				if(m_pEditor->Input()->KeyIsPressed(KEY_LCTRL))
 				{
-					if(m_TextIndexX < 1 || m_TextIndexX > pLayer->m_Width - 2)
-						break;
-					if(e.m_Key != KEY_LEFT)
-						break;
-					m_TextIndexX--;
-					m_TextLineLen--;
+					while(pLayer->GetTile(m_TextIndexX, m_TextIndexY).m_Index)
+					{
+						if(m_TextIndexX < 1 || m_TextIndexX > pLayer->m_Width - 2)
+							break;
+						if(e.m_Key != KEY_LEFT)
+							break;
+						m_TextIndexX--;
+						m_TextLineLen--;
+					}
 				}
 			}
-		}
-		if(e.m_Key == KEY_RIGHT)
-		{
-			m_TextIndexX++;
-			m_TextLineLen++;
-			if(m_pEditor->Input()->KeyIsPressed(KEY_LCTRL))
+			if(e.m_Key == KEY_RIGHT)
 			{
-				while(pLayer->GetTile(m_TextIndexX, m_TextIndexY).m_Index)
+				m_TextIndexX++;
+				m_TextLineLen++;
+				if(m_pEditor->Input()->KeyIsPressed(KEY_LCTRL))
 				{
-					if(m_TextIndexX < 1 || m_TextIndexX > pLayer->m_Width - 2)
-						break;
-					if(e.m_Key != KEY_RIGHT)
-						break;
-					m_TextIndexX++;
-					m_TextLineLen++;
+					while(pLayer->GetTile(m_TextIndexX, m_TextIndexY).m_Index)
+					{
+						if(m_TextIndexX < 1 || m_TextIndexX > pLayer->m_Width - 2)
+							break;
+						if(e.m_Key != KEY_RIGHT)
+							break;
+						m_TextIndexX++;
+						m_TextLineLen++;
+					}
 				}
 			}
+			if(e.m_Key == KEY_UP)
+				m_TextIndexY--;
+			if(e.m_Key == KEY_DOWN)
+				m_TextIndexY++;
+			m_NextCursorBlink = time_get() + time_freq();
+			m_DrawCursor = true;
+			float dist = distance(
+				vec2(m_TextIndexX, m_TextIndexY),
+				vec2((m_pEditor->m_WorldOffsetX + m_pEditor->m_EditorOffsetX) / 32, (m_pEditor->m_WorldOffsetY + m_pEditor->m_EditorOffsetY) / 32));
+			dist /= m_pEditor->m_WorldZoom;
+			if(dist > 10.0f)
+			{
+				m_pEditor->m_WorldOffsetX = m_TextIndexX * 32 - m_pEditor->m_EditorOffsetX;
+				m_pEditor->m_WorldOffsetY = m_TextIndexY * 32 - m_pEditor->m_EditorOffsetY;
+			}
+			dbg_msg("chillerbot", "key=%d dialog=%d", e.m_Key, m_pEditor->m_Dialog);
 		}
-		if(e.m_Key == KEY_UP)
-			m_TextIndexY--;
-		if(e.m_Key == KEY_DOWN)
-			m_TextIndexY++;
-		m_NextCursorBlink = time_get() + time_freq();
-		m_DrawCursor = true;
-		float dist = distance(
-			vec2(m_TextIndexX, m_TextIndexY),
-			vec2((m_pEditor->m_WorldOffsetX + m_pEditor->m_EditorOffsetX) / 32, (m_pEditor->m_WorldOffsetY + m_pEditor->m_EditorOffsetY) / 32));
-		dist /= m_pEditor->m_WorldZoom;
-		if(dist > 10.0f)
-		{
-			m_pEditor->m_WorldOffsetX = m_TextIndexX * 32 - m_pEditor->m_EditorOffsetX;
-			m_pEditor->m_WorldOffsetY = m_TextIndexY * 32 - m_pEditor->m_EditorOffsetY;
-		}
-		dbg_msg("chillerbot", "key=%d dialog=%d", e.m_Key, m_pEditor->m_Dialog);
 	}
 }
