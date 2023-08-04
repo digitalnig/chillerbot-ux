@@ -99,14 +99,14 @@ void CChillerEditor::DoMapEditor()
 		m_EditorMode = CE_MODE_TEXT;
 		m_pEditor->m_Dialog = -1; // hack to not close editor when pressing Escape
 		SetCursor();
-		CLayerTiles *pLayer = (CLayerTiles *)m_pEditor->GetSelectedLayerType(0, LAYERTYPE_TILES);
+		std::shared_ptr<CLayerTiles> pLayer = std::static_pointer_cast<CLayerTiles>(m_pEditor->GetSelectedLayerType(0, LAYERTYPE_TILES));
 		if(pLayer->m_Image >= 0 && pLayer->m_Image < (int)m_pEditor->m_Map.m_vpImages.size())
 			LoadMapresMetaFile(m_pEditor->m_Map.m_vpImages[pLayer->m_Image]->m_aName);
 	}
 	if(m_EditorMode == CE_MODE_TEXT)
 	{
 		m_pEditor->m_pTooltip = "Type on your keyboard to insert letters. Press Escape to end text mode.";
-		CLayerTiles *pLayer = (CLayerTiles *)m_pEditor->GetSelectedLayerType(0, LAYERTYPE_TILES);
+		std::shared_ptr<CLayerTiles> pLayer = std::static_pointer_cast<CLayerTiles>(m_pEditor->GetSelectedLayerType(0, LAYERTYPE_TILES));
 		// exit if selected layer changes
 		if(m_pLastLayer && m_pLastLayer != pLayer)
 		{
@@ -130,7 +130,7 @@ void CChillerEditor::DoMapEditor()
 		}
 		if(m_DrawCursor)
 		{
-			CLayerGroup *g = m_pEditor->GetSelectedGroup();
+			std::shared_ptr<CLayerGroup> g = m_pEditor->GetSelectedGroup();
 			g->MapScreen();
 			m_pEditor->Graphics()->WrapClamp();
 			m_pEditor->Graphics()->TextureSet(m_CursorTextTexture);

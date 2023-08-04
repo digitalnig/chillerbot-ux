@@ -1,6 +1,8 @@
 #ifndef GAME_EDITOR_CHILLERBOT_CHILLEREDITOR_H
 #define GAME_EDITOR_CHILLERBOT_CHILLEREDITOR_H
 
+#include <memory>
+
 #include <engine/graphics.h>
 
 class CChillerEditor
@@ -24,7 +26,7 @@ class CChillerEditor
 	IGraphics::CTextureHandle m_CursorTextTexture;
 
 	class CEditor *m_pEditor;
-	class CLayerTiles *m_pLastLayer;
+	std::shared_ptr<class CLayer> m_pLastLayer;
 
 	void SetCursor();
 	void ExitTextMode();

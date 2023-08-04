@@ -19,6 +19,8 @@
 
 // This file can be included several times.
 
+UUID(NETMSG_IAMCHILLERBOT, "i-am-chillerbot@chillerbot.github.io")
+
 UUID(NETMSG_WHATIS, "what-is@ddnet.tw")
 UUID(NETMSG_ITIS, "it-is@ddnet.tw")
 UUID(NETMSG_IDONTKNOW, "i-dont-know@ddnet.tw")
@@ -35,4 +37,4 @@ UUID(NETMSG_CHECKSUM_REQUEST, "checksum-request@ddnet.tw")
 UUID(NETMSG_CHECKSUM_RESPONSE, "checksum-response@ddnet.tw")
 UUID(NETMSG_CHECKSUM_ERROR, "checksum-error@ddnet.tw")
 
-UUID(NETMSG_IAMCHILLERBOT, "i-am-chillerbot@chillerbot.github.io")
+UUID(NETMSG_REDIRECT, "redirect@ddnet.org")

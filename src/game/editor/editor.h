@@ -25,6 +25,7 @@
 #include <deque>
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -201,7 +202,6 @@ public:
 		m_Readonly = false;
 		m_Flags = 0;
 		m_pEditor = nullptr;
-		m_BrushRefCount = 0;
 	}
 
 	CLayer(const CLayer &Other)
@@ -210,7 +210,6 @@ public:
 		m_Flags = Other.m_Flags;
 		m_pEditor = Other.m_pEditor;
 		m_Type = Other.m_Type;
-		m_BrushRefCount = 0;
 		m_Visible = true;
 		m_Readonly = false;
 	}
@@ -220,10 +219,10 @@ public:
 	}
 
 	virtual void BrushSelecting(CUIRect Rect) {}
-	virtual int BrushGrab(CLayerGroup *pBrush, CUIRect Rect) { return 0; }
-	virtual void FillSelection(bool Empty, CLayer *pBrush, CUIRect Rect) {}
-	virtual void BrushDraw(CLayer *pBrush, float x, float y) {}
-	virtual void BrushPlace(CLayer *pBrush, float x, float y) {}
+	virtual int BrushGrab(std::shared_ptr<CLayerGroup> pBrush, CUIRect Rect) { return 0; }
+	virtual void FillSelection(bool Empty, std::shared_ptr<CLayer> pBrush, CUIRect Rect) {}
+	virtual void BrushDraw(std::shared_ptr<CLayer> pBrush, float x, float y) {}
+	virtual void BrushPlace(std::shared_ptr<CLayer> pBrush, float x, float y) {}
 	virtual void BrushFlipX() {}
 	virtual void BrushFlipY() {}
 	virtual void BrushRotate(float Amount) {}
@@ -237,7 +236,7 @@ public:
 	virtual void ModifyEnvelopeIndex(FIndexModifyFunction pfnFunc) {}
 	virtual void ModifySoundIndex(FIndexModifyFunction pfnFunc) {}
 
-	virtual CLayer *Duplicate() const = 0;
+	virtual std::shared_ptr<CLayer> Duplicate() const = 0;
 
 	virtual void GetSize(float *pWidth, float *pHeight)
 	{
@@ -251,7 +250,6 @@ public:
 
 	bool m_Readonly;
 	bool m_Visible;
-	int m_BrushRefCount;
 };
 
 class CLayerGroup
@@ -259,7 +257,7 @@ class CLayerGroup
 public:
 	class CEditorMap *m_pMap;
 
-	std::vector<CLayer *> m_vpLayers;
+	std::vector<std::shared_ptr<CLayer>> m_vpLayers;
 
 	int m_OffsetX;
 	int m_OffsetY;
@@ -310,7 +308,7 @@ public:
 		m_vpLayers.clear();
 	}
 
-	void AddLayer(CLayer *pLayer);
+	void AddLayer(const std::shared_ptr<CLayer> &pLayer);
 
 	void ModifyImageIndex(FIndexModifyFunction Func)
 	{
@@ -386,8 +384,8 @@ public:
 
 class CEditorMap
 {
-	void MakeGameGroup(CLayerGroup *pGroup);
-	void MakeGameLayer(CLayer *pLayer);
+	void MakeGameGroup(std::shared_ptr<CLayerGroup> pGroup);
+	void MakeGameLayer(const std::shared_ptr<CLayer> &pLayer);
 
 public:
 	CEditor *m_pEditor;
@@ -409,10 +407,10 @@ public:
 	float m_LastAutosaveUpdateTime;
 	void OnModify();
 
-	std::vector<CLayerGroup *> m_vpGroups;
-	std::vector<CEditorImage *> m_vpImages;
-	std::vector<CEnvelope *> m_vpEnvelopes;
-	std::vector<CEditorSound *> m_vpSounds;
+	std::vector<std::shared_ptr<CLayerGroup>> m_vpGroups;
+	std::vector<std::shared_ptr<CEditorImage>> m_vpImages;
+	std::vector<std::shared_ptr<CEnvelope>> m_vpEnvelopes;
+	std::vector<std::shared_ptr<CEditorSound>> m_vpSounds;
 
 	class CMapInfo
 	{
@@ -452,13 +450,13 @@ public:
 	};
 	std::vector<CSetting> m_vSettings;
 
-	class CLayerGame *m_pGameLayer;
-	CLayerGroup *m_pGameGroup;
+	std::shared_ptr<class CLayerGame> m_pGameLayer;
+	std::shared_ptr<CLayerGroup> m_pGameGroup;
 
-	CEnvelope *NewEnvelope(int Channels)
+	std::shared_ptr<CEnvelope> NewEnvelope(int Channels)
 	{
 		OnModify();
-		CEnvelope *pEnv = new CEnvelope(Channels);
+		std::shared_ptr<CEnvelope> pEnv = std::make_shared<CEnvelope>(Channels);
 		m_vpEnvelopes.push_back(pEnv);
 		return pEnv;
 	}
@@ -468,10 +466,10 @@ public:
 	template<typename F>
 	void VisitEnvelopeReferences(F &&Visitor);
 
-	CLayerGroup *NewGroup()
+	std::shared_ptr<CLayerGroup> NewGroup()
 	{
 		OnModify();
-		CLayerGroup *pGroup = new CLayerGroup;
+		std::shared_ptr<CLayerGroup> pGroup = std::make_shared<CLayerGroup>();
 		pGroup->m_pMap = this;
 		m_vpGroups.push_back(pGroup);
 		return pGroup;
@@ -495,7 +493,6 @@ public:
 		if(Index < 0 || Index >= (int)m_vpGroups.size())
 			return;
 		OnModify();
-		delete m_vpGroups[Index];
 		m_vpGroups.erase(m_vpGroups.begin() + Index);
 	}
 
@@ -530,16 +527,16 @@ public:
 
 	// DDRace
 
-	class CLayerTele *m_pTeleLayer;
-	class CLayerSpeedup *m_pSpeedupLayer;
-	class CLayerFront *m_pFrontLayer;
-	class CLayerSwitch *m_pSwitchLayer;
-	class CLayerTune *m_pTuneLayer;
-	void MakeTeleLayer(CLayer *pLayer);
-	void MakeSpeedupLayer(CLayer *pLayer);
-	void MakeFrontLayer(CLayer *pLayer);
-	void MakeSwitchLayer(CLayer *pLayer);
-	void MakeTuneLayer(CLayer *pLayer);
+	std::shared_ptr<class CLayerTele> m_pTeleLayer;
+	std::shared_ptr<class CLayerSpeedup> m_pSpeedupLayer;
+	std::shared_ptr<class CLayerFront> m_pFrontLayer;
+	std::shared_ptr<class CLayerSwitch> m_pSwitchLayer;
+	std::shared_ptr<class CLayerTune> m_pTuneLayer;
+	void MakeTeleLayer(const std::shared_ptr<CLayer> &pLayer);
+	void MakeSpeedupLayer(const std::shared_ptr<CLayer> &pLayer);
+	void MakeFrontLayer(const std::shared_ptr<CLayer> &pLayer);
+	void MakeSwitchLayer(const std::shared_ptr<CLayer> &pLayer);
+	void MakeTuneLayer(const std::shared_ptr<CLayer> &pLayer);
 };
 
 struct CProperty
@@ -667,16 +664,16 @@ public:
 
 	virtual bool IsEntitiesLayer() const override;
 
-	virtual bool IsEmpty(CLayerTiles *pLayer);
+	virtual bool IsEmpty(const std::shared_ptr<CLayerTiles> &pLayer);
 	void BrushSelecting(CUIRect Rect) override;
-	int BrushGrab(CLayerGroup *pBrush, CUIRect Rect) override;
-	void FillSelection(bool Empty, CLayer *pBrush, CUIRect Rect) override;
-	void BrushDraw(CLayer *pBrush, float wx, float wy) override;
+	int BrushGrab(std::shared_ptr<CLayerGroup> pBrush, CUIRect Rect) override;
+	void FillSelection(bool Empty, std::shared_ptr<CLayer> pBrush, CUIRect Rect) override;
+	void BrushDraw(std::shared_ptr<CLayer> pBrush, float wx, float wy) override;
 	void BrushFlipX() override;
 	void BrushFlipY() override;
 	void BrushRotate(float Amount) override;
 
-	CLayer *Duplicate() const override;
+	std::shared_ptr<CLayer> Duplicate() const override;
 
 	virtual void ShowInfo();
 	CUI::EPopupMenuFunctionResult RenderProperties(CUIRect *pToolbox) override;
@@ -693,7 +690,7 @@ public:
 		int m_Height = -1;
 		int m_Color = 0;
 	};
-	static CUI::EPopupMenuFunctionResult RenderCommonProperties(SCommonPropState &State, CEditor *pEditor, CUIRect *pToolbox, std::vector<CLayerTiles *> &vpLayers);
+	static CUI::EPopupMenuFunctionResult RenderCommonProperties(SCommonPropState &State, CEditor *pEditor, CUIRect *pToolbox, std::vector<std::shared_ptr<CLayerTiles>> &vpLayers);
 
 	void ModifyImageIndex(FIndexModifyFunction pfnFunc) override;
 	void ModifyEnvelopeIndex(FIndexModifyFunction pfnFunc) override;
@@ -709,7 +706,6 @@ public:
 
 	void FlagModified(int x, int y, int w, int h);
 
-	IGraphics::CTextureHandle m_Texture;
 	int m_Game;
 	int m_Image;
 	int m_Width;
@@ -744,8 +740,8 @@ public:
 	int SwapQuads(int Index0, int Index1);
 
 	void BrushSelecting(CUIRect Rect) override;
-	int BrushGrab(CLayerGroup *pBrush, CUIRect Rect) override;
-	void BrushPlace(CLayer *pBrush, float wx, float wy) override;
+	int BrushGrab(std::shared_ptr<CLayerGroup> pBrush, CUIRect Rect) override;
+	void BrushPlace(std::shared_ptr<CLayer> pBrush, float wx, float wy) override;
 	void BrushFlipX() override;
 	void BrushFlipY() override;
 	void BrushRotate(float Amount) override;
@@ -756,7 +752,7 @@ public:
 	void ModifyEnvelopeIndex(FIndexModifyFunction pfnFunc) override;
 
 	void GetSize(float *pWidth, float *pHeight) override;
-	CLayer *Duplicate() const override;
+	std::shared_ptr<CLayer> Duplicate() const override;
 
 	int m_Image;
 	std::vector<CQuad> m_vQuads;
@@ -861,6 +857,8 @@ class CEditor : public IEditor
 		PREVIEW_ERROR,
 	};
 
+	std::shared_ptr<CLayerGroup> m_apSavedBrushes[10];
+
 public:
 	class IInput *Input() { return m_pInput; }
 	class IClient *Client() { return m_pClient; }
@@ -877,8 +875,7 @@ public:
 	CEditor() :
 		m_ZoomMapView(200.0f, 10.0f, 2000.0f, this),
 		m_ZoomEnvelopeX(1.0f, 0.1f, 600.0f, this),
-		m_ZoomEnvelopeY(640.0f, 0.1f, 32000.0f, this),
-		m_TilesetPicker(16, 16)
+		m_ZoomEnvelopeY(640.0f, 0.1f, 32000.0f, this)
 	{
 		m_EntitiesTexture.Invalidate();
 		m_FrontTexture.Invalidate();
@@ -999,8 +996,6 @@ public:
 	bool PerformAutosave();
 	void HandleWriterFinishJobs();
 
-	CLayerGroup *m_apSavedBrushes[10];
-
 	void RefreshFilteredFileList();
 	void FilelistPopulate(int StorageType, bool KeepSelection = false);
 	void InvokeFileDialog(int StorageType, int FileType, const char *pTitle, const char *pButtonText,
@@ -1033,9 +1028,9 @@ public:
 
 	std::vector<CQuad *> GetSelectedQuads();
 	std::vector<std::pair<CQuad *, int>> GetSelectedQuadPoints();
-	CLayer *GetSelectedLayerType(int Index, int Type) const;
-	CLayer *GetSelectedLayer(int Index) const;
-	CLayerGroup *GetSelectedGroup() const;
+	std::shared_ptr<CLayer> GetSelectedLayerType(int Index, int Type) const;
+	std::shared_ptr<CLayer> GetSelectedLayer(int Index) const;
+	std::shared_ptr<CLayerGroup> GetSelectedGroup() const;
 	CSoundSource *GetSelectedSource();
 	void SelectLayer(int LayerIndex, int GroupIndex = -1);
 	void AddSelectedLayer(int LayerIndex);
@@ -1317,9 +1312,9 @@ public:
 
 	IGraphics::CTextureHandle GetEntitiesTexture();
 
-	CLayerGroup m_Brush;
-	CLayerTiles m_TilesetPicker;
-	CLayerQuads m_QuadsetPicker;
+	std::shared_ptr<CLayerGroup> m_pBrush;
+	std::shared_ptr<CLayerTiles> m_pTilesetPicker;
+	std::shared_ptr<CLayerQuads> m_pQuadsetPicker;
 
 	static const void *ms_pUiGotContext;
 
@@ -1356,7 +1351,7 @@ public:
 
 	void RenderBackground(CUIRect View, IGraphics::CTextureHandle Texture, float Size, float Brightness);
 
-	void RenderGrid(CLayerGroup *pGroup);
+	void RenderGrid(const std::shared_ptr<CLayerGroup> &pGroup);
 	void SnapToGrid(float &x, float &y);
 
 	int UiDoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, int Current, int Min, int Max, int Step, float Scale, const char *pToolTip, bool IsDegree = false, bool IsHex = false, int corners = IGraphics::CORNER_ALL, ColorRGBA *pColor = nullptr, bool ShowValue = true);
@@ -1368,7 +1363,7 @@ public:
 	struct SLayerPopupContext : public SPopupMenuId
 	{
 		CEditor *m_pEditor;
-		std::vector<CLayerTiles *> m_vpLayers;
+		std::vector<std::shared_ptr<CLayerTiles>> m_vpLayers;
 		CLayerTiles::SCommonPropState m_CommonPropState;
 	};
 	static CUI::EPopupMenuFunctionResult PopupLayer(void *pContext, CUIRect View, bool Active);
@@ -1413,7 +1408,7 @@ public:
 	void DoQuadEnvelopes(const std::vector<CQuad> &vQuads, IGraphics::CTextureHandle Texture = IGraphics::CTextureHandle());
 	void DoQuadEnvPoint(const CQuad *pQuad, int QIndex, int pIndex);
 	void DoQuadPoint(CQuad *pQuad, int QuadIndex, int v);
-	void SetHotQuadPoint(CLayerQuads *pLayer);
+	void SetHotQuadPoint(const std::shared_ptr<CLayerQuads> &pLayer);
 
 	float TriangleArea(vec2 A, vec2 B, vec2 C);
 	bool IsInTriangle(vec2 Point, vec2 A, vec2 B, vec2 C);
@@ -1452,7 +1447,7 @@ public:
 
 	void RenderExtraEditorDragBar(CUIRect View, CUIRect DragBar);
 
-	void SetHotEnvelopePoint(const CUIRect &View, CEnvelope *pEnvelope);
+	void SetHotEnvelopePoint(const CUIRect &View, const std::shared_ptr<CEnvelope> &pEnvelope);
 
 	void RenderMenubar(CUIRect Menubar);
 	void RenderFileDialog();
@@ -1549,8 +1544,8 @@ public:
 	void ZoomAdaptOffsetY(float ZoomFactor, const CUIRect &View);
 	void UpdateZoomEnvelopeY(const CUIRect &View);
 
-	void ResetZoomEnvelope(CEnvelope *pEnvelope, int ActiveChannels);
-	void RemoveTimeOffsetEnvelope(CEnvelope *pEnvelope);
+	void ResetZoomEnvelope(const std::shared_ptr<CEnvelope> &pEnvelope, int ActiveChannels);
+	void RemoveTimeOffsetEnvelope(const std::shared_ptr<CEnvelope> &pEnvelope);
 	float ScreenToEnvelopeX(const CUIRect &View, float x) const;
 	float EnvelopeToScreenX(const CUIRect &View, float x) const;
 	float ScreenToEnvelopeY(const CUIRect &View, float y) const;
@@ -1596,12 +1591,12 @@ public:
 
 	void Resize(int NewW, int NewH) override;
 	void Shift(int Direction) override;
-	bool IsEmpty(CLayerTiles *pLayer) override;
-	void BrushDraw(CLayer *pBrush, float wx, float wy) override;
+	bool IsEmpty(const std::shared_ptr<CLayerTiles> &pLayer) override;
+	void BrushDraw(std::shared_ptr<CLayer> pBrush, float wx, float wy) override;
 	void BrushFlipX() override;
 	void BrushFlipY() override;
 	void BrushRotate(float Amount) override;
-	void FillSelection(bool Empty, CLayer *pBrush, CUIRect Rect) override;
+	void FillSelection(bool Empty, std::shared_ptr<CLayer> pBrush, CUIRect Rect) override;
 	virtual bool ContainsElementWithId(int Id);
 };
 
@@ -1618,12 +1613,12 @@ public:
 
 	void Resize(int NewW, int NewH) override;
 	void Shift(int Direction) override;
-	bool IsEmpty(CLayerTiles *pLayer) override;
-	void BrushDraw(CLayer *pBrush, float wx, float wy) override;
+	bool IsEmpty(const std::shared_ptr<CLayerTiles> &pLayer) override;
+	void BrushDraw(std::shared_ptr<CLayer> pBrush, float wx, float wy) override;
 	void BrushFlipX() override;
 	void BrushFlipY() override;
 	void BrushRotate(float Amount) override;
-	void FillSelection(bool Empty, CLayer *pBrush, CUIRect Rect) override;
+	void FillSelection(bool Empty, std::shared_ptr<CLayer> pBrush, CUIRect Rect) override;
 };
 
 class CLayerFront : public CLayerTiles
@@ -1647,12 +1642,12 @@ public:
 
 	void Resize(int NewW, int NewH) override;
 	void Shift(int Direction) override;
-	bool IsEmpty(CLayerTiles *pLayer) override;
-	void BrushDraw(CLayer *pBrush, float wx, float wy) override;
+	bool IsEmpty(const std::shared_ptr<CLayerTiles> &pLayer) override;
+	void BrushDraw(std::shared_ptr<CLayer> pBrush, float wx, float wy) override;
 	void BrushFlipX() override;
 	void BrushFlipY() override;
 	void BrushRotate(float Amount) override;
-	void FillSelection(bool Empty, CLayer *pBrush, CUIRect Rect) override;
+	void FillSelection(bool Empty, std::shared_ptr<CLayer> pBrush, CUIRect Rect) override;
 	virtual bool ContainsElementWithId(int Id);
 };
 
@@ -1667,12 +1662,12 @@ public:
 
 	void Resize(int NewW, int NewH) override;
 	void Shift(int Direction) override;
-	bool IsEmpty(CLayerTiles *pLayer) override;
-	void BrushDraw(CLayer *pBrush, float wx, float wy) override;
+	bool IsEmpty(const std::shared_ptr<CLayerTiles> &pLayer) override;
+	void BrushDraw(std::shared_ptr<CLayer> pBrush, float wx, float wy) override;
 	void BrushFlipX() override;
 	void BrushFlipY() override;
 	void BrushRotate(float Amount) override;
-	void FillSelection(bool Empty, CLayer *pBrush, CUIRect Rect) override;
+	void FillSelection(bool Empty, std::shared_ptr<CLayer> pBrush, CUIRect Rect) override;
 };
 
 class CLayerSounds : public CLayer
@@ -1686,15 +1681,15 @@ public:
 	CSoundSource *NewSource(int x, int y);
 
 	void BrushSelecting(CUIRect Rect) override;
-	int BrushGrab(CLayerGroup *pBrush, CUIRect Rect) override;
-	void BrushPlace(CLayer *pBrush, float wx, float wy) override;
+	int BrushGrab(std::shared_ptr<CLayerGroup> pBrush, CUIRect Rect) override;
+	void BrushPlace(std::shared_ptr<CLayer> pBrush, float wx, float wy) override;
 
 	CUI::EPopupMenuFunctionResult RenderProperties(CUIRect *pToolbox) override;
 
 	void ModifyEnvelopeIndex(FIndexModifyFunction pfnFunc) override;
 	void ModifySoundIndex(FIndexModifyFunction pfnFunc) override;
 
-	CLayer *Duplicate() const override;
+	std::shared_ptr<CLayer> Duplicate() const override;
 
 	int m_Sound;
 	std::vector<CSoundSource> m_vSources;
