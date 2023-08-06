@@ -815,14 +815,19 @@ void CClient::Connect(const char *pAddress, const char *pPassword)
 	while((pNextAddr = str_next_token(pNextAddr, ",", aBuffer, sizeof(aBuffer))))
 	{
 		NETADDR NextAddr;
-		if(net_host_lookup(aBuffer, &NextAddr, m_aNetClient[CONN_MAIN].NetType()) != 0)
+		char aHost[128];
+		int url = net_addr_from_url(&NextAddr, aBuffer, aHost, sizeof(aHost));
+		if(url > 0)
+			str_copy(aHost, aBuffer);
+
+		if(net_host_lookup(aHost, &NextAddr, m_aNetClient[CONN_MAIN].NetType()) != 0)
 		{
-			log_error("client", "could not find address of %s", aBuffer);
+			log_error("client", "could not find address of %s", aHost);
 			continue;
 		}
 		if(NumConnectAddrs == (int)std::size(aConnectAddrs))
 		{
-			log_warn("client", "too many connect addresses, ignoring %s", aBuffer);
+			log_warn("client", "too many connect addresses, ignoring %s", aHost);
 			continue;
 		}
 		if(NextAddr.port == 0)
@@ -3090,8 +3095,9 @@ void CClient::Run()
 	}
 #endif
 
-	// init font rendering
-	Kernel()->RequestInterface<IEngineTextRender>()->Init();
+	// init text render
+	IEngineTextRender *pTextRender = Kernel()->RequestInterface<IEngineTextRender>();
+	pTextRender->Init();
 
 	// init the input
 	Input()->Init();
@@ -3449,6 +3455,9 @@ void CClient::Run()
 		m_aNetClient[i].Close();
 
 	delete m_pEditor;
+
+	// shutdown text render while graphics are still available
+	pTextRender->Shutdown();
 }
 
 bool CClient::InitNetworkClient(char *pError, size_t ErrorSize)
@@ -4326,61 +4335,6 @@ void CClient::ToggleWindowVSync()
 {
 	if(Graphics()->SetVSync(g_Config.m_GfxVsync ^ 1))
 		g_Config.m_GfxVsync ^= 1;
-}
-
-void CClient::LoadFont()
-{
-	static CFont *pDefaultFont = 0;
-	char aFilename[IO_MAX_PATH_LENGTH];
-	char aBuff[1024];
-	const char *pFontFile = "fonts/DejaVuSans.ttf";
-	const char *apFallbackFontFiles[] =
-		{
-			"fonts/GlowSansJCompressed-Book.otf",
-			"fonts/SourceHanSansSC-Regular.otf",
-		};
-	IOHANDLE File = Storage()->OpenFile(pFontFile, IOFLAG_READ, IStorage::TYPE_ALL, aFilename, sizeof(aFilename));
-	if(File)
-	{
-		IEngineTextRender *pTextRender = Kernel()->RequestInterface<IEngineTextRender>();
-		pDefaultFont = pTextRender->GetFont(aFilename);
-		if(pDefaultFont == NULL)
-		{
-			void *pBuf;
-			unsigned Size;
-			io_read_all(File, &pBuf, &Size);
-			pDefaultFont = pTextRender->LoadFont(aFilename, (unsigned char *)pBuf, Size);
-		}
-		io_close(File);
-
-		for(auto &pFallbackFontFile : apFallbackFontFiles)
-		{
-			bool FontLoaded = false;
-			File = Storage()->OpenFile(pFallbackFontFile, IOFLAG_READ, IStorage::TYPE_ALL, aFilename, sizeof(aFilename));
-			if(File)
-			{
-				void *pBuf;
-				unsigned Size;
-				io_read_all(File, &pBuf, &Size);
-				io_close(File);
-				FontLoaded = pTextRender->LoadFallbackFont(pDefaultFont, aFilename, (unsigned char *)pBuf, Size);
-			}
-
-			if(!FontLoaded)
-			{
-				str_format(aBuff, std::size(aBuff), "failed to load the fallback font. filename='%s'", pFallbackFontFile);
-				m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "gameclient", aBuff);
-			}
-		}
-
-		pTextRender->SetDefaultFont(pDefaultFont);
-	}
-
-	if(!pDefaultFont)
-	{
-		str_format(aBuff, std::size(aBuff), "failed to load font. filename='%s'", pFontFile);
-		m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "gameclient", aBuff);
-	}
 }
 
 void CClient::Notify(const char *pTitle, const char *pMessage)
