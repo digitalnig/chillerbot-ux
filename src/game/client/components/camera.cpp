@@ -36,7 +36,7 @@ float CCamera::ZoomProgress(float CurrentTime) const
 void CCamera::ScaleZoom(float Factor)
 {
 	float CurrentTarget = m_Zooming ? m_ZoomSmoothingTarget : m_Zoom;
-	ChangeZoom(CurrentTarget * Factor, g_Config.m_ClSmoothZoomTime);
+	ChangeZoom(CurrentTarget * Factor, m_pClient->m_Snap.m_SpecInfo.m_Active && GameClient()->m_MultiViewActivated ? g_Config.m_ClMultiViewZoomSmoothness : g_Config.m_ClSmoothZoomTime);
 }
 
 float CCamera::MaxZoomLevel()
@@ -225,7 +225,7 @@ void CCamera::ConZoom(IConsole::IResult *pResult, void *pUserData)
 {
 	CCamera *pSelf = (CCamera *)pUserData;
 	float TargetLevel = pResult->NumArguments() ? pResult->GetFloat(0) : g_Config.m_ClDefaultZoom;
-	pSelf->ChangeZoom(std::pow(ZoomStep, TargetLevel - 10), g_Config.m_ClSmoothZoomTime);
+	pSelf->ChangeZoom(std::pow(ZoomStep, TargetLevel - 10), pSelf->m_pClient->m_Snap.m_SpecInfo.m_Active && pSelf->GameClient()->m_MultiViewActivated ? g_Config.m_ClMultiViewZoomSmoothness : g_Config.m_ClSmoothZoomTime);
 
 	if(pSelf->GameClient()->m_MultiViewActivated)
 		pSelf->GameClient()->m_MultiViewPersonalZoom = 0;
@@ -256,6 +256,9 @@ void CCamera::SetView(ivec2 Pos)
 
 void CCamera::GotoSwitch(int Number, int Offset)
 {
+	if(Collision()->SwitchLayer() == nullptr)
+		return;
+
 	int Match = -1;
 	ivec2 MatchPos = ivec2(-1, -1);
 
@@ -297,6 +300,9 @@ void CCamera::GotoSwitch(int Number, int Offset)
 
 void CCamera::GotoTele(int Number, int Offset)
 {
+	if(Collision()->TeleLayer() == nullptr)
+		return;
+
 	int Match = -1;
 	ivec2 MatchPos = ivec2(-1, -1);
 

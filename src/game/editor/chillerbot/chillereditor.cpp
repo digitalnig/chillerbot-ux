@@ -239,12 +239,12 @@ void CChillerEditor::DoMapEditor()
 			m_DrawCursor = true;
 			float dist = distance(
 				vec2(m_TextIndexX, m_TextIndexY),
-				vec2((m_pEditor->m_WorldOffsetX + m_pEditor->m_EditorOffsetX) / 32, (m_pEditor->m_WorldOffsetY + m_pEditor->m_EditorOffsetY) / 32));
-			dist /= m_pEditor->m_WorldZoom;
+				vec2((m_pEditor->MapView()->m_WorldOffset.x + m_pEditor->MapView()->m_EditorOffset.x) / 32, (m_pEditor->MapView()->m_WorldOffset.y + m_pEditor->MapView()->m_EditorOffset.y) / 32));
+			dist /= m_pEditor->MapView()->m_WorldZoom;
 			if(dist > 10.0f)
 			{
-				m_pEditor->m_WorldOffsetX = m_TextIndexX * 32 - m_pEditor->m_EditorOffsetX;
-				m_pEditor->m_WorldOffsetY = m_TextIndexY * 32 - m_pEditor->m_EditorOffsetY;
+				m_pEditor->MapView()->m_WorldOffset.x = m_TextIndexX * 32 - m_pEditor->MapView()->m_EditorOffset.x;
+				m_pEditor->MapView()->m_WorldOffset.y = m_TextIndexY * 32 - m_pEditor->MapView()->m_EditorOffset.y;
 			}
 			dbg_msg("chillerbot", "key=%d dialog=%d", e.m_Key, m_pEditor->m_Dialog);
 		}

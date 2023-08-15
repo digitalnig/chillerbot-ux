@@ -2385,6 +2385,8 @@ if(CLIENT)
     auto_map.h
     chillerbot/chillereditor.cpp
     chillerbot/chillereditor.h
+    component.cpp
+    component.h
     editor.cpp
     editor.h
     explanations.cpp
@@ -2393,7 +2395,11 @@ if(CLIENT)
     layer_quads.cpp
     layer_sounds.cpp
     layer_tiles.cpp
+    map_view.cpp
+    map_view.h
     popups.cpp
+    smooth_value.cpp
+    smooth_value.h
   )
   set(GAME_GENERATED_CLIENT
     src/game/generated/checksum.cpp

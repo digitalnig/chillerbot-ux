@@ -1045,7 +1045,8 @@ void CGameClient::HandleLanguageChanged()
 	g_Localization.Load(g_Config.m_ClLanguagefile, Storage(), Console());
 	TextRender()->SetFontLanguageVariant(g_Config.m_ClLanguagefile);
 
-	UI()->OnLanguageChange();
+	// Clear all text containers
+	OnWindowResize();
 }
 
 void CGameClient::RenderShutdownMessage()
@@ -3725,7 +3726,7 @@ bool CGameClient::InitMultiView(int Team)
 		m_MultiView.m_Solo = Count == 1;
 	}
 
-	if(!g_Config.m_ClMultiViewUseFreeView && IsMultiViewIdSet())
+	if(IsMultiViewIdSet())
 	{
 		int SpectatorID = m_Snap.m_SpecInfo.m_SpectatorID;
 		int NewSpectatorID = -1;
