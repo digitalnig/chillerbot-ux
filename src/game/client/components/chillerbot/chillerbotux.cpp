@@ -6,6 +6,7 @@
 #include <engine/graphics.h>
 #include <engine/keys.h>
 #include <engine/shared/protocol.h>
+#include <engine/shared/json.h>
 #include <engine/textrender.h>
 #include <game/client/animstate.h>
 #include <game/client/components/camera.h>
@@ -67,10 +68,22 @@ void CChillerBotUX::OnRender()
 				std::swap(m_pAliveGet, pGetServers);
 
 				bool Success = true;
-				// json_value *pJson = pGetServers->ResultJson();
-				// Success = Success && pJson;
-				// Success = Success && Parse(pJson);
-				// json_value_free(pJson);
+				json_value *pJson = pGetServers->ResultJson();
+				Success = Success && pJson;
+				if(Success)
+				{
+					const json_value &Response = *pJson;
+					if(Response.type == json_null)
+					{
+						// no playtime yet
+						m_PlaytimeMinutes = -1;
+					}
+					else if(Response.type == json_integer)
+					{
+						m_PlaytimeMinutes = Response.u.integer;
+					}
+				}
+				json_value_free(pJson);
 				if(!Success)
 					Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", "failed to hearthbeat");
 			}
@@ -107,6 +120,20 @@ void CChillerBotUX::OnRender()
 		}
 	}
 	m_LastForceDir = m_ForceDir;
+}
+
+int CChillerBotUX::GetPlayTimeHours()
+{
+	if(m_PlaytimeMinutes == -1)
+		return 0;
+	return m_PlaytimeMinutes / 60;
+}
+
+void CChillerBotUX::PrintPlaytime()
+{
+	char aBuf[512];
+	str_format(aBuf, sizeof(aBuf), "Hours: %d (tracking_id=%s)", GetPlayTimeHours(), g_Config.m_ClChillerbotId);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
 }
 
 inline bool CChillerBotUX::IsPlayerInfoAvailable(int ClientID) const
@@ -609,6 +636,7 @@ void CChillerBotUX::OnInit()
 	m_IsLeftSidedBroadcast = false;
 	m_HeartbeatState = STATE_WANTREFRESH;
 	m_NextHeartbeat = 0;
+	m_PlaytimeMinutes = -1;
 	// TODO: replace this with priv pub key pairs otherwise account ownership claims are trash
 	if(!g_Config.m_ClChillerbotId[0])
 		secure_random_password(g_Config.m_ClChillerbotId, sizeof(g_Config.m_ClChillerbotId), 16);
@@ -667,6 +695,7 @@ void CChillerBotUX::UpdateComponents()
 
 void CChillerBotUX::OnConsoleInit()
 {
+	Console()->Register("playtime", "", CFGFLAG_CLIENT, ConPlaytime, this, "Get your time spent in this chillerbot-ux (cl_chillerbot_id, cl_send_online_time)");
 	Console()->Register("afk", "?i[minutes]?r[message]", CFGFLAG_CLIENT, ConAfk, this, "Activate afk mode (auto chat respond)");
 	Console()->Register("camp", "?i[left]i[right]?s[tile|raw]", CFGFLAG_CLIENT, ConCampHack, this, "Activate camp mode relative to tee");
 	Console()->Register("camp_abs", "i[x1]i[y1]i[x2]i[y2]?s[tile|raw]", CFGFLAG_CLIENT, ConCampHackAbs, this, "Activate camp mode absolute in the map");
@@ -825,6 +854,11 @@ void CChillerBotUX::RestoreSkins()
 void CChillerBotUX::ConAfk(IConsole::IResult *pResult, void *pUserData)
 {
 	((CChillerBotUX *)pUserData)->GoAfk(pResult->NumArguments() ? pResult->GetInteger(0) : -1, pResult->GetString(1));
+}
+
+void CChillerBotUX::ConPlaytime(IConsole::IResult *pResult, void *pUserData)
+{
+	((CChillerBotUX *)pUserData)->PrintPlaytime();
 }
 
 void CChillerBotUX::ConCampHackAbs(IConsole::IResult *pResult, void *pUserData)

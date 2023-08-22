@@ -3331,4 +3331,11 @@ void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 			Console()->ExecuteLine(aBuf);
 		}
 	}
+	// Playtime
+	{
+		MainView.HSplitTop(20.0f, &Button, &MainView);
+		Button.VSplitLeft(120.0f, &Label, &Button);
+		str_format(aBuf, sizeof(aBuf), "chillerbot-ux playtime: %d hours", m_pClient->m_ChillerBotUX.GetPlayTimeHours());
+		UI()->DoLabel(&Label, aBuf, 14.0f, -1);
+	}
 }

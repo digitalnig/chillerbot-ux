@@ -24,6 +24,7 @@ class CChillerBotUX : public CComponent
 		STATE_REFRESHING,
 	};
 	int m_HeartbeatState;
+	int m_PlaytimeMinutes;
 	std::shared_ptr<CHttpRequest> m_pAliveGet;
 	int64_t m_NextHeartbeat;
 	int64_t m_AfkTill;
@@ -100,6 +101,7 @@ class CChillerBotUX : public CComponent
 	void TraceSpikes();
 	void DumpPlayers(const char *pSearch = 0);
 	void RenderDbgIntersect();
+	void PrintPlaytime();
 
 	// helpers
 	int CountOnlinePlayers();
@@ -112,6 +114,7 @@ class CChillerBotUX : public CComponent
 	virtual bool OnCursorMove(float x, float y, IInput::ECursorType CursorType) override;
 	virtual bool OnInput(const IInput::CEvent &Event) override;
 
+	static void ConPlaytime(IConsole::IResult *pResult, void *pUserData);
 	static void ConAfk(IConsole::IResult *pResult, void *pUserData);
 	static void ConCampHack(IConsole::IResult *pResult, void *pUserData);
 	static void ConCampHackAbs(IConsole::IResult *pResult, void *pUserData);
@@ -147,6 +150,7 @@ public:
 
 	int GetTotalJumps();
 	int GetUnusedJumps();
+	int GetPlayTimeHours();
 };
 
 #endif
