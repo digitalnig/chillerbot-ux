@@ -786,9 +786,7 @@ static inline bool RepackMsg(const CMsgPacker *pMsg, CPacker &Packer, bool Sixup
 				MsgId += 1;
 			else if(MsgId == NETMSG_RCON_LINE)
 				MsgId = protocol7::NETMSG_RCON_LINE;
-			else if(MsgId >= NETMSG_AUTH_CHALLENGE && MsgId <= NETMSG_AUTH_RESULT)
-				MsgId += 4;
-			else if(MsgId >= NETMSG_PING && MsgId <= NETMSG_ERROR)
+			else if(MsgId >= NETMSG_PING && MsgId <= NETMSG_PING_REPLY)
 				MsgId += 4;
 			else if(MsgId >= NETMSG_RCON_CMD_ADD && MsgId <= NETMSG_RCON_CMD_REM)
 				MsgId -= 11;
@@ -1617,7 +1615,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				}
 				else
 				{
-					CMsgPacker Msgp(4, true, true); //NETMSG_SERVERINFO //TODO: Import the shared protocol from 7 as well
+					CMsgPacker Msgp(protocol7::NETMSG_SERVERINFO, true, true);
 					GetServerInfoSixup(&Msgp, -1, false);
 					SendMsg(&Msgp, MSGFLAG_VITAL | MSGFLAG_FLUSH, ClientID);
 				}
@@ -2389,7 +2387,7 @@ void CServer::UpdateServerInfo(bool Resend)
 					SendServerInfo(m_NetServer.ClientAddr(i), -1, SERVERINFO_INGAME, false);
 				else
 				{
-					CMsgPacker Msg(4, true, true); //NETMSG_SERVERINFO //TODO: Import the shared protocol from 7 as well
+					CMsgPacker Msg(protocol7::NETMSG_SERVERINFO, true, true);
 					GetServerInfoSixup(&Msg, -1, false);
 					SendMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_FLUSH, i);
 				}
