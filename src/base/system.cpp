@@ -4162,7 +4162,7 @@ int kill_process(PROCESS process)
 #elif defined(CONF_FAMILY_UNIX)
 	int status;
 	kill(process, SIGTERM);
-	return !waitpid(process, &status, 0);
+	return waitpid(process, &status, 0) != -1;
 #endif
 }
 
