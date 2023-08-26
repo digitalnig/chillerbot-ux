@@ -245,8 +245,7 @@ void CChillerEditor::DoMapEditor()
 			{
 				m_pEditor->MapView()->SetWorldOffset(vec2(
 					m_TextIndexX * 32 - m_pEditor->MapView()->GetEditorOffset().x,
-					m_TextIndexY * 32 - m_pEditor->MapView()->GetEditorOffset().y
-				));
+					m_TextIndexY * 32 - m_pEditor->MapView()->GetEditorOffset().y));
 			}
 			dbg_msg("chillerbot", "key=%d dialog=%d", e.m_Key, m_pEditor->m_Dialog);
 		}
