@@ -8,7 +8,7 @@
 static const char TEEHISTORIAN_NAME[] = "teehistorian@ddnet.tw";
 static const CUuid TEEHISTORIAN_UUID = CalculateUuid(TEEHISTORIAN_NAME);
 static const char TEEHISTORIAN_VERSION[] = "2";
-static const char TEEHISTORIAN_VERSION_MINOR[] = "4";
+static const char TEEHISTORIAN_VERSION_MINOR[] = "5";
 
 #define UUID(id, name) static const CUuid UUID_##id = CalculateUuid(name);
 #include <engine/shared/teehistorian_ex_chunks.h>
@@ -508,6 +508,22 @@ void CTeeHistorian::RecordPlayerJoin(int ClientID, int Protocol)
 	Write(Buffer.Data(), Buffer.Size());
 }
 
+void CTeeHistorian::RecordPlayerRejoin(int ClientID)
+{
+	EnsureTickWritten();
+
+	CPacker Buffer;
+	Buffer.Reset();
+	Buffer.AddInt(ClientID);
+
+	if(m_Debug)
+	{
+		dbg_msg("teehistorian", "player_rejoin cid=%d", ClientID);
+	}
+
+	WriteExtra(UUID_TEEHISTORIAN_PLAYER_REJOIN, Buffer.Data(), Buffer.Size());
+}
+
 void CTeeHistorian::RecordPlayerReady(int ClientID)
 {
 	EnsureTickWritten();
@@ -751,6 +767,16 @@ void CTeeHistorian::RecordAuthLogout(int ClientID)
 	}
 
 	WriteExtra(UUID_TEEHISTORIAN_AUTH_LOGOUT, Buffer.Data(), Buffer.Size());
+}
+
+void CTeeHistorian::RecordAntibot(const void *pData, int DataSize)
+{
+	if(m_Debug)
+	{
+		dbg_msg("teehistorian", "antibot data_size=%d", DataSize);
+	}
+
+	WriteExtra(UUID_TEEHISTORIAN_ANTIBOT, pData, DataSize);
 }
 
 void CTeeHistorian::Finish()

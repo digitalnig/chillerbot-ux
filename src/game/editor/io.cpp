@@ -443,7 +443,7 @@ bool CEditor::Load(const char *pFileName, int StorageType)
 		str_copy(m_aFileName, pFileName);
 		SortImages();
 		SelectGameLayer();
-		ResetMenuBackgroundPositions();
+		MapView()->OnMapLoad();
 	}
 	else
 	{

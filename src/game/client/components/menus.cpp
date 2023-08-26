@@ -444,7 +444,7 @@ int CMenus::DoButton_CheckBox(const void *pID, const char *pText, int Checked, c
 int CMenus::DoButton_CheckBox_Number(const void *pID, const char *pText, int Checked, const CUIRect *pRect)
 {
 	char aBuf[16];
-	str_format(aBuf, sizeof(aBuf), "%d", Checked);
+	str_from_int(Checked, aBuf);
 	return DoButton_CheckBox_Common(pID, pText, aBuf, pRect);
 }
 
@@ -1822,6 +1822,8 @@ void CMenus::PopupConfirmDemoReplaceVideo()
 	const char *pError = Client()->DemoPlayer_Render(aBuf, m_vDemos[m_DemolistSelectedIndex].m_StorageType, aVideoName, m_Speed, m_StartPaused);
 	m_Speed = 4;
 	m_StartPaused = false;
+	m_LastPauseChange = -1.0f;
+	m_LastSpeedChange = -1.0f;
 	if(pError)
 		PopupMessage(Localize("Error"), str_comp(pError, "error loading demo") ? pError : Localize("Error loading demo"), Localize("Ok"));
 }

@@ -1660,7 +1660,15 @@ void CGameContext::OnClientDrop(int ClientID, const char *pReason)
 	Server()->ExpireServerInfo();
 }
 
-void CGameContext::OnClientEngineJoin(int ClientID, bool Sixup)
+void CGameContext::TeehistorianRecordAntibot(const void *pData, int DataSize)
+{
+	if(m_TeeHistorianActive)
+	{
+		m_TeeHistorian.RecordAntibot(pData, DataSize);
+	}
+}
+
+void CGameContext::TeehistorianRecordPlayerJoin(int ClientID, bool Sixup)
 {
 	if(m_TeeHistorianActive)
 	{
@@ -1668,11 +1676,19 @@ void CGameContext::OnClientEngineJoin(int ClientID, bool Sixup)
 	}
 }
 
-void CGameContext::OnClientEngineDrop(int ClientID, const char *pReason)
+void CGameContext::TeehistorianRecordPlayerDrop(int ClientID, const char *pReason)
 {
 	if(m_TeeHistorianActive)
 	{
 		m_TeeHistorian.RecordPlayerDrop(ClientID, pReason);
+	}
+}
+
+void CGameContext::TeehistorianRecordPlayerRejoin(int ClientID)
+{
+	if(m_TeeHistorianActive)
+	{
+		m_TeeHistorian.RecordPlayerRejoin(ClientID);
 	}
 }
 
@@ -4212,7 +4228,7 @@ void CGameContext::Converse(int ClientID, char *pStr)
 bool CGameContext::IsVersionBanned(int Version)
 {
 	char aVersion[16];
-	str_format(aVersion, sizeof(aVersion), "%d", Version);
+	str_from_int(Version, aVersion);
 
 	return str_in_list(g_Config.m_SvBannedVersions, ",", aVersion);
 }
