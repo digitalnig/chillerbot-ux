@@ -140,7 +140,7 @@ void CLayerGroup::Mapping(float *pPoints)
 	m_pMap->m_pEditor->RenderTools()->MapScreenToWorld(
 		m_pMap->m_pEditor->MapView()->GetWorldOffset().x, m_pMap->m_pEditor->MapView()->GetWorldOffset().y,
 		m_ParallaxX, m_ParallaxY, ParallaxZoom, m_OffsetX, m_OffsetY,
-		m_pMap->m_pEditor->Graphics()->ScreenAspect(), m_pMap->m_pEditor->MapView()->WorldZoom(), pPoints);
+		m_pMap->m_pEditor->Graphics()->ScreenAspect(), m_pMap->m_pEditor->MapView()->GetWorldZoom(), pPoints);
 
 	pPoints[0] += m_pMap->m_pEditor->MapView()->GetEditorOffset().x;
 	pPoints[1] += m_pMap->m_pEditor->MapView()->GetEditorOffset().y;
@@ -6482,6 +6482,7 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 										UI()->DoPopupMenu(&s_PopupEnvPointId, UI()->MouseX(), UI()->MouseY(), 150, 56, this, PopupEnvPoint);
 									}
 									UI()->SetActiveItem(nullptr);
+									s_Operation = OP_NONE;
 								}
 							}
 							else if(!UI()->MouseButton(0))
