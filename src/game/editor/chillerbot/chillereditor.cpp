@@ -240,7 +240,7 @@ void CChillerEditor::DoMapEditor()
 			float dist = distance(
 				vec2(m_TextIndexX, m_TextIndexY),
 				vec2((m_pEditor->MapView()->GetWorldOffset().x + m_pEditor->MapView()->GetEditorOffset().x) / 32, (m_pEditor->MapView()->GetWorldOffset().y + m_pEditor->MapView()->GetEditorOffset().y) / 32));
-			dist /= m_pEditor->MapView()->WorldZoom();
+			dist /= m_pEditor->MapView()->GetWorldZoom();
 			if(dist > 10.0f)
 			{
 				m_pEditor->MapView()->SetWorldOffset(vec2(
