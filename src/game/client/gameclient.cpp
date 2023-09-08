@@ -344,7 +344,7 @@ void CGameClient::OnInit()
 		else if(g_pData->m_aImages[i].m_pFilename[0] == '\0') // handle special null image without filename
 			g_pData->m_aImages[i].m_Id = IGraphics::CTextureHandle();
 		else
-			g_pData->m_aImages[i].m_Id = Graphics()->LoadTexture(g_pData->m_aImages[i].m_pFilename, IStorage::TYPE_ALL, CImageInfo::FORMAT_AUTO, 0);
+			g_pData->m_aImages[i].m_Id = Graphics()->LoadTexture(g_pData->m_aImages[i].m_pFilename, IStorage::TYPE_ALL);
 		m_Menus.RenderLoading(pLoadingDDNetCaption, Localize("Initializing assets"), 1);
 	}
 
@@ -692,8 +692,6 @@ void CGameClient::UpdatePositions()
 
 	if(!m_MultiViewActivated && m_MultiView.m_IsInit)
 		ResetMultiView();
-	else if(!m_Snap.m_SpecInfo.m_Active)
-		m_MultiViewPersonalZoom = 0;
 
 	UpdateRenderedCharacters();
 }
@@ -959,7 +957,7 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, int Conn, bool Dumm
 
 			// if everyone of a team killed, we have no ids to spectate anymore, so we disable multi view
 			if(!IsMultiViewIdSet())
-				m_MultiViewActivated = false;
+				ResetMultiView();
 			else
 			{
 				// the "main" tee killed, search a new one
@@ -3661,7 +3659,7 @@ void CGameClient::HandleMultiView()
 			m_MultiView.m_SecondChance = Client()->LocalTime() + 0.3f;
 		else if(m_MultiView.m_SecondChance < Client()->LocalTime())
 		{
-			m_MultiViewActivated = false;
+			ResetMultiView();
 			return;
 		}
 		return;
@@ -3669,7 +3667,7 @@ void CGameClient::HandleMultiView()
 	else if(m_MultiView.m_SecondChance != 0.0f)
 		m_MultiView.m_SecondChance = 0.0f;
 
-	// if we only have one tee thats in the list, we activate solo-mode
+	// if we only have one tee that's in the list, we activate solo-mode
 	m_MultiView.m_Solo = std::count(std::begin(m_aMultiViewId), std::end(m_aMultiViewId), true) == 1;
 
 	vec2 TargetPos = vec2((Minpos.x + Maxpos.x) / 2.0f, (Minpos.y + Maxpos.y) / 2.0f);
@@ -3835,7 +3833,7 @@ float CGameClient::CalculateMultiViewZoom(vec2 MinPos, vec2 MaxPos, float Vel)
 	float Zoom = std::max(ZoomX, ZoomY);
 	// zoom out to maximum 10 percent of the current zoom for 70 velocity
 	float Diff = clamp(MapValue(70.0f, 15.0f, Zoom * 0.10f, 0.0f, Vel), 0.0f, Zoom * 0.10f);
-	// zoom should stay inbetween 1.1 and 20.0
+	// zoom should stay between 1.1 and 20.0
 	Zoom = clamp(Zoom + Diff, 1.1f, 20.0f);
 	// add the user preference
 	Zoom -= (Zoom * 0.1f) * m_MultiViewPersonalZoom;
@@ -3851,6 +3849,7 @@ float CGameClient::MapValue(float MaxValue, float MinValue, float MaxRange, floa
 
 void CGameClient::ResetMultiView()
 {
+	m_Camera.SetZoom(std::pow(CCamera::ZOOM_STEP, g_Config.m_ClDefaultZoom - 10), g_Config.m_ClSmoothZoomTime);
 	m_MultiViewPersonalZoom = 0;
 	m_MultiViewActivated = false;
 	m_MultiView.m_Solo = false;

@@ -1,6 +1,8 @@
 #ifndef GAME_CLIENT_COMPONENTS_CHILLERBOT_CHATHELPER_H
 #define GAME_CLIENT_COMPONENTS_CHILLERBOT_CHATHELPER_H
 
+#include <engine/console.h>
+
 #include <game/client/component.h>
 #include <game/client/lineinput.h>
 

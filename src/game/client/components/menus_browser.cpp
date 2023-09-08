@@ -70,7 +70,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 	{
 		int m_ID;
 		int m_Sort;
-		CLocConstString m_Caption;
+		const char *m_pCaption;
 		int m_Direction;
 		float m_Width;
 		CUIRect m_Rect;
@@ -90,17 +90,17 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 		COL_VERSION,
 	};
 
-	CColumn s_aCols[] = {
-		{-1, -1, " ", -1, 2.0f, {0}, {0}},
-		{COL_FLAG_LOCK, -1, " ", -1, 14.0f, {0}, {0}},
-		{COL_FLAG_FAV, -1, " ", -1, 14.0f, {0}, {0}},
-		{COL_FLAG_OFFICIAL, -1, " ", -1, 14.0f, {0}, {0}},
-		{COL_NAME, IServerBrowser::SORT_NAME, "Name", 0, 50.0f, {0}, {0}}, // Localize - these strings are localized within CLocConstString
+	static CColumn s_aCols[] = {
+		{-1, -1, "", -1, 2.0f, {0}, {0}},
+		{COL_FLAG_LOCK, -1, "", -1, 14.0f, {0}, {0}},
+		{COL_FLAG_FAV, -1, "", -1, 14.0f, {0}, {0}},
+		{COL_FLAG_OFFICIAL, -1, "", -1, 14.0f, {0}, {0}},
+		{COL_NAME, IServerBrowser::SORT_NAME, Localizable("Name"), 0, 50.0f, {0}, {0}},
 		{COL_GAMETYPE, IServerBrowser::SORT_GAMETYPE, Localizable("Type"), 1, 50.0f, {0}, {0}},
-		{COL_MAP, IServerBrowser::SORT_MAP, "Map", 1, 120.0f + (Headers.w - 480) / 8, {0}, {0}},
-		{COL_PLAYERS, IServerBrowser::SORT_NUMPLAYERS, "Players", 1, 85.0f, {0}, {0}},
-		{-1, -1, " ", 1, 10.0f, {0}, {0}},
-		{COL_PING, IServerBrowser::SORT_PING, "Ping", 1, 40.0f, {0}, {0}},
+		{COL_MAP, IServerBrowser::SORT_MAP, Localizable("Map"), 1, 120.0f + (Headers.w - 480) / 8, {0}, {0}},
+		{COL_PLAYERS, IServerBrowser::SORT_NUMPLAYERS, Localizable("Players"), 1, 85.0f, {0}, {0}},
+		{-1, -1, "", 1, 10.0f, {0}, {0}},
+		{COL_PING, IServerBrowser::SORT_PING, Localizable("Ping"), 1, 40.0f, {0}, {0}},
 	};
 
 	int NumCols = std::size(s_aCols);
@@ -143,7 +143,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 		if(PlayersOrPing && g_Config.m_BrSortOrder == 2 && (s_aCols[i].m_Sort == IServerBrowser::SORT_NUMPLAYERS || s_aCols[i].m_Sort == IServerBrowser::SORT_PING))
 			Checked = 2;
 
-		if(DoButton_GridHeader(s_aCols[i].m_Caption, Localize(s_aCols[i].m_Caption), Checked, &s_aCols[i].m_Rect))
+		if(DoButton_GridHeader(&s_aCols[i].m_ID, Localize(s_aCols[i].m_pCaption), Checked, &s_aCols[i].m_Rect))
 		{
 			if(s_aCols[i].m_Sort != -1)
 			{
@@ -178,7 +178,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 			UI()->DoLabel(&MsgBox, Localize("No servers match your filter criteria"), 16.0f, TEXTALIGN_MC);
 	}
 
-	if(UI()->ConsumeHotkey(CUI::HOTKEY_TAB))
+	if(!UI()->IsPopupOpen() && UI()->ConsumeHotkey(CUI::HOTKEY_TAB))
 	{
 		const int Direction = Input()->ShiftIsPressed() ? -1 : 1;
 		g_Config.m_UiToolboxPage = (g_Config.m_UiToolboxPage + 3 + Direction) % 3;
@@ -493,7 +493,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 		QuickSearch.VSplitLeft(5.0f, 0, &QuickSearch);
 
 		static CLineInput s_FilterInput(g_Config.m_BrFilterString, sizeof(g_Config.m_BrFilterString));
-		if(Input()->KeyPress(KEY_F) && Input()->ModifierIsPressed())
+		if(!UI()->IsPopupOpen() && Input()->KeyPress(KEY_F) && Input()->ModifierIsPressed())
 		{
 			UI()->SetActiveItem(&s_FilterInput);
 			s_FilterInput.SelectAll();
@@ -520,7 +520,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 		QuickExclude.VSplitLeft(5.0f, 0, &QuickExclude);
 
 		static CLineInput s_ExcludeInput(g_Config.m_BrExcludeString, sizeof(g_Config.m_BrExcludeString));
-		if(Input()->KeyPress(KEY_X) && Input()->ShiftIsPressed() && Input()->ModifierIsPressed())
+		if(!UI()->IsPopupOpen() && Input()->KeyPress(KEY_X) && Input()->ShiftIsPressed() && Input()->ModifierIsPressed())
 			UI()->SetActiveItem(&s_ExcludeInput);
 		if(UI()->DoClearableEditBox(&s_ExcludeInput, &QuickExclude, 12.0f))
 			Client()->ServerBrowserUpdate();
@@ -576,7 +576,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 			Props.m_UseIconFont = true;
 
 			static CButtonContainer s_RefreshButton;
-			if(UI()->DoButton_Menu(m_RefreshButton, &s_RefreshButton, RefreshLabelFunc, &ButtonRefresh, Props) || Input()->KeyPress(KEY_F5) || (Input()->KeyPress(KEY_R) && Input()->ModifierIsPressed()))
+			if(UI()->DoButton_Menu(m_RefreshButton, &s_RefreshButton, RefreshLabelFunc, &ButtonRefresh, Props) || (!UI()->IsPopupOpen() && (Input()->KeyPress(KEY_F5) || (Input()->KeyPress(KEY_R) && Input()->ModifierIsPressed()))))
 			{
 				RefreshBrowserTab(g_Config.m_UiPage);
 			}
@@ -591,7 +591,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View)
 			Props.m_Color = ColorRGBA(0.5f, 1.0f, 0.5f, 0.5f);
 
 			static CButtonContainer s_ConnectButton;
-			if(UI()->DoButton_Menu(m_ConnectButton, &s_ConnectButton, ConnectLabelFunc, &ButtonConnect, Props) || s_ListBox.WasItemActivated() || UI()->ConsumeHotkey(CUI::HOTKEY_ENTER))
+			if(UI()->DoButton_Menu(m_ConnectButton, &s_ConnectButton, ConnectLabelFunc, &ButtonConnect, Props) || s_ListBox.WasItemActivated() || (!UI()->IsPopupOpen() && UI()->ConsumeHotkey(CUI::HOTKEY_ENTER)))
 			{
 				Connect(g_Config.m_UiServerAddress);
 			}
@@ -1066,12 +1066,6 @@ void CMenus::RenderServerbrowserServerDetail(CUIRect View)
 	{
 		ServerDetails.Margin(5.0f, &ServerDetails);
 
-		CUIRect Row;
-		static CLocConstString s_aLabels[] = {
-			"Version", // Localize - these strings are localized within CLocConstString
-			"Game type",
-			"Ping"};
-
 		// copy info button
 		{
 			CUIRect Button;
@@ -1122,20 +1116,23 @@ void CMenus::RenderServerbrowserServerDetail(CUIRect View)
 			}
 		}
 
-		CUIRect LeftColumn, RightColumn;
+		CUIRect LeftColumn, RightColumn, Row;
 		ServerDetails.VSplitLeft(80.0f, &LeftColumn, &RightColumn);
 
-		for(auto &Label : s_aLabels)
-		{
-			LeftColumn.HSplitTop(15.0f, &Row, &LeftColumn);
-			UI()->DoLabel(&Row, Label, FontSize, TEXTALIGN_ML);
-		}
+		LeftColumn.HSplitTop(15.0f, &Row, &LeftColumn);
+		UI()->DoLabel(&Row, Localize("Version"), FontSize, TEXTALIGN_ML);
 
 		RightColumn.HSplitTop(15.0f, &Row, &RightColumn);
 		UI()->DoLabel(&Row, pSelectedServer->m_aVersion, FontSize, TEXTALIGN_ML);
 
+		LeftColumn.HSplitTop(15.0f, &Row, &LeftColumn);
+		UI()->DoLabel(&Row, Localize("Game type"), FontSize, TEXTALIGN_ML);
+
 		RightColumn.HSplitTop(15.0f, &Row, &RightColumn);
 		UI()->DoLabel(&Row, pSelectedServer->m_aGameType, FontSize, TEXTALIGN_ML);
+
+		LeftColumn.HSplitTop(15.0f, &Row, &LeftColumn);
+		UI()->DoLabel(&Row, Localize("Ping"), FontSize, TEXTALIGN_ML);
 
 		char aTemp[16];
 		FormatServerbrowserPing(aTemp, sizeof(aTemp), pSelectedServer);

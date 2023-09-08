@@ -5,6 +5,15 @@
 #include <engine/external/json-parser/json.h>
 
 #include <game/editor/editor.h>
+#include <game/editor/mapitems/image.h>
+
+#include <chrono>
+#include <deque>
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "chillereditor.h"
 
@@ -68,7 +77,7 @@ void CChillerEditor::LoadMapresMetaFile(const char *pImage)
 void CChillerEditor::Init(class CEditor *pEditor)
 {
 	m_pEditor = pEditor;
-	m_CursorTextTexture = pEditor->Graphics()->LoadTexture("editor/cursor_text.png", IStorage::TYPE_ALL, CImageInfo::FORMAT_AUTO, 0);
+	m_CursorTextTexture = pEditor->Graphics()->LoadTexture("editor/cursor_text.png", IStorage::TYPE_ALL, 0);
 }
 
 void CChillerEditor::SetCursor()

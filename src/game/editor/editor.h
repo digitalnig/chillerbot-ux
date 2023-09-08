@@ -331,58 +331,8 @@ public:
 	}
 };
 
-class CEditorImage : public CImageInfo
-{
-public:
-	CEditor *m_pEditor;
-
-	CEditorImage(CEditor *pEditor) :
-		m_AutoMapper(pEditor)
-	{
-		m_pEditor = pEditor;
-		m_aName[0] = 0;
-		m_Texture.Invalidate();
-		m_External = 0;
-		m_Width = 0;
-		m_Height = 0;
-		m_pData = nullptr;
-		m_Format = 0;
-	}
-
-	~CEditorImage();
-
-	void AnalyseTileFlags();
-
-	IGraphics::CTextureHandle m_Texture;
-	int m_External;
-	char m_aName[IO_MAX_PATH_LENGTH];
-	unsigned char m_aTileFlags[256];
-	class CAutoMapper m_AutoMapper;
-};
-
-class CEditorSound
-{
-public:
-	CEditor *m_pEditor;
-
-	CEditorSound(CEditor *pEditor)
-	{
-		m_pEditor = pEditor;
-		m_aName[0] = 0;
-		m_SoundID = 0;
-
-		m_pData = nullptr;
-		m_DataSize = 0;
-	}
-
-	~CEditorSound();
-
-	int m_SoundID;
-	char m_aName[IO_MAX_PATH_LENGTH];
-
-	void *m_pData;
-	unsigned m_DataSize;
-};
+class CEditorImage;
+class CEditorSound;
 
 class CEditorMap
 {
@@ -868,6 +818,7 @@ public:
 		m_BrushColorEnabled = true;
 
 		m_aFileName[0] = '\0';
+		m_aFileNamePending[0] = '\0';
 		m_aFileSaveName[0] = '\0';
 		m_ValidSaveFilename = false;
 
@@ -981,6 +932,7 @@ public:
 	void Reset(bool CreateDefault = true);
 	bool Save(const char *pFilename) override;
 	bool Load(const char *pFilename, int StorageType) override;
+	bool HandleMapDrop(const char *pFilename, int StorageType) override;
 	bool Append(const char *pFilename, int StorageType);
 	void LoadCurrentMap();
 	void Render();
@@ -1034,6 +986,7 @@ public:
 	bool m_BrushColorEnabled;
 
 	char m_aFileName[IO_MAX_PATH_LENGTH];
+	char m_aFileNamePending[IO_MAX_PATH_LENGTH];
 	char m_aFileSaveName[IO_MAX_PATH_LENGTH];
 	bool m_ValidSaveFilename;
 
@@ -1042,6 +995,7 @@ public:
 		POPEVENT_EXIT = 0,
 		POPEVENT_LOAD,
 		POPEVENT_LOADCURRENT,
+		POPEVENT_LOADDROP,
 		POPEVENT_NEW,
 		POPEVENT_SAVE,
 		POPEVENT_SAVE_COPY,
@@ -1049,7 +1003,10 @@ public:
 		POPEVENT_PREVENTUNUSEDTILES,
 		POPEVENT_IMAGEDIV16,
 		POPEVENT_IMAGE_MAX,
-		POPEVENT_PLACE_BORDER_TILES
+		POPEVENT_PLACE_BORDER_TILES,
+		POPEVENT_PIXELART_BIG_IMAGE,
+		POPEVENT_PIXELART_MANY_COLORS,
+		POPEVENT_PIXELART_TOO_MANY_COLORS
 	};
 
 	int m_PopupEventType;
@@ -1268,6 +1225,11 @@ public:
 
 	CLineInputBuffered<256> m_SettingsCommandInput;
 
+	CImageInfo m_TileartImageInfo;
+	char m_aTileartFilename[IO_MAX_PATH_LENGTH];
+	void AddTileart();
+	void TileartCheckColors();
+
 	void PlaceBorderTiles();
 
 	void UpdateTooltip(const void *pID, const CUIRect *pRect, const char *pToolTip);
@@ -1330,6 +1292,7 @@ public:
 	static bool CallbackAppendMap(const char *pFileName, int StorageType, void *pUser);
 	static bool CallbackSaveMap(const char *pFileName, int StorageType, void *pUser);
 	static bool CallbackSaveCopyMap(const char *pFileName, int StorageType, void *pUser);
+	static bool CallbackAddTileart(const char *pFilepath, int StorageType, void *pUser);
 
 	void PopupSelectImageInvoke(int Current, float x, float y);
 	int PopupSelectImageResult();
