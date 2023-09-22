@@ -91,7 +91,7 @@ using namespace std::chrono_literals;
 
 const char *CGameClient::Version() const { return GAME_VERSION; }
 const char *CGameClient::NetVersion() const { return GAME_NETVERSION; }
-int CGameClient::DDNetVersion() const { return CLIENT_VERSIONNR; }
+int CGameClient::DDNetVersion() const { return DDNET_VERSION_NUMBER; }
 const char *CGameClient::DDNetVersionStr() const { return m_aDDNetVersionStr; }
 const char *CGameClient::GetItemName(int Type) const { return m_NetObjHandler.GetObjName(Type); }
 
@@ -820,6 +820,14 @@ bool CGameClient::Predict() const
 	return !m_Snap.m_SpecInfo.m_Active && m_Snap.m_pLocalCharacter;
 }
 
+ColorRGBA CGameClient::GetDDTeamColor(int DDTeam, float Lightness) const
+{
+	// Use golden angle to generate unique colors with distinct adjacent colors.
+	// The first DDTeam (team 1) gets angle 0°, i.e. red hue.
+	const float Hue = std::fmod((DDTeam - 1) * (137.50776f / 360.0f), 1.0f);
+	return color_cast<ColorRGBA>(ColorHSLA(Hue, 1.0f, Lightness));
+}
+
 void CGameClient::OnRelease()
 {
 	// release all systems
@@ -1254,6 +1262,7 @@ static CGameInfo GetGameInfo(const CNetObj_GameInfoEx *pInfoEx, int InfoExSize, 
 	Info.m_HudAmmo = true;
 	Info.m_HudDDRace = false;
 	Info.m_NoWeakHookAndBounce = false;
+	Info.m_NoSkinChangeForFrozen = false;
 
 	if(Version >= 0)
 	{
@@ -1309,6 +1318,11 @@ static CGameInfo GetGameInfo(const CNetObj_GameInfoEx *pInfoEx, int InfoExSize, 
 	{
 		Info.m_NoWeakHookAndBounce = Flags2 & GAMEINFOFLAG2_NO_WEAK_HOOK;
 	}
+	if(Version >= 9)
+	{
+		Info.m_NoSkinChangeForFrozen = Flags2 & GAMEINFOFLAG2_NO_SKIN_CHANGE_FOR_FROZEN;
+	}
+
 	return Info;
 }
 
@@ -1836,7 +1850,7 @@ void CGameClient::OnNewSnapshot()
 			continue;
 		}
 		CMsgPacker Msg(NETMSGTYPE_CL_ISDDNETLEGACY, false);
-		Msg.AddInt(CLIENT_VERSIONNR);
+		Msg.AddInt(DDNetVersion());
 		Client()->SendMsg(i, &Msg, MSGFLAG_VITAL);
 		m_aDDRaceMsgSent[i] = true;
 	}
@@ -3418,6 +3432,11 @@ void CGameClient::RefindSkins()
 			Client.m_SkinInfo.m_OriginalRenderSkin = pSkin->m_OriginalSkin;
 			Client.m_SkinInfo.m_ColorableRenderSkin = pSkin->m_ColorableSkin;
 			Client.UpdateRenderInfo(IsTeamPlay());
+		}
+		else
+		{
+			Client.m_SkinInfo.m_OriginalRenderSkin.Reset();
+			Client.m_SkinInfo.m_ColorableRenderSkin.Reset();
 		}
 	}
 	m_Ghost.RefindSkin();
