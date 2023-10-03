@@ -2812,16 +2812,44 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClNameplatesStrong, Localize("Show hook strength indicator"), &g_Config.m_ClNameplatesStrong, &Section, LineSize);
 
 		Section.HSplitTop(LineSize, &Button, &Section);
-		if(DoButton_CheckBox(&g_Config.m_ClShowDirection, Localize("Show other players' key presses"), g_Config.m_ClShowDirection >= 1, &Button))
+		if(DoButton_CheckBox(&g_Config.m_ClShowDirection, Localize("Show other players' key presses"), g_Config.m_ClShowDirection >= 1 && g_Config.m_ClShowDirection != 3, &Button))
 		{
-			g_Config.m_ClShowDirection = g_Config.m_ClShowDirection >= 1 ? 0 : 1;
+			switch(g_Config.m_ClShowDirection)
+			{
+			case 0:
+				g_Config.m_ClShowDirection = 1;
+				break;
+			case 1:
+				g_Config.m_ClShowDirection = 0;
+				break;
+			case 2:
+				g_Config.m_ClShowDirection = 3;
+				break;
+			case 3:
+				g_Config.m_ClShowDirection = 2;
+				break;
+			}
 		}
 
 		Section.HSplitTop(LineSize, &Button, &Section);
 		static int s_ShowLocalPlayer = 0;
-		if(DoButton_CheckBox(&s_ShowLocalPlayer, Localize("Show local player's key presses"), g_Config.m_ClShowDirection == 2, &Button))
+		if(DoButton_CheckBox(&s_ShowLocalPlayer, Localize("Show local player's key presses"), g_Config.m_ClShowDirection >= 2, &Button))
 		{
-			g_Config.m_ClShowDirection = g_Config.m_ClShowDirection != 2 ? 2 : 1;
+			switch(g_Config.m_ClShowDirection)
+			{
+			case 0:
+				g_Config.m_ClShowDirection = 3;
+				break;
+			case 1:
+				g_Config.m_ClShowDirection = 2;
+				break;
+			case 2:
+				g_Config.m_ClShowDirection = 1;
+				break;
+			case 3:
+				g_Config.m_ClShowDirection = 0;
+				break;
+			}
 		}
 	}
 	else if(s_CurTab == APPEARANCE_TAB_HOOK_COLLISION)
@@ -3130,8 +3158,8 @@ void CMenus::RenderSettingsDDNet(CUIRect MainView)
 	static CButtonContainer s_BackgroundEntitiesReloadButton;
 	if(DoButton_Menu(&s_BackgroundEntitiesReloadButton, Localize("Reload"), 0, &Button))
 	{
-		if(str_comp(g_Config.m_ClBackgroundEntities, m_pClient->m_BackGround.MapName()) != 0)
-			m_pClient->m_BackGround.LoadBackground();
+		if(str_comp(g_Config.m_ClBackgroundEntities, m_pClient->m_Background.MapName()) != 0)
+			m_pClient->m_Background.LoadBackground();
 	}
 
 	Background.HSplitTop(20.0f, &Button, &Background);
@@ -3143,7 +3171,7 @@ void CMenus::RenderSettingsDDNet(CUIRect MainView)
 			g_Config.m_ClBackgroundEntities[0] = '\0';
 		else
 			str_copy(g_Config.m_ClBackgroundEntities, CURRENT_MAP);
-		m_pClient->m_BackGround.LoadBackground();
+		m_pClient->m_Background.LoadBackground();
 	}
 
 	Background.HSplitTop(20.0f, &Button, &Background);

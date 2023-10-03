@@ -169,9 +169,7 @@ protected:
 		IGraphics::CTextureHandle m_GreyTexture;
 	};
 	std::vector<CMenuImage> m_vMenuImages;
-
 	static int MenuImageScan(const char *pName, int IsDir, int DirType, void *pUser);
-
 	const CMenuImage *FindMenuImage(const char *pName);
 
 	// loading
@@ -346,6 +344,7 @@ protected:
 		const CServerInfo *m_pServerInfo;
 		int m_FriendState;
 		bool m_IsPlayer;
+		bool m_IsAfk;
 		// skin
 		char m_aSkin[24 + 1];
 		bool m_CustomSkinColors;
@@ -357,6 +356,7 @@ protected:
 		CFriendItem(const CFriendInfo *pFriendInfo) :
 			m_pServerInfo(nullptr),
 			m_IsPlayer(false),
+			m_IsAfk(false),
 			m_CustomSkinColors(false),
 			m_CustomSkinColorBody(0),
 			m_CustomSkinColorFeet(0)
@@ -370,6 +370,7 @@ protected:
 			m_pServerInfo(pServerInfo),
 			m_FriendState(CurrentClient.m_FriendState),
 			m_IsPlayer(CurrentClient.m_Player),
+			m_IsAfk(CurrentClient.m_Afk),
 			m_CustomSkinColors(CurrentClient.m_CustomSkinColors),
 			m_CustomSkinColorBody(CurrentClient.m_CustomSkinColorBody),
 			m_CustomSkinColorFeet(CurrentClient.m_CustomSkinColorFeet)
@@ -384,6 +385,7 @@ protected:
 		const CServerInfo *ServerInfo() const { return m_pServerInfo; }
 		int FriendState() const { return m_FriendState; }
 		bool IsPlayer() const { return m_IsPlayer; }
+		bool IsAfk() const { return m_IsAfk; }
 		const char *Skin() const { return m_aSkin; }
 		bool CustomSkinColors() const { return m_CustomSkinColors; }
 		int CustomSkinColorBody() const { return m_CustomSkinColorBody; }
@@ -669,6 +671,7 @@ public:
 		POPUP_LANGUAGE,
 		POPUP_RENAME_DEMO,
 		POPUP_RENDER_DEMO,
+		POPUP_RENDER_DONE,
 		POPUP_PASSWORD,
 		POPUP_QUIT,
 		POPUP_WARNING,

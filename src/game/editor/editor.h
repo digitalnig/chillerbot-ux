@@ -953,11 +953,12 @@ public:
 	void ToggleSelectQuad(int Index);
 	void DeselectQuads();
 	void DeselectQuadPoints();
-	void SelectQuadPoint(int Index);
-	void ToggleSelectQuadPoint(int Index);
+	void SelectQuadPoint(int QuadIndex, int Index);
+	void ToggleSelectQuadPoint(int QuadIndex, int Index);
 	void DeleteSelectedQuads();
 	bool IsQuadSelected(int Index) const;
-	bool IsQuadPointSelected(int Index) const;
+	bool IsQuadCornerSelected(int Index) const;
+	bool IsQuadPointSelected(int QuadIndex, int Index) const;
 	int FindSelectedQuadIndex(int Index) const;
 
 	int FindEnvPointIndex(int Index, int Channel) const;
@@ -997,6 +998,8 @@ public:
 		POPEVENT_NEW,
 		POPEVENT_SAVE,
 		POPEVENT_SAVE_COPY,
+		POPEVENT_SAVE_IMG,
+		POPEVENT_SAVE_SOUND,
 		POPEVENT_LARGELAYER,
 		POPEVENT_PREVENTUNUSEDTILES,
 		POPEVENT_IMAGEDIV16,
@@ -1289,6 +1292,8 @@ public:
 	static bool CallbackSaveMap(const char *pFileName, int StorageType, void *pUser);
 	static bool CallbackSaveCopyMap(const char *pFileName, int StorageType, void *pUser);
 	static bool CallbackAddTileart(const char *pFilepath, int StorageType, void *pUser);
+	static bool CallbackSaveImage(const char *pFileName, int StorageType, void *pUser);
+	static bool CallbackSaveSound(const char *pFileName, int StorageType, void *pUser);
 
 	void PopupSelectImageInvoke(int Current, float x, float y);
 	int PopupSelectImageResult();

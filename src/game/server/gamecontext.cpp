@@ -1555,8 +1555,11 @@ void CGameContext::OnClientEnter(int ClientID)
 	// initial chat delay
 	if(g_Config.m_SvChatInitialDelay != 0 && m_apPlayers[ClientID]->m_JoinTick > m_NonEmptySince + 10 * Server()->TickSpeed())
 	{
+		char aBuf[128];
 		NETADDR Addr;
 		Server()->GetClientAddr(ClientID, &Addr);
+		str_format(aBuf, sizeof aBuf, "This server has an initial chat delay, you will need to wait %d seconds before talking.", g_Config.m_SvChatInitialDelay);
+		SendChatTarget(ClientID, aBuf);
 		Mute(&Addr, g_Config.m_SvChatInitialDelay, Server()->ClientName(ClientID), "Initial chat delay", true);
 	}
 
@@ -3385,6 +3388,38 @@ void CGameContext::ConVote(IConsole::IResult *pResult, void *pUserData)
 		pSelf->ForceVote(pResult->m_ClientID, false);
 }
 
+void CGameContext::ConVotes(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	int Page = pResult->NumArguments() > 0 ? pResult->GetInteger(0) : 0;
+	static const int s_EntriesPerPage = 20;
+	const int Start = Page * s_EntriesPerPage;
+	const int End = (Page + 1) * s_EntriesPerPage;
+
+	char aBuf[512];
+	int Count = 0;
+	for(CVoteOptionServer *pOption = pSelf->m_pVoteOptionFirst; pOption; pOption = pOption->m_pNext, Count++)
+	{
+		if(Count < Start || Count >= End)
+		{
+			continue;
+		}
+
+		str_copy(aBuf, "add_vote \"");
+		char *pDst = aBuf + str_length(aBuf);
+		str_escape(&pDst, pOption->m_aDescription, aBuf + sizeof(aBuf));
+		str_append(aBuf, "\" \"");
+		pDst = aBuf + str_length(aBuf);
+		str_escape(&pDst, pOption->m_aCommand, aBuf + sizeof(aBuf));
+		str_append(aBuf, "\"");
+
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "votes", aBuf);
+	}
+	str_format(aBuf, sizeof(aBuf), "%d %s, showing entries %d - %d", Count, Count == 1 ? "vote" : "votes", Start, End - 1);
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "votes", aBuf);
+}
+
 void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData)
 {
 	pfnCallback(pResult, pCallbackUserData);
@@ -3440,6 +3475,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("clear_votes", "", CFGFLAG_SERVER, ConClearVotes, this, "Clears the voting options");
 	Console()->Register("add_map_votes", "", CFGFLAG_SERVER, ConAddMapVotes, this, "Automatically adds voting options for all maps");
 	Console()->Register("vote", "r['yes'|'no']", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
+	Console()->Register("votes", "?i[page]", CFGFLAG_SERVER, ConVotes, this, "Show all votes (page 0 by default, 20 entries per page)");
 	Console()->Register("dump_antibot", "", CFGFLAG_SERVER, ConDumpAntibot, this, "Dumps the antibot status");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
@@ -4151,20 +4187,27 @@ bool CGameContext::ProcessSpamProtection(int ClientID, bool RespectChatInitialDe
 	NETADDR Addr;
 	Server()->GetClientAddr(ClientID, &Addr);
 
-	int Muted = 0;
-	for(int i = 0; i < m_NumMutes && Muted <= 0; i++)
+	CMute Muted;
+	int Expires = 0;
+	for(int i = 0; i < m_NumMutes && Expires <= 0; i++)
 	{
 		if(!net_addr_comp_noport(&Addr, &m_aMutes[i].m_Addr))
 		{
 			if(RespectChatInitialDelay || m_aMutes[i].m_InitialChatDelay)
-				Muted = (m_aMutes[i].m_Expire - Server()->Tick()) / Server()->TickSpeed();
+			{
+				Muted = m_aMutes[i];
+				Expires = (m_aMutes[i].m_Expire - Server()->Tick()) / Server()->TickSpeed();
+			}
 		}
 	}
 
-	if(Muted > 0)
+	if(Expires > 0)
 	{
 		char aBuf[128];
-		str_format(aBuf, sizeof aBuf, "You are not permitted to talk for the next %d seconds.", Muted);
+		if(Muted.m_InitialChatDelay)
+			str_format(aBuf, sizeof aBuf, "This server has an initial chat delay, you will be able to talk in %d seconds.", Expires);
+		else
+			str_format(aBuf, sizeof aBuf, "You are not permitted to talk for the next %d seconds.", Expires);
 		SendChatTarget(ClientID, aBuf);
 		return true;
 	}

@@ -12,6 +12,7 @@
 
 #include <engine/client.h>
 #include <engine/console.h>
+#include <engine/gfx/image_loader.h>
 #include <engine/gfx/image_manipulation.h>
 #include <engine/graphics.h>
 #include <engine/input.h>
@@ -541,14 +542,30 @@ void CEditor::DeselectQuadPoints()
 	m_SelectedQuadPoints = 0;
 }
 
-void CEditor::SelectQuadPoint(int Index)
+void CEditor::SelectQuadPoint(int QuadIndex, int Index)
 {
+	SelectQuad(QuadIndex);
 	m_SelectedQuadPoints = 1 << Index;
 }
 
-void CEditor::ToggleSelectQuadPoint(int Index)
+void CEditor::ToggleSelectQuadPoint(int QuadIndex, int Index)
 {
-	m_SelectedQuadPoints ^= 1 << Index;
+	if(IsQuadPointSelected(QuadIndex, Index))
+	{
+		m_SelectedQuadPoints ^= 1 << Index;
+	}
+	else
+	{
+		if(!IsQuadSelected(QuadIndex))
+		{
+			ToggleSelectQuad(QuadIndex);
+		}
+
+		if(!(m_SelectedQuadPoints & 1 << Index))
+		{
+			m_SelectedQuadPoints ^= 1 << Index;
+		}
+	}
 }
 
 void CEditor::DeleteSelectedQuads()
@@ -574,9 +591,14 @@ bool CEditor::IsQuadSelected(int Index) const
 	return FindSelectedQuadIndex(Index) >= 0;
 }
 
-bool CEditor::IsQuadPointSelected(int Index) const
+bool CEditor::IsQuadCornerSelected(int Index) const
 {
 	return m_SelectedQuadPoints & (1 << Index);
+}
+
+bool CEditor::IsQuadPointSelected(int QuadIndex, int Index) const
+{
+	return IsQuadSelected(QuadIndex) && IsQuadCornerSelected(Index);
 }
 
 int CEditor::FindSelectedQuadIndex(int Index) const
@@ -783,6 +805,88 @@ bool CEditor::CallbackSaveCopyMap(const char *pFileName, int StorageType, void *
 		pEditor->ShowFileDialogError("Failed to save map to file '%s'.", pFileName);
 		return false;
 	}
+}
+
+bool CEditor::CallbackSaveImage(const char *pFileName, int StorageType, void *pUser)
+{
+	dbg_assert(StorageType == IStorage::TYPE_SAVE, "Saving only allowed for IStorage::TYPE_SAVE");
+
+	CEditor *pEditor = static_cast<CEditor *>(pUser);
+	char aBuf[IO_MAX_PATH_LENGTH];
+
+	// add file extension
+	if(!str_endswith(pFileName, ".png"))
+	{
+		str_format(aBuf, sizeof(aBuf), "%s.png", pFileName);
+		pFileName = aBuf;
+	}
+
+	std::shared_ptr<CEditorImage> pImg = pEditor->m_Map.m_vpImages[pEditor->m_SelectedImage];
+
+	EImageFormat OutputFormat;
+	switch(pImg->m_Format)
+	{
+	case CImageInfo::FORMAT_RGB:
+		OutputFormat = IMAGE_FORMAT_RGB;
+		break;
+	case CImageInfo::FORMAT_RGBA:
+		OutputFormat = IMAGE_FORMAT_RGBA;
+		break;
+	case CImageInfo::FORMAT_SINGLE_COMPONENT:
+		OutputFormat = IMAGE_FORMAT_R;
+		break;
+	default:
+		dbg_assert(false, "Image has invalid format.");
+		return false;
+	};
+
+	TImageByteBuffer ByteBuffer;
+	SImageByteBuffer ImageByteBuffer(&ByteBuffer);
+	if(SavePNG(OutputFormat, static_cast<const uint8_t *>(pImg->m_pData), ImageByteBuffer, pImg->m_Width, pImg->m_Height))
+	{
+		IOHANDLE File = pEditor->Storage()->OpenFile(pFileName, IOFLAG_WRITE, StorageType);
+		if(File)
+		{
+			io_write(File, &ByteBuffer.front(), ByteBuffer.size());
+			io_close(File);
+			pEditor->m_Dialog = DIALOG_NONE;
+			return true;
+		}
+		pEditor->ShowFileDialogError("Failed to open file '%s'.", pFileName);
+		return false;
+	}
+	else
+	{
+		pEditor->ShowFileDialogError("Failed to write image to file.");
+		return false;
+	}
+}
+
+bool CEditor::CallbackSaveSound(const char *pFileName, int StorageType, void *pUser)
+{
+	dbg_assert(StorageType == IStorage::TYPE_SAVE, "Saving only allowed for IStorage::TYPE_SAVE");
+
+	CEditor *pEditor = static_cast<CEditor *>(pUser);
+	char aBuf[IO_MAX_PATH_LENGTH];
+
+	// add file extension
+	if(!str_endswith(pFileName, ".opus"))
+	{
+		str_format(aBuf, sizeof(aBuf), "%s.opus", pFileName);
+		pFileName = aBuf;
+	}
+	std::shared_ptr<CEditorSound> pSound = pEditor->m_Map.m_vpSounds[pEditor->m_SelectedSound];
+	IOHANDLE File = pEditor->Storage()->OpenFile(pFileName, IOFLAG_WRITE, StorageType);
+
+	if(File)
+	{
+		io_write(File, pSound->m_pData, pSound->m_DataSize);
+		io_close(File);
+		pEditor->m_Dialog = DIALOG_NONE;
+		return true;
+	}
+	pEditor->ShowFileDialogError("Failed to open file '%s'.", pFileName);
+	return false;
 }
 
 void CEditor::DoToolbarLayers(CUIRect ToolBar)
@@ -1560,7 +1664,7 @@ void CEditor::DoQuadPoint(CQuad *pQuad, int QuadIndex, int V)
 	float py = fx2f(pQuad->m_aPoints[V].y);
 
 	// draw selection background
-	if(IsQuadPointSelected(V))
+	if(IsQuadPointSelected(QuadIndex, V))
 	{
 		Graphics()->SetColor(0, 0, 0, 1);
 		IGraphics::CQuadItem QuadItem(px, py, 7.0f * m_MouseWScale, 7.0f * m_MouseWScale);
@@ -1593,8 +1697,8 @@ void CEditor::DoQuadPoint(CQuad *pQuad, int QuadIndex, int V)
 
 				if(x * x + y * y > 20.0f)
 				{
-					if(!IsQuadPointSelected(V))
-						SelectQuadPoint(V);
+					if(!IsQuadPointSelected(QuadIndex, V))
+						SelectQuadPoint(QuadIndex, V);
 
 					if(Input()->ShiftIsPressed())
 					{
@@ -1618,7 +1722,7 @@ void CEditor::DoQuadPoint(CQuad *pQuad, int QuadIndex, int V)
 
 				for(int m = 0; m < 4; m++)
 				{
-					if(IsQuadPointSelected(m))
+					if(IsQuadPointSelected(QuadIndex, m))
 					{
 						pQuad->m_aPoints[m].x += OffsetX;
 						pQuad->m_aPoints[m].y += OffsetY;
@@ -1629,7 +1733,7 @@ void CEditor::DoQuadPoint(CQuad *pQuad, int QuadIndex, int V)
 			{
 				for(int m = 0; m < 4; m++)
 				{
-					if(IsQuadPointSelected(m))
+					if(IsQuadPointSelected(QuadIndex, m))
 					{
 						// 0,2;1,3 - line x
 						// 0,1;2,3 - line y
@@ -1669,9 +1773,9 @@ void CEditor::DoQuadPoint(CQuad *pQuad, int QuadIndex, int V)
 				if(s_Operation == OP_SELECT)
 				{
 					if(Input()->ShiftIsPressed())
-						ToggleSelectQuadPoint(V);
+						ToggleSelectQuadPoint(QuadIndex, V);
 					else
-						SelectQuadPoint(V);
+						SelectQuadPoint(QuadIndex, V);
 				}
 
 				UI()->DisableMouseLock();
@@ -1703,8 +1807,8 @@ void CEditor::DoQuadPoint(CQuad *pQuad, int QuadIndex, int V)
 
 			UI()->SetActiveItem(pID);
 
-			if(!IsQuadPointSelected(V))
-				SelectQuadPoint(V);
+			if(!IsQuadPointSelected(QuadIndex, V))
+				SelectQuadPoint(QuadIndex, V);
 		}
 	}
 	else
@@ -2447,6 +2551,7 @@ void CEditor::DoMapEditor(CUIRect View)
 						std::shared_ptr<CLayerQuads> pQuadLayer = std::static_pointer_cast<CLayerQuads>(GetSelectedLayerType(0, LAYERTYPE_QUADS));
 						if(Input()->ShiftIsPressed() && pQuadLayer)
 						{
+							DeselectQuads();
 							for(size_t i = 0; i < pQuadLayer->m_vQuads.size(); i++)
 							{
 								const CQuad &Quad = pQuadLayer->m_vQuads[i];
@@ -2454,7 +2559,7 @@ void CEditor::DoMapEditor(CUIRect View)
 								float py = fx2f(Quad.m_aPoints[4].y);
 
 								if(r.Inside(px, py) && !IsQuadSelected(i))
-									SelectQuad(i);
+									ToggleSelectQuad(i);
 							}
 						}
 						else
@@ -4117,7 +4222,7 @@ void CEditor::RenderImagesList(CUIRect ToolBox)
 				if(Result == 2)
 				{
 					const std::shared_ptr<CEditorImage> pImg = m_Map.m_vpImages[m_SelectedImage];
-					const int Height = pImg->m_External || IsVanillaImage(pImg->m_aName) ? 73 : 56;
+					const int Height = !pImg->m_External && IsVanillaImage(pImg->m_aName) ? 90 : 73;
 					static SPopupMenuId s_PopupImageId;
 					UI()->DoPopupMenu(&s_PopupImageId, UI()->MouseX(), UI()->MouseY(), 120, Height, this, PopupImage);
 				}
@@ -4233,7 +4338,7 @@ void CEditor::RenderSounds(CUIRect ToolBox)
 			if(Result == 2)
 			{
 				static SPopupMenuId s_PopupSoundId;
-				UI()->DoPopupMenu(&s_PopupSoundId, UI()->MouseX(), UI()->MouseY(), 120, 56, this, PopupSound);
+				UI()->DoPopupMenu(&s_PopupSoundId, UI()->MouseX(), UI()->MouseY(), 120, 73, this, PopupSound);
 			}
 		}
 	}
@@ -4741,7 +4846,14 @@ void CEditor::RenderFileDialog()
 				str_append(m_aFileSaveName, FILETYPE_EXTENSIONS[m_FileDialogFileType]);
 			if(!str_comp(m_pFileDialogButtonText, "Save") && Storage()->FileExists(m_aFileSaveName, StorageType))
 			{
-				m_PopupEventType = m_pfnFileDialogFunc == &CallbackSaveCopyMap ? POPEVENT_SAVE_COPY : POPEVENT_SAVE;
+				if(m_pfnFileDialogFunc == &CallbackSaveMap)
+					m_PopupEventType = POPEVENT_SAVE;
+				else if(m_pfnFileDialogFunc == &CallbackSaveCopyMap)
+					m_PopupEventType = POPEVENT_SAVE_COPY;
+				else if(m_pfnFileDialogFunc == &CallbackSaveImage)
+					m_PopupEventType = POPEVENT_SAVE_IMG;
+				else
+					m_PopupEventType = POPEVENT_SAVE_SOUND;
 				m_PopupEventActivated = true;
 			}
 			else if(m_pfnFileDialogFunc)
@@ -5543,9 +5655,29 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 			{
 				ToolBar.VSplitRight(5.0f, &ToolBar, nullptr);
 				ToolBar.VSplitRight(20.0f, &ToolBar, &Button);
+				static int s_ZoomOutButton = 0;
+				if(DoButton_FontIcon(&s_ZoomOutButton, "-", 0, &Button, 0, "[NumPad-] Zoom out horizontally, hold shift to zoom vertically", IGraphics::CORNER_R, 9.0f))
+				{
+					if(Input()->ShiftIsPressed())
+						m_ZoomEnvelopeY.ChangeValue(0.1f * m_ZoomEnvelopeY.GetValue());
+					else
+						m_ZoomEnvelopeX.ChangeValue(0.1f * m_ZoomEnvelopeX.GetValue());
+				}
+
+				ToolBar.VSplitRight(20.0f, &ToolBar, &Button);
 				static int s_ResetZoomButton = 0;
-				if(DoButton_FontIcon(&s_ResetZoomButton, FONT_ICON_MAGNIFYING_GLASS, 0, &Button, 0, "Reset zoom to default value", IGraphics::CORNER_ALL, 9.0f))
+				if(DoButton_FontIcon(&s_ResetZoomButton, FONT_ICON_MAGNIFYING_GLASS, 0, &Button, 0, "[NumPad*] Reset zoom to default value", IGraphics::CORNER_NONE, 9.0f))
 					ResetZoomEnvelope(pEnvelope, s_ActiveChannels);
+
+				ToolBar.VSplitRight(20.0f, &ToolBar, &Button);
+				static int s_ZoomInButton = 0;
+				if(DoButton_FontIcon(&s_ZoomInButton, "+", 0, &Button, 0, "[NumPad+] Zoom in horizontally, hold shift to zoom vertically", IGraphics::CORNER_L, 9.0f))
+				{
+					if(Input()->ShiftIsPressed())
+						m_ZoomEnvelopeY.ChangeValue(-0.1f * m_ZoomEnvelopeY.GetValue());
+					else
+						m_ZoomEnvelopeX.ChangeValue(-0.1f * m_ZoomEnvelopeX.GetValue());
+				}
 			}
 
 			// Margin on the right side
@@ -5706,8 +5838,14 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 				m_OffsetEnvelopeX += UI()->MouseDeltaX() / Graphics()->ScreenWidth() * UI()->Screen()->w / View.w;
 				m_OffsetEnvelopeY -= UI()->MouseDeltaY() / Graphics()->ScreenHeight() * UI()->Screen()->h / View.h;
 			}
+			if(Input()->KeyPress(KEY_KP_MULTIPLY))
+				ResetZoomEnvelope(pEnvelope, s_ActiveChannels);
 			if(Input()->ShiftIsPressed())
 			{
+				if(Input()->KeyPress(KEY_KP_MINUS))
+					m_ZoomEnvelopeY.ChangeValue(0.1f * m_ZoomEnvelopeY.GetValue());
+				if(Input()->KeyPress(KEY_KP_PLUS))
+					m_ZoomEnvelopeY.ChangeValue(-0.1f * m_ZoomEnvelopeY.GetValue());
 				if(Input()->KeyPress(KEY_MOUSE_WHEEL_DOWN))
 					m_ZoomEnvelopeY.ChangeValue(0.1f * m_ZoomEnvelopeY.GetValue());
 				if(Input()->KeyPress(KEY_MOUSE_WHEEL_UP))
@@ -5715,6 +5853,10 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 			}
 			else
 			{
+				if(Input()->KeyPress(KEY_KP_MINUS))
+					m_ZoomEnvelopeX.ChangeValue(0.1f * m_ZoomEnvelopeX.GetValue());
+				if(Input()->KeyPress(KEY_KP_PLUS))
+					m_ZoomEnvelopeX.ChangeValue(-0.1f * m_ZoomEnvelopeX.GetValue());
 				if(Input()->KeyPress(KEY_MOUSE_WHEEL_DOWN))
 					m_ZoomEnvelopeX.ChangeValue(0.1f * m_ZoomEnvelopeX.GetValue());
 				if(Input()->KeyPress(KEY_MOUSE_WHEEL_UP))
@@ -6998,14 +7140,6 @@ void CEditor::Render()
 
 	if(m_Dialog == DIALOG_NONE && CLineInput::GetActiveInput() == nullptr)
 	{
-		// handle zoom hotkeys
-		if(Input()->KeyPress(KEY_KP_MINUS))
-			MapView()->Zoom()->ChangeValue(50.0f);
-		if(Input()->KeyPress(KEY_KP_PLUS))
-			MapView()->Zoom()->ChangeValue(-50.0f);
-		if(Input()->KeyPress(KEY_KP_MULTIPLY))
-			MapView()->ResetZoom();
-
 		// handle brush save/load hotkeys
 		for(int i = KEY_1; i <= KEY_0; i++)
 		{
@@ -7199,6 +7333,13 @@ void CEditor::Render()
 
 	if(m_Dialog == DIALOG_NONE && !UI()->IsPopupHovered() && (!m_GuiActive || UI()->MouseInside(&View)))
 	{
+		// handle zoom hotkeys
+		if(Input()->KeyPress(KEY_KP_MINUS))
+			MapView()->Zoom()->ChangeValue(50.0f);
+		if(Input()->KeyPress(KEY_KP_PLUS))
+			MapView()->Zoom()->ChangeValue(-50.0f);
+		if(Input()->KeyPress(KEY_KP_MULTIPLY))
+			MapView()->ResetZoom();
 		if(Input()->KeyPress(KEY_MOUSE_WHEEL_DOWN))
 			MapView()->Zoom()->ChangeValue(20.0f);
 		if(Input()->KeyPress(KEY_MOUSE_WHEEL_UP))

@@ -903,9 +903,7 @@ void CMenus::OnInit()
 
 void CMenus::OnConsoleInit()
 {
-	auto *pConfigManager = Kernel()->RequestInterface<IConfigManager>();
-	if(pConfigManager != nullptr)
-		pConfigManager->RegisterCallback(CMenus::ConfigSaveCallback, this);
+	ConfigManager()->RegisterCallback(CMenus::ConfigSaveCallback, this);
 	Console()->Register("add_favorite_skin", "s[skin_name]", CFGFLAG_CLIENT, Con_AddFavoriteSkin, this, "Add a skin as a favorite");
 	Console()->Register("remove_favorite_skin", "s[skin_name]", CFGFLAG_CLIENT, Con_RemFavoriteSkin, this, "Remove a skin from the favorites");
 }
@@ -1242,6 +1240,10 @@ int CMenus::Render()
 		else if(m_Popup == POPUP_RENDER_DEMO)
 		{
 			pTitle = Localize("Render demo");
+		}
+		else if(m_Popup == POPUP_RENDER_DONE)
+		{
+			pTitle = Localize("Render complete");
 		}
 #endif
 		else if(m_Popup == POPUP_PASSWORD)
@@ -1698,6 +1700,50 @@ int CMenus::Render()
 			UI()->DoLabel(&Label, Localize("Video name:"), 18.0f, TEXTALIGN_ML);
 			UI()->DoEditBox(&m_DemoRenderInput, &TextBox, 12.0f);
 		}
+		else if(m_Popup == POPUP_RENDER_DONE)
+		{
+			CUIRect TextBox, Ok, OpenFolder;
+
+			char aFilePath[IO_MAX_PATH_LENGTH];
+			char aSaveFolder[IO_MAX_PATH_LENGTH];
+			Storage()->GetCompletePath(Storage()->TYPE_SAVE, "videos", aSaveFolder, sizeof(aSaveFolder));
+			str_format(aFilePath, sizeof(aFilePath), "%s/%s.mp4", aSaveFolder, m_DemoRenderInput.GetString());
+
+			Box.HSplitBottom(20.f, &Box, &Part);
+			Box.HSplitBottom(24.f, &Box, &Part);
+			Part.VMargin(80.0f, &Part);
+
+			Part.VSplitMid(&OpenFolder, &Ok);
+
+			Ok.VMargin(20.0f, &Ok);
+			OpenFolder.VMargin(20.0f, &OpenFolder);
+
+			static CButtonContainer s_ButtonOpenFolder;
+			if(DoButton_Menu(&s_ButtonOpenFolder, Localize("Videos directory"), 0, &OpenFolder))
+			{
+				if(!open_file(aSaveFolder))
+				{
+					dbg_msg("menus", "couldn't open file '%s'", aBuf);
+				}
+			}
+
+			static CButtonContainer s_ButtonOk;
+			if(DoButton_Menu(&s_ButtonOk, Localize("Ok"), 0, &Ok) || UI()->ConsumeHotkey(CUI::HOTKEY_ENTER))
+			{
+				m_Popup = POPUP_NONE;
+				m_DemoRenderInput.Clear();
+			}
+
+			Box.HSplitBottom(160.f, &Box, &Part);
+
+			Part.VSplitLeft(60.0f, nullptr, &TextBox);
+			TextBox.VSplitLeft(20.0f, nullptr, &TextBox);
+			TextBox.VSplitRight(60.0f, &TextBox, nullptr);
+
+			str_format(aBuf, sizeof(aBuf), Localize("Video was saved to '%s'"), aFilePath);
+
+			UI()->DoLabel(&TextBox, aBuf, 18.0f, TEXTALIGN_TL);
+		}
 #endif
 		else if(m_Popup == POPUP_FIRST_LAUNCH)
 		{
@@ -2096,45 +2142,49 @@ void CMenus::RenderBackground()
 {
 	Graphics()->BlendNormal();
 
-	float sw = 300 * Graphics()->ScreenAspect();
-	float sh = 300;
-	Graphics()->MapScreen(0, 0, sw, sh);
+	const float ScreenHeight = 300.0f;
+	const float ScreenWidth = ScreenHeight * Graphics()->ScreenAspect();
+	Graphics()->MapScreen(0.0f, 0.0f, ScreenWidth, ScreenHeight);
 
 	// render background color
 	Graphics()->TextureClear();
 	Graphics()->QuadsBegin();
-	ColorRGBA Bottom(ms_GuiColor.r, ms_GuiColor.g, ms_GuiColor.b, 1.0f);
-	ColorRGBA Top(ms_GuiColor.r, ms_GuiColor.g, ms_GuiColor.b, 1.0f);
-	IGraphics::CColorVertex Array[4] = {
-		IGraphics::CColorVertex(0, Top.r, Top.g, Top.b, Top.a),
-		IGraphics::CColorVertex(1, Top.r, Top.g, Top.b, Top.a),
-		IGraphics::CColorVertex(2, Bottom.r, Bottom.g, Bottom.b, Bottom.a),
-		IGraphics::CColorVertex(3, Bottom.r, Bottom.g, Bottom.b, Bottom.a)};
-	Graphics()->SetColorVertex(Array, 4);
-	IGraphics::CQuadItem QuadItem(0, 0, sw, sh);
-	Graphics()->QuadsDrawTL(&QuadItem, 1);
+	Graphics()->SetColor(ms_GuiColor.WithAlpha(1.0f));
+	const IGraphics::CQuadItem BackgroundQuadItem = IGraphics::CQuadItem(0, 0, ScreenWidth, ScreenHeight);
+	Graphics()->QuadsDrawTL(&BackgroundQuadItem, 1);
 	Graphics()->QuadsEnd();
 
 	// render the tiles
 	Graphics()->TextureClear();
 	Graphics()->QuadsBegin();
-	float Size = 15.0f;
-	float OffsetTime = std::fmod(LocalTime() * 0.15f, 2.0f);
-	for(int y = -2; y < (int)(sw / Size); y++)
-		for(int x = -2; x < (int)(sh / Size); x++)
+	Graphics()->SetColor(0.0f, 0.0f, 0.0f, 0.045f);
+	const float Size = 15.0f;
+	const float OffsetTime = std::fmod(LocalTime() * 0.15f, 2.0f);
+	IGraphics::CQuadItem aCheckerItems[64];
+	size_t NumCheckerItems = 0;
+	for(int y = -2; y < (int)(ScreenWidth / Size); y++)
+	{
+		for(int x = -2; x < (int)(ScreenHeight / Size); x++)
 		{
-			Graphics()->SetColor(0, 0, 0, 0.045f);
-			QuadItem = IGraphics::CQuadItem((x - OffsetTime) * Size * 2 + (y & 1) * Size, (y + OffsetTime) * Size, Size, Size);
-			Graphics()->QuadsDrawTL(&QuadItem, 1);
+			aCheckerItems[NumCheckerItems] = IGraphics::CQuadItem((x - OffsetTime) * Size * 2 + (y & 1) * Size, (y + OffsetTime) * Size, Size, Size);
+			NumCheckerItems++;
+			if(NumCheckerItems == std::size(aCheckerItems))
+			{
+				Graphics()->QuadsDrawTL(aCheckerItems, NumCheckerItems);
+				NumCheckerItems = 0;
+			}
 		}
+	}
+	if(NumCheckerItems != 0)
+		Graphics()->QuadsDrawTL(aCheckerItems, NumCheckerItems);
 	Graphics()->QuadsEnd();
 
 	// render border fade
 	Graphics()->TextureSet(m_TextureBlob);
 	Graphics()->QuadsBegin();
-	Graphics()->SetColor(1, 1, 1, 1);
-	QuadItem = IGraphics::CQuadItem(-100, -100, sw + 200, sh + 200);
-	Graphics()->QuadsDrawTL(&QuadItem, 1);
+	Graphics()->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
+	const IGraphics::CQuadItem BlobQuadItem = IGraphics::CQuadItem(-100, -100, ScreenWidth + 200, ScreenHeight + 200);
+	Graphics()->QuadsDrawTL(&BlobQuadItem, 1);
 	Graphics()->QuadsEnd();
 
 	// restore screen
@@ -2166,58 +2216,52 @@ int CMenus::DoButton_CheckBox_Tristate(const void *pID, const char *pText, TRIST
 
 int CMenus::MenuImageScan(const char *pName, int IsDir, int DirType, void *pUser)
 {
-	CMenus *pSelf = (CMenus *)pUser;
-	if(IsDir || !str_endswith(pName, ".png"))
+	const char *pExtension = ".png";
+	CMenuImage MenuImage;
+	CMenus *pSelf = static_cast<CMenus *>(pUser);
+	if(IsDir || !str_endswith(pName, pExtension) || str_length(pName) - str_length(pExtension) >= (int)sizeof(MenuImage.m_aName))
 		return 0;
 
-	char aBuf[IO_MAX_PATH_LENGTH];
-	bool ImgExists = false;
-	for(const auto &Img : pSelf->m_vMenuImages)
+	char aPath[IO_MAX_PATH_LENGTH];
+	str_format(aPath, sizeof(aPath), "menuimages/%s", pName);
+
+	CImageInfo Info;
+	if(!pSelf->Graphics()->LoadPNG(&Info, aPath, DirType))
 	{
-		str_format(aBuf, std::size(aBuf), "%s.png", Img.m_aName);
-		if(str_comp(aBuf, pName) == 0)
-		{
-			ImgExists = true;
-			break;
-		}
+		char aError[IO_MAX_PATH_LENGTH + 64];
+		str_format(aError, sizeof(aError), "Failed to load menu image from '%s'", aPath);
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "menus", aError);
+		return 0;
 	}
-
-	if(!ImgExists)
+	if(Info.m_Format != CImageInfo::FORMAT_RGBA)
 	{
-		str_format(aBuf, sizeof(aBuf), "menuimages/%s", pName);
-		CImageInfo Info;
-		if(!pSelf->Graphics()->LoadPNG(&Info, aBuf, DirType))
-		{
-			str_format(aBuf, sizeof(aBuf), "failed to load menu image from %s", pName);
-			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "game", aBuf);
-			return 0;
-		}
-
-		CMenuImage MenuImage;
-		MenuImage.m_OrgTexture = pSelf->Graphics()->LoadTextureRaw(Info.m_Width, Info.m_Height, Info.m_Format, Info.m_pData, Info.m_Format, 0);
-
-		unsigned char *pData = (unsigned char *)Info.m_pData;
-
-		// create colorless version
-		const size_t Step = Info.PixelSize();
-
-		// make the texture gray scale
-		for(int i = 0; i < Info.m_Width * Info.m_Height; i++)
-		{
-			int v = (pData[i * Step] + pData[i * Step + 1] + pData[i * Step + 2]) / 3;
-			pData[i * Step] = v;
-			pData[i * Step + 1] = v;
-			pData[i * Step + 2] = v;
-		}
-
-		MenuImage.m_GreyTexture = pSelf->Graphics()->LoadTextureRaw(Info.m_Width, Info.m_Height, Info.m_Format, Info.m_pData, Info.m_Format, 0);
 		pSelf->Graphics()->FreePNG(&Info);
-
-		// set menu image data
-		str_truncate(MenuImage.m_aName, sizeof(MenuImage.m_aName), pName, str_length(pName) - 4);
-		pSelf->m_vMenuImages.push_back(MenuImage);
-		pSelf->RenderLoading(Localize("Loading chillerbot-ux"), Localize("Loading menu images"), 1);
+		char aError[IO_MAX_PATH_LENGTH + 64];
+		str_format(aError, sizeof(aError), "Failed to load menu image from '%s': must be an RGBA image", aPath);
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "menus", aError);
+		return 0;
 	}
+
+	MenuImage.m_OrgTexture = pSelf->Graphics()->LoadTextureRaw(Info.m_Width, Info.m_Height, Info.m_Format, Info.m_pData, Info.m_Format, 0);
+
+	// create gray scale version
+	unsigned char *pData = static_cast<unsigned char *>(Info.m_pData);
+	const size_t Step = Info.PixelSize();
+	for(int i = 0; i < Info.m_Width * Info.m_Height; i++)
+	{
+		int v = (pData[i * Step] + pData[i * Step + 1] + pData[i * Step + 2]) / 3;
+		pData[i * Step] = v;
+		pData[i * Step + 1] = v;
+		pData[i * Step + 2] = v;
+	}
+	MenuImage.m_GreyTexture = pSelf->Graphics()->LoadTextureRaw(Info.m_Width, Info.m_Height, Info.m_Format, Info.m_pData, Info.m_Format, 0);
+	pSelf->Graphics()->FreePNG(&Info);
+
+	str_truncate(MenuImage.m_aName, sizeof(MenuImage.m_aName), pName, str_length(pName) - str_length(pExtension));
+	pSelf->m_vMenuImages.push_back(MenuImage);
+
+	pSelf->RenderLoading(Localize("Loading chillerbot-ux"), Localize("Loading menu images"), 1);
+
 	return 0;
 }
 
