@@ -11,9 +11,9 @@
 #include <game/gamecore.h>
 #include <game/mapitems_ex.h>
 
-#include <engine/shared/config.h>
 #include "image.h"
 #include "sound.h"
+#include <engine/shared/config.h>
 
 template<typename T>
 static int MakeVersion(int i, const T &v)
