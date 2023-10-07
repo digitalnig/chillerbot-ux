@@ -892,6 +892,18 @@ bool CWarList::OnChatCmd(char Prefix, int ClientID, int Team, const char *pCmd, 
 			m_pClient->m_Chat.AddLine(-2, 0, "Error type has to be one of those: <war|team|neutral|traitor>");
 			return true;
 		}
+		const char *aTypes[] = {"war", "team", "neutral", "traitor"};
+		for(const auto CheckType : aTypes)
+		{
+			str_format(aBuf, sizeof(aBuf), "chillerbot/warlist/%s/%s", CheckType, aFolder);
+			if(Storage()->FolderExists(aBuf, IStorage::TYPE_SAVE))
+			{
+				char aError[256];
+				str_format(aError, sizeof(aError), "Error folder already exists: %s", aBuf);
+				m_pClient->m_Chat.AddLine(-2, 0, aError);
+				return true;
+			}
+		}
 		str_format(aBuf, sizeof(aBuf), "chillerbot/warlist/%s", aType);
 		if(!Storage()->CreateFolder(aBuf, IStorage::TYPE_SAVE))
 		{
