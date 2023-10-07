@@ -987,6 +987,40 @@ bool CWarList::OnChatCmd(char Prefix, int ClientID, int Team, const char *pCmd, 
 		ReloadList();
 		m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 	}
+	else if(!str_comp(pCmd, "addtraitor")) // "addtraitor <folder> <name can contain spaces>"
+	{
+		if(NumArgs < 1)
+		{
+			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <folder>");
+			return true;
+		}
+		if(NumArgs < 2)
+		{
+			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <name>");
+			return true;
+		}
+		char aFolder[512];
+		char aName[512];
+		str_copy(aFolder, ppArgs[0], sizeof(aFolder));
+		str_copy(aName, ppArgs[1], sizeof(aName));
+		char aFilename[1024];
+		str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/traitor/%s/names.txt", aFolder);
+		IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_APPEND, IStorage::TYPE_SAVE);
+		if(!File)
+		{
+			str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
+			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+			return true;
+		}
+
+		io_write(File, aName, str_length(aName));
+		io_write_newline(File);
+		io_close(File);
+
+		str_format(aBuf, sizeof(aBuf), "Added '%s' to the folder %s", aName, aFolder);
+		ReloadList();
+		m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+	}
 	else if(!str_comp(pCmd, "peace")) // "peace <folder>"
 	{
 		if(NumArgs < 1)
