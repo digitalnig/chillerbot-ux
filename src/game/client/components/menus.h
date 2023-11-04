@@ -247,7 +247,6 @@ protected:
 	enum
 	{
 		SORT_DEMONAME = 0,
-		SORT_MARKERS,
 		SORT_LENGTH,
 		SORT_DATE,
 	};
@@ -306,8 +305,6 @@ protected:
 			if(!m_InfosLoaded)
 				return !Other.m_InfosLoaded;
 
-			if(g_Config.m_BrDemoSort == SORT_MARKERS)
-				return Left.NumMarkers() < Right.NumMarkers();
 			if(g_Config.m_BrDemoSort == SORT_LENGTH)
 				return Left.Length() < Right.Length();
 
@@ -431,7 +428,11 @@ protected:
 	void HandleDemoSeeking(float PositionToSeek, float TimeToSeek);
 	void RenderDemoPlayer(CUIRect MainView);
 	void RenderDemoPlayerSliceSavePopup(CUIRect MainView);
-	void RenderDemoList(CUIRect MainView);
+	bool m_DemoBrowserListInitialized = false;
+	void RenderDemoBrowser(CUIRect MainView);
+	void RenderDemoBrowserList(CUIRect ListView, bool &WasListboxItemActivated);
+	void RenderDemoBrowserDetails(CUIRect DetailsView);
+	void RenderDemoBrowserButtons(CUIRect ButtonsView, bool WasListboxItemActivated);
 	void PopupConfirmDeleteDemo();
 	void PopupConfirmDeleteFolder();
 
@@ -627,9 +628,11 @@ public:
 		char m_aFilename[IO_MAX_PATH_LENGTH];
 		char m_aPlayer[MAX_NAME_LENGTH];
 
+		bool m_Failed;
 		int m_Time;
 		int m_Slot;
 		bool m_Own;
+		time_t m_Date;
 
 		CGhostItem() :
 			m_Slot(-1), m_Own(false) { m_aFilename[0] = 0; }
@@ -682,7 +685,7 @@ public:
 	};
 
 private:
-	static int GhostlistFetchCallback(const char *pName, int IsDir, int StorageType, void *pUser);
+	static int GhostlistFetchCallback(const CFsFileInfo *pInfo, int IsDir, int StorageType, void *pUser);
 	void SetMenuPage(int NewPage);
 	void RefreshBrowserTab(int UiPage);
 

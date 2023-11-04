@@ -114,7 +114,7 @@ void CChillerEditor::DoMapEditor()
 	}
 	if(m_EditorMode == CE_MODE_TEXT)
 	{
-		m_pEditor->m_pTooltip = "Type on your keyboard to insert letters. Press Escape to end text mode.";
+		str_copy(m_pEditor->m_aTooltip, "Type on your keyboard to insert letters. Press Escape to end text mode.");
 		std::shared_ptr<CLayerTiles> pLayer = std::static_pointer_cast<CLayerTiles>(m_pEditor->GetSelectedLayerType(0, LAYERTYPE_TILES));
 		// exit if selected layer changes
 		if(m_pLastLayer && m_pLastLayer != pLayer)

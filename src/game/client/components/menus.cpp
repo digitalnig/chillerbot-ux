@@ -841,7 +841,7 @@ void CMenus::RenderNews(CUIRect MainView)
 
 	CUIRect Label;
 
-	const char *pStr = Client()->m_aNews;
+	const char *pStr = Client()->News();
 	char aLine[256];
 	while((pStr = str_next_token(pStr, "\n", aLine, sizeof(aLine))))
 	{
@@ -999,22 +999,11 @@ int CMenus::Render()
 	else if(s_Frame == 1)
 	{
 		UpdateMusicState();
-		s_Frame++;
-
 		RefreshBrowserTab(g_Config.m_UiPage);
-		if(g_Config.m_UiPage == PAGE_INTERNET)
-			ServerBrowser()->Refresh(IServerBrowser::TYPE_INTERNET);
-		else if(g_Config.m_UiPage == PAGE_LAN)
-			ServerBrowser()->Refresh(IServerBrowser::TYPE_LAN);
-		else if(g_Config.m_UiPage == PAGE_FAVORITES)
-			ServerBrowser()->Refresh(IServerBrowser::TYPE_FAVORITES);
-		else if(g_Config.m_UiPage == PAGE_DDNET)
-			ServerBrowser()->Refresh(IServerBrowser::TYPE_DDNET);
-		else if(g_Config.m_UiPage == PAGE_KOG)
-			ServerBrowser()->Refresh(IServerBrowser::TYPE_KOG);
+		s_Frame++;
 	}
 
-	if(Client()->State() >= IClient::STATE_ONLINE)
+	if(Client()->State() == IClient::STATE_ONLINE || Client()->State() == IClient::STATE_DEMOPLAYBACK)
 	{
 		ms_ColorTabbarInactive = ms_ColorTabbarInactiveIngame;
 		ms_ColorTabbarActive = ms_ColorTabbarActiveIngame;
@@ -1121,7 +1110,7 @@ int CMenus::Render()
 			else if(m_MenuPage == PAGE_DEMOS)
 			{
 				m_pBackground->ChangePosition(CMenuBackground::POS_DEMOS);
-				RenderDemoList(MainView);
+				RenderDemoBrowser(MainView);
 			}
 			else if(m_MenuPage == PAGE_FAVORITES)
 			{
@@ -1223,9 +1212,9 @@ int CMenus::Render()
 			pTitle = Localize("Disconnected");
 			pExtraText = Client()->ErrorString();
 			pButtonText = Localize("Ok");
-			if(Client()->m_ReconnectTime > 0)
+			if(Client()->ReconnectTime() > 0)
 			{
-				str_format(aBuf, sizeof(aBuf), Localize("Reconnect in %d sec"), (int)((Client()->m_ReconnectTime - time_get()) / time_freq()));
+				str_format(aBuf, sizeof(aBuf), Localize("Reconnect in %d sec"), (int)((Client()->ReconnectTime() - time_get()) / time_freq()));
 				pTitle = Client()->ErrorString();
 				pExtraText = aBuf;
 				pButtonText = Localize("Abort");
@@ -1271,13 +1260,13 @@ int CMenus::Render()
 		else if(m_Popup == POPUP_POINTS)
 		{
 			pTitle = Localize("Existing Player");
-			if(Client()->m_Points > 50)
+			if(Client()->Points() > 50)
 			{
-				str_format(aBuf, sizeof(aBuf), Localize("Your nickname '%s' is already used (%d points). Do you still want to use it?"), Client()->PlayerName(), Client()->m_Points);
+				str_format(aBuf, sizeof(aBuf), Localize("Your nickname '%s' is already used (%d points). Do you still want to use it?"), Client()->PlayerName(), Client()->Points());
 				pExtraText = aBuf;
 				TopAlign = true;
 			}
-			else if(Client()->m_Points >= 0)
+			else if(Client()->Points() >= 0)
 			{
 				m_Popup = POPUP_NONE;
 			}
@@ -1586,26 +1575,20 @@ int CMenus::Render()
 #if defined(CONF_VIDEORECORDER)
 		else if(m_Popup == POPUP_RENDER_DEMO)
 		{
-			dbg_assert(m_DemolistSelectedIndex >= 0 && !m_vpFilteredDemos[m_DemolistSelectedIndex]->m_IsDir, "m_DemolistSelectedIndex invalid for POPUP_RENDER_DEMO");
-
-			CUIRect Label, TextBox, Ok, Abort, Button;
-
-			Box.HSplitBottom(20.f, &Box, &Part);
-#if defined(__ANDROID__)
-			Box.HSplitBottom(60.f, &Box, &Part);
-#else
-			Box.HSplitBottom(24.f, &Box, &Part);
-#endif
-			Part.VMargin(80.0f, &Part);
-
-			Part.VSplitMid(&Abort, &Ok);
-
-			Ok.VMargin(20.0f, &Ok);
-			Abort.VMargin(20.0f, &Abort);
+			CUIRect Row, Ok, Abort;
+			Box.VMargin(60.0f, &Box);
+			Box.HMargin(20.0f, &Box);
+			Box.HSplitBottom(24.0f, &Box, &Row);
+			Box.HSplitBottom(40.0f, &Box, nullptr);
+			Row.VMargin(40.0f, &Row);
+			Row.VSplitMid(&Abort, &Ok, 40.0f);
 
 			static CButtonContainer s_ButtonAbort;
 			if(DoButton_Menu(&s_ButtonAbort, Localize("Abort"), 0, &Abort) || UI()->ConsumeHotkey(CUI::HOTKEY_ESCAPE))
+			{
+				m_DemoRenderInput.Clear();
 				m_Popup = POPUP_NONE;
+			}
 
 			static CButtonContainer s_ButtonOk;
 			if(DoButton_Menu(&s_ButtonOk, Localize("Ok"), 0, &Ok) || UI()->ConsumeHotkey(CUI::HOTKEY_ENTER))
@@ -1631,78 +1614,67 @@ int CMenus::Render()
 					PopupConfirmDemoReplaceVideo();
 				}
 			}
-			Box.HSplitBottom(30.f, &Box, 0);
-			Box.HSplitBottom(20.f, &Box, &Part);
-			Box.HSplitBottom(10.f, &Box, 0);
 
-			float ButtonSize = 20.0f;
-			Part.VSplitLeft(113.0f, 0, &Part);
-			Part.VSplitLeft(200.0f, &Button, &Part);
-			if(DoButton_CheckBox(&g_Config.m_ClVideoShowChat, Localize("Show chat"), g_Config.m_ClVideoShowChat, &Button))
+			CUIRect ShowChatCheckbox, UseSoundsCheckbox;
+			Box.HSplitBottom(20.0f, &Box, &Row);
+			Box.HSplitBottom(10.0f, &Box, nullptr);
+			Row.VSplitMid(&ShowChatCheckbox, &UseSoundsCheckbox, 20.0f);
+
+			if(DoButton_CheckBox(&g_Config.m_ClVideoShowChat, Localize("Show chat"), g_Config.m_ClVideoShowChat, &ShowChatCheckbox))
 				g_Config.m_ClVideoShowChat ^= 1;
-			Part.VSplitLeft(32.0f, 0, &Part);
-			if(DoButton_CheckBox(&g_Config.m_ClVideoSndEnable, Localize("Use sounds"), g_Config.m_ClVideoSndEnable, &Part))
+
+			if(DoButton_CheckBox(&g_Config.m_ClVideoSndEnable, Localize("Use sounds"), g_Config.m_ClVideoSndEnable, &UseSoundsCheckbox))
 				g_Config.m_ClVideoSndEnable ^= 1;
 
-			Box.HSplitBottom(20.f, &Box, &Part);
-			Part.VSplitLeft(55.0f, 0, &Part);
-			Part.VSplitLeft(60.0f, 0, &Label);
+			CUIRect ShowHudButton;
+			Box.HSplitBottom(20.0f, &Box, &Row);
+			Row.VSplitMid(&Row, &ShowHudButton, 20.0f);
 
-			bool IncDemoSpeed = false, DecDemoSpeed = false;
+			if(DoButton_CheckBox(&g_Config.m_ClVideoShowhud, Localize("Show ingame HUD"), g_Config.m_ClVideoShowhud, &ShowHudButton))
+				g_Config.m_ClVideoShowhud ^= 1;
+
 			// slowdown
-			Part.VSplitLeft(5.0f, 0, &Part);
-			Part.VSplitLeft(ButtonSize, &Button, &Part);
+			CUIRect SlowDownButton;
+			Row.VSplitLeft(20.0f, &SlowDownButton, &Row);
+			Row.VSplitLeft(5.0f, nullptr, &Row);
 			static CButtonContainer s_SlowDownButton;
-			if(DoButton_FontIcon(&s_SlowDownButton, FONT_ICON_BACKWARD, 0, &Button, IGraphics::CORNER_ALL))
-				DecDemoSpeed = true;
+			if(DoButton_FontIcon(&s_SlowDownButton, FONT_ICON_BACKWARD, 0, &SlowDownButton, IGraphics::CORNER_ALL))
+				m_Speed = clamp(m_Speed - 1, 0, (int)(g_DemoSpeeds - 1));
 
 			// paused
-			Part.VSplitLeft(5.0f, 0, &Part);
-			Part.VSplitLeft(ButtonSize, &Button, &Part);
+			CUIRect PausedButton;
+			Row.VSplitLeft(20.0f, &PausedButton, &Row);
+			Row.VSplitLeft(5.0f, nullptr, &Row);
 			static CButtonContainer s_PausedButton;
-			if(DoButton_FontIcon(&s_PausedButton, FONT_ICON_PAUSE, 0, &Button, IGraphics::CORNER_ALL))
+			if(DoButton_FontIcon(&s_PausedButton, FONT_ICON_PAUSE, 0, &PausedButton, IGraphics::CORNER_ALL))
 				m_StartPaused ^= 1;
 
 			// fastforward
-			Part.VSplitLeft(5.0f, 0, &Part);
-			Part.VSplitLeft(ButtonSize, &Button, &Part);
+			CUIRect FastForwardButton;
+			Row.VSplitLeft(20.0f, &FastForwardButton, &Row);
+			Row.VSplitLeft(8.0f, nullptr, &Row);
 			static CButtonContainer s_FastForwardButton;
-			if(DoButton_FontIcon(&s_FastForwardButton, FONT_ICON_FORWARD, 0, &Button, IGraphics::CORNER_ALL))
-				IncDemoSpeed = true;
+			if(DoButton_FontIcon(&s_FastForwardButton, FONT_ICON_FORWARD, 0, &FastForwardButton, IGraphics::CORNER_ALL))
+				m_Speed = clamp(m_Speed + 1, 0, (int)(g_DemoSpeeds - 1));
 
 			// speed meter
-			Part.VSplitLeft(8.0f, 0, &Part);
 			char aBuffer[128];
 			const char *pPaused = m_StartPaused ? Localize("(paused)") : "";
 			str_format(aBuffer, sizeof(aBuffer), "%s: ×%g %s", Localize("Speed"), g_aSpeeds[m_Speed], pPaused);
-			UI()->DoLabel(&Part, aBuffer, 12.8f, TEXTALIGN_ML);
+			UI()->DoLabel(&Row, aBuffer, 12.8f, TEXTALIGN_ML);
 
-			if(IncDemoSpeed)
-				m_Speed = clamp(m_Speed + 1, 0, (int)(g_DemoSpeeds - 1));
-			else if(DecDemoSpeed)
-				m_Speed = clamp(m_Speed - 1, 0, (int)(g_DemoSpeeds - 1));
+			Box.HSplitBottom(16.0f, &Box, nullptr);
+			Box.HSplitBottom(24.0f, &Box, &Row);
 
-			Part.VSplitLeft(207.0f, 0, &Part);
-			if(DoButton_CheckBox(&g_Config.m_ClVideoShowhud, Localize("Show ingame HUD"), g_Config.m_ClVideoShowhud, &Part))
-				g_Config.m_ClVideoShowhud ^= 1;
-
-			Box.HSplitBottom(20.f, &Box, &Part);
-#if defined(__ANDROID__)
-			Box.HSplitBottom(60.f, &Box, &Part);
-#else
-			Box.HSplitBottom(24.f, &Box, &Part);
-#endif
-
-			Part.VSplitLeft(60.0f, 0, &Label);
-			Label.VSplitLeft(120.0f, 0, &TextBox);
-			TextBox.VSplitLeft(20.0f, 0, &TextBox);
-			TextBox.VSplitRight(60.0f, &TextBox, 0);
-			UI()->DoLabel(&Label, Localize("Video name:"), 18.0f, TEXTALIGN_ML);
-			UI()->DoEditBox(&m_DemoRenderInput, &TextBox, 12.0f);
+			CUIRect Label, TextBox;
+			Row.VSplitLeft(110.0f, &Label, &TextBox);
+			TextBox.VSplitLeft(10.0f, nullptr, &TextBox);
+			UI()->DoLabel(&Label, Localize("Video name:"), 12.8f, TEXTALIGN_ML);
+			UI()->DoEditBox(&m_DemoRenderInput, &TextBox, 12.8f);
 		}
 		else if(m_Popup == POPUP_RENDER_DONE)
 		{
-			CUIRect TextBox, Ok, OpenFolder;
+			CUIRect Ok, OpenFolder;
 
 			char aFilePath[IO_MAX_PATH_LENGTH];
 			char aSaveFolder[IO_MAX_PATH_LENGTH];
@@ -1723,7 +1695,7 @@ int CMenus::Render()
 			{
 				if(!open_file(aSaveFolder))
 				{
-					dbg_msg("menus", "couldn't open file '%s'", aBuf);
+					dbg_msg("menus", "couldn't open file '%s'", aSaveFolder);
 				}
 			}
 
@@ -1735,14 +1707,13 @@ int CMenus::Render()
 			}
 
 			Box.HSplitBottom(160.f, &Box, &Part);
-
-			Part.VSplitLeft(60.0f, nullptr, &TextBox);
-			TextBox.VSplitLeft(20.0f, nullptr, &TextBox);
-			TextBox.VSplitRight(60.0f, &TextBox, nullptr);
+			Part.VMargin(20.0f, &Part);
 
 			str_format(aBuf, sizeof(aBuf), Localize("Video was saved to '%s'"), aFilePath);
 
-			UI()->DoLabel(&TextBox, aBuf, 18.0f, TEXTALIGN_TL);
+			SLabelProperties MessageProps;
+			MessageProps.m_MaxWidth = (int)Part.w;
+			UI()->DoLabel(&Part, aBuf, 18.0f, TEXTALIGN_TL, MessageProps);
 		}
 #endif
 		else if(m_Popup == POPUP_FIRST_LAUNCH)
@@ -1823,7 +1794,7 @@ int CMenus::Render()
 			Part.VMargin(120.0f, &Part);
 
 			static CButtonContainer s_Button;
-			if(DoButton_Menu(&s_Button, pButtonText, 0, &Part) || UI()->ConsumeHotkey(CUI::HOTKEY_ESCAPE) || UI()->ConsumeHotkey(CUI::HOTKEY_ENTER) || (time_get_nanoseconds() - m_PopupWarningLastTime >= m_PopupWarningDuration))
+			if(DoButton_Menu(&s_Button, pButtonText, 0, &Part) || UI()->ConsumeHotkey(CUI::HOTKEY_ESCAPE) || UI()->ConsumeHotkey(CUI::HOTKEY_ENTER) || (m_PopupWarningDuration > 0s && time_get_nanoseconds() - m_PopupWarningLastTime >= m_PopupWarningDuration))
 			{
 				m_Popup = POPUP_NONE;
 				SetActive(false);
@@ -1838,8 +1809,8 @@ int CMenus::Render()
 			static CButtonContainer s_Button;
 			if(DoButton_Menu(&s_Button, pButtonText, 0, &Part) || UI()->ConsumeHotkey(CUI::HOTKEY_ESCAPE) || UI()->ConsumeHotkey(CUI::HOTKEY_ENTER))
 			{
-				if(m_Popup == POPUP_DISCONNECTED && Client()->m_ReconnectTime > 0)
-					Client()->m_ReconnectTime = 0;
+				if(m_Popup == POPUP_DISCONNECTED && Client()->ReconnectTime() > 0)
+					Client()->SetReconnectTime(0);
 				m_Popup = POPUP_NONE;
 			}
 		}
@@ -1863,18 +1834,21 @@ int CMenus::Render()
 void CMenus::PopupConfirmDemoReplaceVideo()
 {
 	char aBuf[IO_MAX_PATH_LENGTH];
-	str_format(aBuf, sizeof(aBuf), "%s/%s", m_aCurrentDemoFolder, m_vpFilteredDemos[m_DemolistSelectedIndex]->m_aFilename);
+	str_format(aBuf, sizeof(aBuf), "%s/%s.demo", m_aCurrentDemoFolder, m_aCurrentDemoSelectionName);
 	char aVideoName[IO_MAX_PATH_LENGTH];
 	str_copy(aVideoName, m_DemoRenderInput.GetString());
 	if(!str_endswith(aVideoName, ".mp4"))
 		str_append(aVideoName, ".mp4");
-	const char *pError = Client()->DemoPlayer_Render(aBuf, m_vpFilteredDemos[m_DemolistSelectedIndex]->m_StorageType, aVideoName, m_Speed, m_StartPaused);
+	const char *pError = Client()->DemoPlayer_Render(aBuf, m_DemolistStorageType, aVideoName, m_Speed, m_StartPaused);
 	m_Speed = 4;
 	m_StartPaused = false;
 	m_LastPauseChange = -1.0f;
 	m_LastSpeedChange = -1.0f;
 	if(pError)
-		PopupMessage(Localize("Error"), str_comp(pError, "error loading demo") ? pError : Localize("Error loading demo"), Localize("Ok"));
+	{
+		m_DemoRenderInput.Clear();
+		PopupMessage(Localize("Error loading demo"), pError, Localize("Ok"));
+	}
 }
 #endif
 

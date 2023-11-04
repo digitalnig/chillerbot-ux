@@ -138,8 +138,8 @@ void CGameClient::OnConsoleInit()
 					      &m_MapLayersBackground, // first to render
 					      &m_Particles.m_RenderTrail,
 					      &m_Items,
-					      &m_Players,
 					      &m_Ghost,
+					      &m_Players,
 					      &m_MapLayersForeground,
 					      &m_Particles.m_RenderExplosions,
 					      &m_NamePlates,
@@ -449,6 +449,12 @@ void CGameClient::OnUpdate()
 				break;
 		}
 	}
+
+	if(g_Config.m_ClSubTickAiming && m_Binds.m_MouseOnAction)
+	{
+		m_Controls.m_aMousePosOnAction[g_Config.m_ClDummy] = m_Controls.m_aMousePos[g_Config.m_ClDummy];
+		m_Binds.m_MouseOnAction = false;
+	}
 }
 
 void CGameClient::OnDummySwap()
@@ -722,9 +728,9 @@ void CGameClient::OnRender()
 	// display gfx & client warnings
 	for(SWarning *pWarning : {Graphics()->GetCurWarning(), Client()->GetCurWarning()})
 	{
-		if(pWarning != NULL && m_Menus.CanDisplayWarning())
+		if(pWarning != nullptr && m_Menus.CanDisplayWarning())
 		{
-			m_Menus.PopupWarning(Localize("Warning"), pWarning->m_aWarningMsg, "Ok", 10s);
+			m_Menus.PopupWarning(pWarning->m_aWarningTitle[0] == '\0' ? Localize("Warning") : pWarning->m_aWarningTitle, pWarning->m_aWarningMsg, "Ok", pWarning->m_AutoHide ? 10s : 0s);
 			pWarning->m_WasShown = true;
 		}
 	}
@@ -1446,7 +1452,7 @@ void CGameClient::OnNewSnapshot()
 			{
 				const CNetObj_PlayerInfo *pInfo = (const CNetObj_PlayerInfo *)pData;
 
-				if(pInfo->m_ClientID < MAX_CLIENTS)
+				if(pInfo->m_ClientID < MAX_CLIENTS && pInfo->m_ClientID == Item.m_ID)
 				{
 					m_aClients[pInfo->m_ClientID].m_Team = pInfo->m_Team;
 					m_aClients[pInfo->m_ClientID].m_Active = true;
@@ -1455,7 +1461,7 @@ void CGameClient::OnNewSnapshot()
 
 					if(pInfo->m_Local)
 					{
-						m_Snap.m_LocalClientID = Item.m_ID;
+						m_Snap.m_LocalClientID = pInfo->m_ClientID;
 						m_Snap.m_pLocalInfo = pInfo;
 
 						if(pInfo->m_Team == TEAM_SPECTATORS)

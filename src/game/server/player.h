@@ -112,7 +112,6 @@ public:
 	bool m_ForceBalanced;
 	int m_LastActionTick;
 	int m_TeamChangeTick;
-	bool m_SentSemicolonTip;
 
 	// network latency calculations
 	struct
@@ -193,6 +192,7 @@ public:
 	void UpdatePlaytime();
 	void AfkTimer();
 	void SetAfk(bool Afk);
+	void SetInitialAfk(bool Afk);
 	bool IsAfk() const { return m_Afk; }
 
 	int64_t m_LastPlaytime;

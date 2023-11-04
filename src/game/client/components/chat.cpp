@@ -24,7 +24,7 @@
 
 #include "chat.h"
 
-char CChat::ms_aDisplayText[512] = {'\0'};
+char CChat::ms_aDisplayText[MAX_LINE_LENGTH] = {'\0'};
 
 CChat::CChat()
 {
@@ -331,7 +331,7 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 			// insert the command
 			if(pCompletionCommand)
 			{
-				char aBuf[256];
+				char aBuf[MAX_LINE_LENGTH];
 				// add part before the name
 				str_truncate(aBuf, sizeof(aBuf), m_Input.GetString(), m_PlaceholderOffset);
 
@@ -392,7 +392,7 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 			// insert the name
 			if(pCompletionString)
 			{
-				char aBuf[256];
+				char aBuf[MAX_LINE_LENGTH];
 				// add part before the name
 				str_truncate(aBuf, sizeof(aBuf), m_Input.GetString(), m_PlaceholderOffset);
 
@@ -600,7 +600,7 @@ void CChat::AddLine(int ClientID, int Team, const char *pLine)
 		else if(pEnd == 0)
 			pEnd = pStrOld;
 
-		if(++Length >= 256)
+		if(++Length >= MAX_LINE_LENGTH)
 		{
 			*(const_cast<char *>(pStr)) = 0;
 			break;

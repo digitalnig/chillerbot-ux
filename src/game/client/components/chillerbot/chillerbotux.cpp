@@ -3,6 +3,7 @@
 #include <engine/client/notifications.h>
 #include <engine/config.h>
 #include <engine/console.h>
+#include <engine/engine.h>
 #include <engine/graphics.h>
 #include <engine/keys.h>
 #include <engine/shared/json.h>
@@ -426,7 +427,7 @@ void CChillerBotUX::RenderDbgIntersect()
 
 	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
 	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
-	RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), Layers()->GameGroupEx(), m_pClient->m_Camera.m_Zoom);
+	RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), m_pClient->m_Camera.m_Zoom);
 
 	if(Collision()->IntersectLine(InitPos, FinishPos, &outCol, &outBeforeCol))
 	{
@@ -462,7 +463,7 @@ void CChillerBotUX::CampHackTick()
 	{
 		float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
 		Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
-		RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), Layers()->GameGroupEx(), m_pClient->m_Camera.m_Zoom);
+		RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), m_pClient->m_Camera.m_Zoom);
 		Graphics()->DrawRect(m_CampHackX1, m_CampHackY1, 20.0f, 20.0f, ColorRGBA(0, 0, 0, 0.4f), IGraphics::CORNER_ALL, 3.0f);
 		Graphics()->DrawRect(m_CampHackX2, m_CampHackY2, 20.0f, 20.0f, ColorRGBA(0, 0, 0, 0.4f), IGraphics::CORNER_ALL, 3.0f);
 		if(m_CampHackX1 && m_CampHackX2 && m_CampHackY1 && m_CampHackY2)
@@ -1055,7 +1056,7 @@ void CChillerBotUX::TraceSpikes()
 	static float m_ScreenY0;
 	static float m_ScreenY1;
 	Graphics()->GetScreen(&m_ScreenX0, &m_ScreenY0, &m_ScreenX1, &m_ScreenY1);
-	RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), Layers()->GameGroupEx(), m_pClient->m_Camera.m_Zoom);
+	RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), m_pClient->m_Camera.m_Zoom);
 	for(int x = FromX; x < ToX; x++)
 	{
 		for(int y = FromY; y < ToY; y++)

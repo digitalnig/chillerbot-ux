@@ -3,6 +3,7 @@
 #include <engine/client/notifications.h>
 #include <engine/config.h>
 #include <engine/console.h>
+#include <engine/engine.h>
 #include <engine/graphics.h>
 #include <engine/keys.h>
 #include <engine/shared/protocol.h>

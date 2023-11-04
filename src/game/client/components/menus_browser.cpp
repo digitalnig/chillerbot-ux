@@ -1085,9 +1085,31 @@ void CMenus::RenderServerbrowserInfoScoreboard(CUIRect View, const CServerInfo *
 		CUIRect Skin, Name, Clan, Score, Flag;
 		Name = Item.m_Rect;
 
-		ColorRGBA Color = CurrentClient.m_FriendState == IFriends::FRIEND_NO ?
-					  ColorRGBA(1.0f, 1.0f, 1.0f, (i % 2 + 1) * 0.05f) :
-					  ColorRGBA(0.5f, 1.0f, 0.5f, 0.15f + (i % 2 + 1) * 0.05f);
+		ColorRGBA Color;
+		const float Alpha = (i % 2 + 1) * 0.05f;
+		switch(CurrentClient.m_FriendState)
+		{
+		case IFriends::FRIEND_NO:
+			Color = ColorRGBA(1.0f, 1.0f, 1.0f, Alpha);
+			break;
+		case IFriends::FRIEND_PLAYER:
+			if(CurrentClient.m_Afk)
+				Color = ColorRGBA(1.0f, 1.0f, 0.5f, 0.15f + Alpha);
+			else
+				Color = ColorRGBA(0.5f, 1.0f, 0.5f, 0.15f + Alpha);
+			break;
+		case IFriends::FRIEND_CLAN:
+			if(CurrentClient.m_Afk)
+				Color = ColorRGBA(0.4f, 0.75f, 1.0f, 0.15f + Alpha);
+			else
+				Color = ColorRGBA(0.4f, 0.4f, 1.0f, 0.15f + Alpha);
+			break;
+		default:
+			dbg_assert(false, "Invalid friend state");
+			dbg_break();
+			break;
+		}
+
 		Name.Draw(Color, IGraphics::CORNER_ALL, 4.0f);
 		Name.VSplitLeft(1.0f, nullptr, &Name);
 		Name.VSplitLeft(34.0f, &Score, &Name);
@@ -1143,7 +1165,7 @@ void CMenus::RenderServerbrowserInfoScoreboard(CUIRect View, const CServerInfo *
 			vec2 OffsetToMid;
 			RenderTools()->GetRenderTeeOffsetToRenderedTee(pIdleState, &TeeInfo, OffsetToMid);
 			const vec2 TeeRenderPos = vec2(Skin.x + TeeInfo.m_Size / 2.0f, Skin.y + Skin.h / 2.0f + OffsetToMid.y);
-			RenderTools()->RenderTee(pIdleState, &TeeInfo, EMOTE_NORMAL, vec2(1.0f, 0.0f), TeeRenderPos);
+			RenderTools()->RenderTee(pIdleState, &TeeInfo, CurrentClient.m_Afk ? EMOTE_BLINK : EMOTE_NORMAL, vec2(1.0f, 0.0f), TeeRenderPos);
 		}
 
 		// name

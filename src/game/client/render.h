@@ -23,7 +23,6 @@ struct CEnvPoint;
 struct CEnvPointBezier;
 struct CEnvPointBezier_upstream;
 struct CMapItemGroup;
-struct CMapItemGroupEx;
 struct CQuad;
 
 class CTeeRenderInfo
@@ -89,6 +88,7 @@ enum
 class IEnvelopePointAccess
 {
 public:
+	virtual ~IEnvelopePointAccess() = default;
 	virtual int NumPoints() const = 0;
 	virtual const CEnvPoint *GetPoint(int Index) const = 0;
 	virtual const CEnvPointBezier *GetBezier(int Index) const = 0;
@@ -135,7 +135,6 @@ public:
 	void SelectSprite(CDataSprite *pSprite, int Flags = 0, int sx = 0, int sy = 0);
 	void SelectSprite(int Id, int Flags = 0, int sx = 0, int sy = 0);
 
-	void GetSpriteScale(client_data7::CDataSprite *pSprite, float &ScaleX, float &ScaleY);
 	void GetSpriteScale(CDataSprite *pSprite, float &ScaleX, float &ScaleY);
 	void GetSpriteScale(int Id, float &ScaleX, float &ScaleY);
 	void GetSpriteScaleImpl(int Width, int Height, float &ScaleX, float &ScaleY);
@@ -173,7 +172,7 @@ public:
 	void CalcScreenParams(float Aspect, float Zoom, float *pWidth, float *pHeight);
 	void MapScreenToWorld(float CenterX, float CenterY, float ParallaxX, float ParallaxY,
 		float ParallaxZoom, float OffsetX, float OffsetY, float Aspect, float Zoom, float *pPoints);
-	void MapScreenToGroup(float CenterX, float CenterY, CMapItemGroup *pGroup, CMapItemGroupEx *pGroupEx, float Zoom);
+	void MapScreenToGroup(float CenterX, float CenterY, CMapItemGroup *pGroup, float Zoom);
 	void MapScreenToInterface(float CenterX, float CenterY);
 
 	// DDRace
