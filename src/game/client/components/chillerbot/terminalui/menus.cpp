@@ -283,9 +283,9 @@ void CTerminalUI::RenderPopup()
 	aExtraText[0] = '\0';
 	if(m_Popup == POPUP_DISCONNECTED)
 	{
-		if(Client()->m_ReconnectTime > 0)
+		if(Client()->ReconnectTime() > 0)
 		{
-			int ReconnectSecs = (int)((Client()->m_ReconnectTime - time_get()) / time_freq());
+			int ReconnectSecs = (int)((Client()->ReconnectTime() - time_get()) / time_freq());
 			str_format(aExtraText, sizeof(aExtraText), Localize("Reconnect in %d sec"), ReconnectSecs);
 			str_copy(m_aPopupTitle, Client()->ErrorString(), sizeof(m_aPopupTitle));
 			// pButtonText = Localize("Abort");
