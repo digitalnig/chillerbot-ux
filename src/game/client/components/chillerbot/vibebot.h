@@ -3,8 +3,6 @@
 
 #include <engine/shared/protocol.h>
 #include <game/client/component.h>
-#include <game/generated/client_data.h>
-#include <game/generated/client_data7.h>
 #include <game/generated/protocol.h>
 #include <game/mapitems.h>
 
