@@ -197,6 +197,8 @@ void CChillerBotUX::ChangeTileNotifyTick()
 {
 	if(!g_Config.m_ClChangeTileNotification)
 		return;
+	if(!GameClient()->m_Snap.m_pLocalCharacter)
+		return;
 	static int LastTile = -1;
 	float X = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[g_Config.m_ClDummy]].m_Cur.m_X;
 	float Y = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[g_Config.m_ClDummy]].m_Cur.m_Y;
