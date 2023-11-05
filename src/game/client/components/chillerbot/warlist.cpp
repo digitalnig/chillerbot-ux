@@ -893,7 +893,7 @@ bool CWarList::OnChatCmd(char Prefix, int ClientID, int Team, const char *pCmd, 
 			return true;
 		}
 		const char *aTypes[] = {"war", "team", "neutral", "traitor"};
-		for(const auto CheckType : aTypes)
+		for(const auto *CheckType : aTypes)
 		{
 			str_format(aBuf, sizeof(aBuf), "chillerbot/warlist/%s/%s", CheckType, aFolder);
 			if(Storage()->FolderExists(aBuf, IStorage::TYPE_SAVE))
