@@ -2831,6 +2831,7 @@ if(GTEST_FOUND OR DOWNLOAD_GTEST)
     langparser.cpp
     linereader.cpp
     mapbugs.cpp
+    math.cpp
     name_ban.cpp
     net.cpp
     netaddr.cpp

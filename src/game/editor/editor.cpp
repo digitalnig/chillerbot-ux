@@ -1137,18 +1137,18 @@ void CEditor::DoToolbarLayers(CUIRect ToolBar)
 				}
 
 			static int s_CcwButton = 0;
-			if(DoButton_FontIcon(&s_CcwButton, FONT_ICON_ARROW_ROTATE_LEFT, Enabled, &Button, 0, "[R] Rotates the brush counter clockwise", IGraphics::CORNER_ALL) || (Input()->KeyPress(KEY_R) && m_Dialog == DIALOG_NONE && CLineInput::GetActiveInput() == nullptr))
+			if(DoButton_FontIcon(&s_CcwButton, FONT_ICON_ARROW_ROTATE_LEFT, Enabled, &Button, 0, "[R] Rotates the brush counter clockwise", IGraphics::CORNER_L) || (Input()->KeyPress(KEY_R) && m_Dialog == DIALOG_NONE && CLineInput::GetActiveInput() == nullptr))
 			{
 				for(auto &pLayer : m_pBrush->m_vpLayers)
 					pLayer->BrushRotate(-s_RotationAmount / 360.0f * pi * 2);
 			}
 
 			TB_Top.VSplitLeft(30.0f, &Button, &TB_Top);
-			s_RotationAmount = UiDoValueSelector(&s_RotationAmount, &Button, "", s_RotationAmount, TileLayer ? 90 : 1, 359, TileLayer ? 90 : 1, TileLayer ? 10.0f : 2.0f, "Rotation of the brush in degrees. Use left mouse button to drag and change the value. Hold shift to be more precise.", true);
+			s_RotationAmount = UiDoValueSelector(&s_RotationAmount, &Button, "", s_RotationAmount, TileLayer ? 90 : 1, 359, TileLayer ? 90 : 1, TileLayer ? 10.0f : 2.0f, "Rotation of the brush in degrees. Use left mouse button to drag and change the value. Hold shift to be more precise.", true, false, IGraphics::CORNER_NONE);
 
 			TB_Top.VSplitLeft(25.0f, &Button, &TB_Top);
 			static int s_CwButton = 0;
-			if(DoButton_FontIcon(&s_CwButton, FONT_ICON_ARROW_ROTATE_RIGHT, Enabled, &Button, 0, "[T] Rotates the brush clockwise", IGraphics::CORNER_ALL) || (Input()->KeyPress(KEY_T) && m_Dialog == DIALOG_NONE && CLineInput::GetActiveInput() == nullptr))
+			if(DoButton_FontIcon(&s_CwButton, FONT_ICON_ARROW_ROTATE_RIGHT, Enabled, &Button, 0, "[T] Rotates the brush clockwise", IGraphics::CORNER_R) || (Input()->KeyPress(KEY_T) && m_Dialog == DIALOG_NONE && CLineInput::GetActiveInput() == nullptr))
 			{
 				for(auto &pLayer : m_pBrush->m_vpLayers)
 					pLayer->BrushRotate(s_RotationAmount / 360.0f * pi * 2);
@@ -2549,7 +2549,7 @@ void CEditor::DoMapEditor(CUIRect View)
 				else
 					Layer = NUM_LAYERS;
 
-				EExplanation Explanation = EExplanation::DDNET;
+				EExplanation Explanation;
 				if(m_SelectEntitiesImage == "DDNet")
 					Explanation = EExplanation::DDNET;
 				else if(m_SelectEntitiesImage == "FNG")
@@ -2561,7 +2561,7 @@ void CEditor::DoMapEditor(CUIRect View)
 				else if(m_SelectEntitiesImage == "blockworlds")
 					Explanation = EExplanation::BLOCKWORLDS;
 				else
-					dbg_assert(false, "Unhandled entities image for explanations");
+					Explanation = EExplanation::NONE;
 
 				if(Layer != NUM_LAYERS)
 				{
@@ -4311,9 +4311,9 @@ void CEditor::RenderImagesList(CUIRect ToolBox)
 				if(Result == 2)
 				{
 					const std::shared_ptr<CEditorImage> pImg = m_Map.m_vpImages[m_SelectedImage];
-					const int Height = !pImg->m_External && IsVanillaImage(pImg->m_aName) ? 90 : 73;
+					const int Height = !pImg->m_External && IsVanillaImage(pImg->m_aName) ? 107 : pImg->m_External ? 73 : 90;
 					static SPopupMenuId s_PopupImageId;
-					UI()->DoPopupMenu(&s_PopupImageId, UI()->MouseX(), UI()->MouseY(), 120, Height, this, PopupImage);
+					UI()->DoPopupMenu(&s_PopupImageId, UI()->MouseX(), UI()->MouseY(), 140, Height, this, PopupImage);
 				}
 			}
 		}
@@ -4427,7 +4427,7 @@ void CEditor::RenderSounds(CUIRect ToolBox)
 			if(Result == 2)
 			{
 				static SPopupMenuId s_PopupSoundId;
-				UI()->DoPopupMenu(&s_PopupSoundId, UI()->MouseX(), UI()->MouseY(), 120, 73, this, PopupSound);
+				UI()->DoPopupMenu(&s_PopupSoundId, UI()->MouseX(), UI()->MouseY(), 140, 90, this, PopupSound);
 			}
 		}
 	}
@@ -4949,15 +4949,18 @@ void CEditor::RenderFileDialog()
 	if(DoButton_Editor(&s_RefreshButton, "Refresh", 0, &Button, 0, nullptr) || (s_ListBox.Active() && (Input()->KeyIsPressed(KEY_F5) || (Input()->ModifierIsPressed() && Input()->KeyIsPressed(KEY_R)))))
 		FilelistPopulate(m_FileDialogLastPopulatedStorageType, true);
 
-	ButtonBar.VSplitRight(ButtonSpacing, &ButtonBar, nullptr);
-	ButtonBar.VSplitRight(90.0f, &ButtonBar, &Button);
-	if(DoButton_Editor(&s_ShowDirectoryButton, "Show directory", 0, &Button, 0, "Open the current directory in the file browser"))
+	if(m_FilesSelectedIndex >= 0 && m_vpFilteredFileList[m_FilesSelectedIndex]->m_StorageType != IStorage::TYPE_ALL)
 	{
-		char aOpenPath[IO_MAX_PATH_LENGTH];
-		Storage()->GetCompletePath(m_FilesSelectedIndex >= 0 ? m_vpFilteredFileList[m_FilesSelectedIndex]->m_StorageType : IStorage::TYPE_SAVE, m_pFileDialogPath, aOpenPath, sizeof(aOpenPath));
-		if(!open_file(aOpenPath))
+		ButtonBar.VSplitRight(ButtonSpacing, &ButtonBar, nullptr);
+		ButtonBar.VSplitRight(90.0f, &ButtonBar, &Button);
+		if(DoButton_Editor(&s_ShowDirectoryButton, "Show directory", 0, &Button, 0, "Open the current directory in the file browser"))
 		{
-			ShowFileDialogError("Failed to open the directory '%s'.", aOpenPath);
+			char aOpenPath[IO_MAX_PATH_LENGTH];
+			Storage()->GetCompletePath(m_FilesSelectedIndex >= 0 ? m_vpFilteredFileList[m_FilesSelectedIndex]->m_StorageType : IStorage::TYPE_SAVE, m_pFileDialogPath, aOpenPath, sizeof(aOpenPath));
+			if(!open_file(aOpenPath))
+			{
+				ShowFileDialogError("Failed to open the directory '%s'.", aOpenPath);
+			}
 		}
 	}
 
