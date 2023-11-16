@@ -373,7 +373,7 @@ int CEditor::UiDoValueSelector(void *pID, CUIRect *pRect, const char *pLabel, in
 			s_TextMode = false;
 		}
 
-		if(Input()->KeyIsPressed(KEY_ESCAPE))
+		if(UI()->ConsumeHotkey(CUI::HOTKEY_ESCAPE))
 		{
 			UI()->DisableMouseLock();
 			UI()->SetActiveItem(nullptr);
@@ -5005,6 +5005,7 @@ void CEditor::RenderFileDialog()
 				else
 					ShowFileDialogError("Failed to delete file '%s'.", aDeleteFilePath);
 			}
+			UpdateFileNameInput();
 		}
 		if(s_ConfirmDeletePopupContext.m_Result != CUI::SConfirmPopupContext::UNSET)
 			s_ConfirmDeletePopupContext.Reset();
@@ -5145,15 +5146,15 @@ void CEditor::InvokeFileDialog(int StorageType, int FileType, const char *pTitle
 	m_FileDialogStorageType = StorageType;
 	if(m_FileDialogStorageType == IStorage::TYPE_ALL)
 	{
-		int NumStoragedWithFolder = 0;
+		int NumStoragesWithFolder = 0;
 		for(int CheckStorageType = IStorage::TYPE_SAVE; CheckStorageType < Storage()->NumPaths(); ++CheckStorageType)
 		{
-			if(Storage()->FolderExists(m_pFileDialogPath, CheckStorageType))
+			if(Storage()->FolderExists(pBasePath, CheckStorageType))
 			{
-				NumStoragedWithFolder++;
+				NumStoragesWithFolder++;
 			}
 		}
-		m_FileDialogMultipleStorages = NumStoragedWithFolder > 1;
+		m_FileDialogMultipleStorages = NumStoragesWithFolder > 1;
 	}
 	else
 	{
@@ -6876,7 +6877,7 @@ void CEditor::RenderEnvelopeEditor(CUIRect View)
 			{
 				s_Operation = OP_NONE;
 			}
-			else if(UI()->MouseButton(1))
+			else if(UI()->MouseButton(1) || UI()->ConsumeHotkey(CUI::HOTKEY_ESCAPE))
 			{
 				for(size_t k = 0; k < m_vSelectedEnvelopePoints.size(); k++)
 				{
@@ -7201,7 +7202,7 @@ void CEditor::RenderMenubar(CUIRect MenuBar)
 	UI()->DoLabel(&Info, aBuf, 10.0f, TEXTALIGN_MR);
 
 	static int s_CloseButton = 0;
-	if(DoButton_Editor(&s_CloseButton, "×", 0, &Close, 0, "Exits from the editor") || (m_Dialog == DIALOG_NONE && !UI()->IsPopupOpen() && !m_PopupEventActivated && Input()->KeyPress(KEY_ESCAPE)))
+	if(DoButton_Editor(&s_CloseButton, "×", 0, &Close, 0, "Exits from the editor"))
 	{
 		OnClose();
 		g_Config.m_ClEditor = 0;
@@ -7461,6 +7462,12 @@ void CEditor::Render()
 
 	UI()->RenderPopupMenus();
 	FreeDynamicPopupMenus();
+
+	if(m_Dialog == DIALOG_NONE && !m_PopupEventActivated && UI()->ConsumeHotkey(CUI::HOTKEY_ESCAPE))
+	{
+		OnClose();
+		g_Config.m_ClEditor = 0;
+	}
 
 	// The tooltip can be set in popup menus so we have to render the tooltip after the popup menus.
 	if(m_GuiActive)
