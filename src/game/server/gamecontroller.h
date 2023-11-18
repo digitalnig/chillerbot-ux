@@ -6,7 +6,9 @@
 #include <base/vmath.h>
 #include <engine/map.h>
 #include <engine/shared/protocol.h>
+#include <game/server/teams.h>
 
+#include <map>
 #include <vector>
 
 /*
@@ -23,6 +25,8 @@ class IGameController
 	class CGameContext *m_pGameServer;
 	class CConfig *m_pConfig;
 	class IServer *m_pServer;
+
+	CGameTeams m_Teams;
 
 protected:
 	CGameContext *GameServer() const { return m_pGameServer; }
@@ -143,10 +147,14 @@ public:
 	int ClampTeam(int Team);
 
 	virtual CClientMask GetMaskForPlayerWorldEvent(int Asker, int ExceptID = -1);
+	virtual void InitTeleporter();
 
 	// DDRace
 
 	float m_CurrentRecord;
+	std::map<int, std::vector<vec2>> m_TeleOuts;
+	std::map<int, std::vector<vec2>> m_TeleCheckOuts;
+	CGameTeams &Teams() { return m_Teams; }
 };
 
 #endif
