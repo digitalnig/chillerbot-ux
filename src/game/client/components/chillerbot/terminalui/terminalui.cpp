@@ -1310,7 +1310,7 @@ void CTerminalUI::OnStateChange(int NewState, int OldState)
 
 void CTerminalUI::SetServerBrowserPage(int NewPage)
 {
-	if(NewPage >= CMenus::PAGE_INTERNET && NewPage <= CMenus::PAGE_KOG)
+	if(NewPage >= CMenus::PAGE_INTERNET && NewPage <= CMenus::PAGE_FAVORITES)
 	{
 		m_SelectedServer = 0;
 		g_Config.m_UiPage = NewPage;
@@ -1320,10 +1320,6 @@ void CTerminalUI::SetServerBrowserPage(int NewPage)
 			ServerBrowser()->Refresh(CServerBrowser::TYPE_LAN);
 		else if(g_Config.m_UiPage == CMenus::PAGE_FAVORITES)
 			ServerBrowser()->Refresh(CServerBrowser::TYPE_FAVORITES);
-		else if(g_Config.m_UiPage == CMenus::PAGE_DDNET)
-			ServerBrowser()->Refresh(CServerBrowser::TYPE_DDNET);
-		else if(g_Config.m_UiPage == CMenus::PAGE_KOG)
-			ServerBrowser()->Refresh(CServerBrowser::TYPE_KOG);
 		gs_NeedLogDraw = true;
 		m_NewInput = true;
 	}

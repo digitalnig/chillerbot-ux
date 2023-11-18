@@ -159,10 +159,6 @@ void CTerminalUI::RenderServerList()
 		str_copy(aTab, "lan", sizeof(aTab));
 	else if(g_Config.m_UiPage == CMenus::PAGE_FAVORITES)
 		str_copy(aTab, "favorites", sizeof(aTab));
-	else if(g_Config.m_UiPage == CMenus::PAGE_DDNET)
-		str_copy(aTab, "ddnet", sizeof(aTab));
-	else if(g_Config.m_UiPage == CMenus::PAGE_KOG)
-		str_copy(aTab, "KoG", sizeof(aTab));
 	int mx = getmaxx(g_LogWindow.m_pCursesWin);
 	int my = getmaxy(g_LogWindow.m_pCursesWin);
 	int offY = 5;
