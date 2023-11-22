@@ -104,6 +104,8 @@ The curses client only works on linux and needs ncurses installed (see dependenc
     make -j$(nproc)
     ./term-ux
 
+![term-ux browser](other/term-ux_download.png)
+![term-ux browser](other/term-ux_rcon.png)
 ![term-ux browser](other/term-ux_browser.png)
 ![term-ux scoreboard](other/term-ux_scoreboard.png)
 ![term-ux help](other/term-ux_help.png)
