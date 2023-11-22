@@ -91,7 +91,7 @@ Intended to avoid getting dragged into the next part when being afk in ddrace.
 Execute whisper messages in local console when prefixed with the correct token.
 Example "/whisper user sample_password say hello". Can be used to mess around with friends or control clients running on other devices.
 
-### Curses terminal client
+### term-ux a ncurses terminal client
 
 Compile the client with the cmake flags -DHEADLESS_CLIENT=ON and -DCURSES_CLIENT=ON to get a terminal only (no graphical window) client.
 It still can be controlled using keypresses in the terminal (powered by ncurses).
