@@ -169,14 +169,7 @@ void CPlayer::Tick()
 		m_ScoreFinishResult = nullptr;
 	}
 
-	bool ClientIngame = Server()->ClientIngame(m_ClientID);
-#ifdef CONF_DEBUG
-	if(g_Config.m_DbgDummies && m_ClientID >= MAX_CLIENTS - g_Config.m_DbgDummies)
-	{
-		ClientIngame = true;
-	}
-#endif
-	if(!ClientIngame)
+	if(!Server()->ClientIngame(m_ClientID))
 		return;
 
 	if(m_ChatScore > 0)
@@ -302,11 +295,8 @@ void CPlayer::PostTick()
 
 void CPlayer::PostPostTick()
 {
-#ifdef CONF_DEBUG
-	if(!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS - g_Config.m_DbgDummies)
-#endif
-		if(!Server()->ClientIngame(m_ClientID))
-			return;
+	if(!Server()->ClientIngame(m_ClientID))
+		return;
 
 	if(!GameServer()->m_World.m_Paused && !m_pCharacter && m_Spawning && m_WeakHookSpawn)
 		TryRespawn();
@@ -314,11 +304,8 @@ void CPlayer::PostPostTick()
 
 void CPlayer::Snap(int SnappingClient)
 {
-#ifdef CONF_DEBUG
-	if(!g_Config.m_DbgDummies || m_ClientID < MAX_CLIENTS - g_Config.m_DbgDummies)
-#endif
-		if(!Server()->ClientIngame(m_ClientID))
-			return;
+	if(!Server()->ClientIngame(m_ClientID))
+		return;
 
 	int id = m_ClientID;
 	if(!Server()->Translate(id, SnappingClient))
@@ -392,7 +379,7 @@ void CPlayer::Snap(int SnappingClient)
 			pPlayerInfo->m_PlayerFlags |= protocol7::PLAYERFLAG_ADMIN;
 
 		// Times are in milliseconds for 0.7
-		pPlayerInfo->m_Score = Score == -9999 ? -1 : -Score * 1000;
+		pPlayerInfo->m_Score = m_Score.has_value() ? GameServer()->Score()->PlayerData(id)->m_BestTime * 1000 : -1;
 		pPlayerInfo->m_Latency = Latency;
 	}
 
@@ -572,6 +559,13 @@ int CPlayer::GetClientVersion() const
 }
 
 CCharacter *CPlayer::GetCharacter()
+{
+	if(m_pCharacter && m_pCharacter->IsAlive())
+		return m_pCharacter;
+	return 0;
+}
+
+const CCharacter *CPlayer::GetCharacter() const
 {
 	if(m_pCharacter && m_pCharacter->IsAlive())
 		return m_pCharacter;

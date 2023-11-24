@@ -407,8 +407,10 @@ void CGameContext::ConTeleport(IConsole::IResult *pResult, void *pUserData)
 	{
 		vec2 Pos = pSelf->m_apPlayers[TeleTo]->m_ViewPos;
 		if(!pPlayer->IsPaused() && !pResult->NumArguments())
-			Pos = Pos + vec2(pChr->Core()->m_Input.m_TargetX, pChr->Core()->m_Input.m_TargetY);
-
+		{
+			vec2 ZoomScale = vec2(pPlayer->m_ShowDistance.x / 1400.0f, pPlayer->m_ShowDistance.y / 800.0f);
+			Pos = Pos + (vec2(pChr->Core()->m_Input.m_TargetX, pChr->Core()->m_Input.m_TargetY) * ZoomScale);
+		}
 		pSelf->Teleport(pChr, Pos);
 		pChr->UnFreeze();
 		pChr->Core()->m_Vel = vec2(0, 0);
@@ -480,10 +482,10 @@ void CGameContext::VoteMute(const NETADDR *pAddr, int Secs, const char *pReason,
 
 	char aBuf[128];
 	if(pReason[0])
-		str_format(aBuf, sizeof aBuf, "'%s' banned '%s' for %d seconds from voting (%s)",
+		str_format(aBuf, sizeof(aBuf), "'%s' banned '%s' for %d seconds from voting (%s)",
 			Server()->ClientName(AuthedID), pDisplayName, Secs, pReason);
 	else
-		str_format(aBuf, sizeof aBuf, "'%s' banned '%s' for %d seconds from voting",
+		str_format(aBuf, sizeof(aBuf), "'%s' banned '%s' for %d seconds from voting",
 			Server()->ClientName(AuthedID), pDisplayName, Secs);
 	SendChat(-1, CHAT_ALL, aBuf);
 }
@@ -499,7 +501,7 @@ bool CGameContext::VoteUnmute(const NETADDR *pAddr, const char *pDisplayName, in
 			if(pDisplayName)
 			{
 				char aBuf[128];
-				str_format(aBuf, sizeof aBuf, "'%s' unbanned '%s' from voting.",
+				str_format(aBuf, sizeof(aBuf), "'%s' unbanned '%s' from voting.",
 					Server()->ClientName(AuthedID), pDisplayName);
 				Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "voteunmute", aBuf);
 			}
@@ -555,9 +557,9 @@ void CGameContext::Mute(const NETADDR *pAddr, int Secs, const char *pDisplayName
 
 	char aBuf[128];
 	if(pReason[0])
-		str_format(aBuf, sizeof aBuf, "'%s' has been muted for %d seconds (%s)", pDisplayName, Secs, pReason);
+		str_format(aBuf, sizeof(aBuf), "'%s' has been muted for %d seconds (%s)", pDisplayName, Secs, pReason);
 	else
-		str_format(aBuf, sizeof aBuf, "'%s' has been muted for %d seconds", pDisplayName, Secs);
+		str_format(aBuf, sizeof(aBuf), "'%s' has been muted for %d seconds", pDisplayName, Secs);
 	SendChat(-1, CHAT_ALL, aBuf);
 }
 
@@ -598,7 +600,7 @@ void CGameContext::ConVoteUnmute(IConsole::IResult *pResult, void *pUserData)
 	if(Found)
 	{
 		char aBuf[128];
-		str_format(aBuf, sizeof aBuf, "'%s' unbanned '%s' from voting.",
+		str_format(aBuf, sizeof(aBuf), "'%s' unbanned '%s' from voting.",
 			pSelf->Server()->ClientName(pResult->m_ClientID), pSelf->Server()->ClientName(Victim));
 		pSelf->SendChat(-1, 0, aBuf);
 	}
@@ -624,7 +626,7 @@ void CGameContext::ConVoteMutes(IConsole::IResult *pResult, void *pUserData)
 	for(int i = 0; i < pSelf->m_NumVoteMutes; i++)
 	{
 		net_addr_str(&pSelf->m_aVoteMutes[i].m_Addr, aIpBuf, sizeof(aIpBuf), false);
-		str_format(aBuf, sizeof aBuf, "%d: \"%s\", %d seconds left (%s)", i,
+		str_format(aBuf, sizeof(aBuf), "%d: \"%s\", %d seconds left (%s)", i,
 			aIpBuf, (pSelf->m_aVoteMutes[i].m_Expire - pSelf->Server()->Tick()) / pSelf->Server()->TickSpeed(), pSelf->m_aVoteMutes[i].m_aReason);
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "votemutes", aBuf);
 	}
@@ -742,7 +744,7 @@ void CGameContext::ConMutes(IConsole::IResult *pResult, void *pUserData)
 	for(int i = 0; i < pSelf->m_NumMutes; i++)
 	{
 		net_addr_str(&pSelf->m_aMutes[i].m_Addr, aIpBuf, sizeof(aIpBuf), false);
-		str_format(aBuf, sizeof aBuf, "%d: \"%s\", %d seconds left (%s)", i, aIpBuf,
+		str_format(aBuf, sizeof(aBuf), "%d: \"%s\", %d seconds left (%s)", i, aIpBuf,
 			(pSelf->m_aMutes[i].m_Expire - pSelf->Server()->Tick()) / pSelf->Server()->TickSpeed(), pSelf->m_aMutes[i].m_aReason);
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "mutes", aBuf);
 	}
@@ -774,7 +776,7 @@ void CGameContext::ConModerate(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConSetDDRTeam(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	CGameControllerDDRace *pController = (CGameControllerDDRace *)pSelf->m_pController;
+	auto *pController = pSelf->m_pController;
 
 	if(g_Config.m_SvTeam == SV_TEAM_FORBIDDEN || g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO)
 	{
@@ -800,7 +802,7 @@ void CGameContext::ConSetDDRTeam(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConUninvite(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	CGameControllerDDRace *pController = (CGameControllerDDRace *)pSelf->m_pController;
+	auto *pController = pSelf->m_pController;
 
 	pController->Teams().SetClientInvited(pResult->GetInteger(1), pResult->GetVictim(), false);
 }
@@ -816,7 +818,7 @@ void CGameContext::ConFreezeHammer(IConsole::IResult *pResult, void *pUserData)
 		return;
 
 	char aBuf[128];
-	str_format(aBuf, sizeof aBuf, "'%s' got freeze hammer!",
+	str_format(aBuf, sizeof(aBuf), "'%s' got freeze hammer!",
 		pSelf->Server()->ClientName(Victim));
 	pSelf->SendChat(-1, CHAT_ALL, aBuf);
 
@@ -834,7 +836,7 @@ void CGameContext::ConUnFreezeHammer(IConsole::IResult *pResult, void *pUserData
 		return;
 
 	char aBuf[128];
-	str_format(aBuf, sizeof aBuf, "'%s' lost freeze hammer!",
+	str_format(aBuf, sizeof(aBuf), "'%s' lost freeze hammer!",
 		pSelf->Server()->ClientName(Victim));
 	pSelf->SendChat(-1, CHAT_ALL, aBuf);
 
@@ -878,7 +880,13 @@ void CGameContext::ConDrySave(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConDumpAntibot(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	pSelf->Antibot()->Dump();
+	pSelf->Antibot()->ConsoleCommand("dump");
+}
+
+void CGameContext::ConAntibot(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	pSelf->Antibot()->ConsoleCommand(pResult->GetString(0));
 }
 
 void CGameContext::ConDumpLog(IConsole::IResult *pResult, void *pUserData)
@@ -906,9 +914,9 @@ void CGameContext::ConDumpLog(IConsole::IResult *pResult, void *pUserData)
 
 		char aBuf[256];
 		if(pEntry->m_FromServer)
-			str_format(aBuf, sizeof aBuf, "%s, %d seconds ago", pEntry->m_aDescription, Seconds);
+			str_format(aBuf, sizeof(aBuf), "%s, %d seconds ago", pEntry->m_aDescription, Seconds);
 		else
-			str_format(aBuf, sizeof aBuf, "%s, %d seconds ago < addr=<{%s}> name='%s' client=%d",
+			str_format(aBuf, sizeof(aBuf), "%s, %d seconds ago < addr=<{%s}> name='%s' client=%d",
 				pEntry->m_aDescription, Seconds, pEntry->m_aClientAddrStr, pEntry->m_aClientName, pEntry->m_ClientVersion);
 		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "log", aBuf);
 	}

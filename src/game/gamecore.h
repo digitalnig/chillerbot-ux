@@ -45,7 +45,6 @@ class CTuningParams
 public:
 	CTuningParams()
 	{
-		const float TicksPerSecond = 50.0f;
 #define MACRO_TUNING_PARAM(Name, ScriptName, Value, Description) m_##Name.Set((int)((Value)*100.0f));
 #include "tuning.h"
 #undef MACRO_TUNING_PARAM
@@ -284,7 +283,6 @@ public:
 	bool m_Reset;
 	CCollision *Collision() { return m_pCollision; }
 
-	vec2 m_LastVel;
 	int m_Colliding;
 	bool m_LeftWall;
 

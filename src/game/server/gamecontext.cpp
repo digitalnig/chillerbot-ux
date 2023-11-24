@@ -30,6 +30,7 @@
 
 #include "entities/character.h"
 #include "gamemodes/DDRace.h"
+#include "gamemodes/mod.h"
 #include "player.h"
 #include "score.h"
 
@@ -569,7 +570,7 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 				Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, i);
 		}
 
-		str_format(aBuf, sizeof aBuf, "Chat: %s", aText);
+		str_format(aBuf, sizeof(aBuf), "Chat: %s", aText);
 		LogEvent(aBuf, ChatterClientID);
 	}
 	else
@@ -1194,21 +1195,6 @@ void CGameContext::OnTick()
 		m_SqlRandomMapResult = nullptr;
 	}
 
-#ifdef CONF_DEBUG
-	if(g_Config.m_DbgDummies)
-	{
-		for(int i = 0; i < g_Config.m_DbgDummies; i++)
-		{
-			if(m_apPlayers[MAX_CLIENTS - i - 1])
-			{
-				CNetObj_PlayerInput Input = {0};
-				Input.m_Direction = (i & 1) ? -1 : 1;
-				m_apPlayers[MAX_CLIENTS - i - 1]->OnPredictedInput(&Input);
-			}
-		}
-	}
-#endif
-
 	// Record player position at the end of the tick
 	if(m_TeeHistorianActive)
 	{
@@ -1557,7 +1543,7 @@ void CGameContext::OnClientEnter(int ClientID)
 		char aBuf[128];
 		NETADDR Addr;
 		Server()->GetClientAddr(ClientID, &Addr);
-		str_format(aBuf, sizeof aBuf, "This server has an initial chat delay, you will need to wait %d seconds before talking.", g_Config.m_SvChatInitialDelay);
+		str_format(aBuf, sizeof(aBuf), "This server has an initial chat delay, you will need to wait %d seconds before talking.", g_Config.m_SvChatInitialDelay);
 		SendChatTarget(ClientID, aBuf);
 		Mute(&Addr, g_Config.m_SvChatInitialDelay, Server()->ClientName(ClientID), "Initial chat delay", true);
 	}
@@ -1613,14 +1599,6 @@ void CGameContext::OnClientConnected(int ClientID, void *pData)
 	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, NextUniqueClientID, ClientID, StartTeam);
 	m_apPlayers[ClientID]->SetInitialAfk(Afk);
 	NextUniqueClientID += 1;
-
-#ifdef CONF_DEBUG
-	if(g_Config.m_DbgDummies)
-	{
-		if(ClientID >= MAX_CLIENTS - g_Config.m_DbgDummies)
-			return;
-	}
-#endif
 
 	SendMotd(ClientID);
 	SendSettings(ClientID);
@@ -3471,6 +3449,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("vote", "r['yes'|'no']", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
 	Console()->Register("votes", "?i[page]", CFGFLAG_SERVER, ConVotes, this, "Show all votes (page 0 by default, 20 entries per page)");
 	Console()->Register("dump_antibot", "", CFGFLAG_SERVER, ConDumpAntibot, this, "Dumps the antibot status");
+	Console()->Register("antibot", "r[command]", CFGFLAG_SERVER, ConAntibot, this, "Sends a command to the antibot");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 
@@ -3592,7 +3571,10 @@ void CGameContext::OnInit(const void *pPersistentData)
 		}
 	}
 
-	m_pController = new CGameControllerDDRace(this);
+	if(!str_comp(Config()->m_SvGametype, "mod"))
+		m_pController = new CGameControllerMod(this);
+	else
+		m_pController = new CGameControllerDDRace(this);
 
 	const char *pCensorFilename = "censorlist.txt";
 	IOHANDLE File = Storage()->OpenFile(pCensorFilename, IOFLAG_READ | IOFLAG_SKIP_BOM, IStorage::TYPE_ALL);
@@ -3697,16 +3679,6 @@ void CGameContext::OnInit(const void *pPersistentData)
 		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "git-revision", GIT_SHORTREV_HASH);
 
 	m_pAntibot->RoundStart(this);
-
-#ifdef CONF_DEBUG
-	if(g_Config.m_DbgDummies)
-	{
-		for(int i = 0; i < g_Config.m_DbgDummies; i++)
-		{
-			OnClientConnected(MAX_CLIENTS - i - 1, 0);
-		}
-	}
-#endif
 }
 
 void CGameContext::CreateAllEntities(bool Initial)
@@ -4198,9 +4170,9 @@ bool CGameContext::ProcessSpamProtection(int ClientID, bool RespectChatInitialDe
 	{
 		char aBuf[128];
 		if(Muted.m_InitialChatDelay)
-			str_format(aBuf, sizeof aBuf, "This server has an initial chat delay, you will be able to talk in %d seconds.", Expires);
+			str_format(aBuf, sizeof(aBuf), "This server has an initial chat delay, you will be able to talk in %d seconds.", Expires);
 		else
-			str_format(aBuf, sizeof aBuf, "You are not permitted to talk for the next %d seconds.", Expires);
+			str_format(aBuf, sizeof(aBuf), "You are not permitted to talk for the next %d seconds.", Expires);
 		SendChatTarget(ClientID, aBuf);
 		return true;
 	}

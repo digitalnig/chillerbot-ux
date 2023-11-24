@@ -317,8 +317,6 @@ CServer::CServer()
 		m_aDemoRecorder[i] = CDemoRecorder(&m_SnapshotDelta, true);
 	m_aDemoRecorder[MAX_CLIENTS] = CDemoRecorder(&m_SnapshotDelta, false);
 
-	m_TickSpeed = SERVER_TICK_SPEED;
-
 	m_pGameServer = 0;
 
 	m_CurrentGameTick = MIN_TICK;
@@ -558,7 +556,7 @@ void CServer::RedirectClient(int ClientID, int Port, bool Verbose)
 
 int64_t CServer::TickStartTime(int Tick)
 {
-	return m_GameStartTime + (time_freq() * Tick) / SERVER_TICK_SPEED;
+	return m_GameStartTime + (time_freq() * Tick) / TickSpeed();
 }
 
 int CServer::Init()
@@ -573,6 +571,7 @@ int CServer::Init()
 		Client.m_Traffic = 0;
 		Client.m_TrafficSince = 0;
 		Client.m_ShowIps = false;
+		Client.m_DebugDummy = false;
 		Client.m_AuthKey = -1;
 		Client.m_Latency = 0;
 		Client.m_Sixup = false;
@@ -942,7 +941,7 @@ void CServer::DoSnapshot()
 			continue;
 
 		// this client is trying to recover, don't spam snapshots
-		if(m_aClients[i].m_SnapRate == CClient::SNAPRATE_RECOVER && (Tick() % 50) != 0)
+		if(m_aClients[i].m_SnapRate == CClient::SNAPRATE_RECOVER && (Tick() % TickSpeed()) != 0)
 			continue;
 
 		// this client is trying to recover, don't spam snapshots
@@ -969,7 +968,7 @@ void CServer::DoSnapshot()
 
 			// remove old snapshots
 			// keep 3 seconds worth of snapshots
-			m_aClients[i].m_Snapshots.PurgeUntil(m_CurrentGameTick - SERVER_TICK_SPEED * 3);
+			m_aClients[i].m_Snapshots.PurgeUntil(m_CurrentGameTick - TickSpeed() * 3);
 
 			// save the snapshot
 			m_aClients[i].m_Snapshots.Add(m_CurrentGameTick, time_get(), SnapshotSize, pData, 0, nullptr);
@@ -1083,6 +1082,7 @@ int CServer::NewClientNoAuthCallback(int ClientID, void *pUser)
 	pThis->m_aClients[ClientID].m_AuthTries = 0;
 	pThis->m_aClients[ClientID].m_pRconCmdToSend = 0;
 	pThis->m_aClients[ClientID].m_ShowIps = false;
+	pThis->m_aClients[ClientID].m_DebugDummy = false;
 	pThis->m_aClients[ClientID].m_DDNetVersion = VERSION_NONE;
 	pThis->m_aClients[ClientID].m_GotDDNetVersionPacket = false;
 	pThis->m_aClients[ClientID].m_DDNetVersionSettled = false;
@@ -1114,6 +1114,7 @@ int CServer::NewClientCallback(int ClientID, void *pUser, bool Sixup)
 	pThis->m_aClients[ClientID].m_Traffic = 0;
 	pThis->m_aClients[ClientID].m_TrafficSince = 0;
 	pThis->m_aClients[ClientID].m_ShowIps = false;
+	pThis->m_aClients[ClientID].m_DebugDummy = false;
 	pThis->m_aClients[ClientID].m_DDNetVersion = VERSION_NONE;
 	pThis->m_aClients[ClientID].m_GotDDNetVersionPacket = false;
 	pThis->m_aClients[ClientID].m_DDNetVersionSettled = false;
@@ -1200,6 +1201,7 @@ int CServer::DelClientCallback(int ClientID, const char *pReason, void *pUser)
 	pThis->m_aClients[ClientID].m_Traffic = 0;
 	pThis->m_aClients[ClientID].m_TrafficSince = 0;
 	pThis->m_aClients[ClientID].m_ShowIps = false;
+	pThis->m_aClients[ClientID].m_DebugDummy = false;
 	pThis->m_aPrevStates[ClientID] = CClient::STATE_EMPTY;
 	pThis->m_aClients[ClientID].m_Snapshots.PurgeAll();
 	pThis->m_aClients[ClientID].m_Sixup = false;
@@ -1933,7 +1935,7 @@ void CServer::CacheServerInfo(CCache *pCache, int Type, bool SendClients)
 	int PlayerCount = 0, ClientCount = 0;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
+		if(m_aClients[i].IncludedInServerInfo())
 		{
 			if(GameServer()->IsClientPlayer(i))
 				PlayerCount++;
@@ -2065,7 +2067,7 @@ void CServer::CacheServerInfo(CCache *pCache, int Type, bool SendClients)
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
+		if(m_aClients[i].IncludedInServerInfo())
 		{
 			if(Remaining == 0)
 			{
@@ -2147,7 +2149,7 @@ void CServer::CacheServerInfoSixup(CCache *pCache, bool SendClients)
 	int PlayerCount = 0, ClientCount = 0;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
+		if(m_aClients[i].IncludedInServerInfo())
 		{
 			if(GameServer()->IsClientPlayer(i))
 				PlayerCount++;
@@ -2183,7 +2185,7 @@ void CServer::CacheServerInfoSixup(CCache *pCache, bool SendClients)
 	{
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if(m_aClients[i].m_State != CClient::STATE_EMPTY)
+			if(m_aClients[i].IncludedInServerInfo())
 			{
 				Packer.AddString(ClientName(i), MAX_NAME_LENGTH); // client name
 				Packer.AddString(ClientClan(i), MAX_CLAN_LENGTH); // client clan
@@ -2286,7 +2288,7 @@ void CServer::UpdateRegisterServerInfo()
 	int PlayerCount = 0, ClientCount = 0;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
+		if(m_aClients[i].IncludedInServerInfo())
 		{
 			if(GameServer()->IsClientPlayer(i))
 				PlayerCount++;
@@ -2334,7 +2336,7 @@ void CServer::UpdateRegisterServerInfo()
 	bool FirstPlayer = true;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
+		if(m_aClients[i].IncludedInServerInfo())
 		{
 			char aCName[32];
 			char aCClan[32];
@@ -2615,6 +2617,45 @@ int CServer::LoadMap(const char *pMapName)
 	return 1;
 }
 
+#ifdef CONF_DEBUG
+void CServer::UpdateDebugDummies(bool ForceDisconnect)
+{
+	if(m_PreviousDebugDummies == g_Config.m_DbgDummies && !ForceDisconnect)
+		return;
+
+	for(int DummyIndex = 0; DummyIndex < maximum(m_PreviousDebugDummies, g_Config.m_DbgDummies); ++DummyIndex)
+	{
+		const bool AddDummy = !ForceDisconnect && DummyIndex < g_Config.m_DbgDummies;
+		const int ClientID = MAX_CLIENTS - DummyIndex - 1;
+		if(AddDummy && m_aClients[ClientID].m_State == CClient::STATE_EMPTY)
+		{
+			NewClientCallback(ClientID, this, false);
+			m_aClients[ClientID].m_DebugDummy = true;
+			GameServer()->OnClientConnected(ClientID, nullptr);
+			m_aClients[ClientID].m_State = CClient::STATE_INGAME;
+			str_format(m_aClients[ClientID].m_aName, sizeof(m_aClients[ClientID].m_aName), "Debug dummy %d", DummyIndex + 1);
+			GameServer()->OnClientEnter(ClientID);
+		}
+		else if(!AddDummy && m_aClients[ClientID].m_DebugDummy)
+		{
+			DelClientCallback(ClientID, "Dropping debug dummy", this);
+		}
+
+		if(AddDummy && m_aClients[ClientID].m_DebugDummy)
+		{
+			CNetObj_PlayerInput Input = {0};
+			Input.m_Direction = (ClientID & 1) ? -1 : 1;
+			m_aClients[ClientID].m_aInputs[0].m_GameTick = Tick() + 1;
+			mem_copy(m_aClients[ClientID].m_aInputs[0].m_aData, &Input, minimum(sizeof(Input), sizeof(m_aClients[ClientID].m_aInputs[0].m_aData)));
+			m_aClients[ClientID].m_LatestInput = m_aClients[ClientID].m_aInputs[0];
+			m_aClients[ClientID].m_CurrentInput = 0;
+		}
+	}
+
+	m_PreviousDebugDummies = ForceDisconnect ? 0 : g_Config.m_DbgDummies;
+}
+#endif
+
 int CServer::Run()
 {
 	if(m_RunServer == UNINITIALIZED)
@@ -2762,6 +2803,9 @@ int CServer::Run()
 						}
 					}
 
+#ifdef CONF_DEBUG
+					UpdateDebugDummies(true);
+#endif
 					GameServer()->OnShutdown(m_pPersistentData);
 
 					for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
@@ -2850,6 +2894,10 @@ int CServer::Run()
 			while(t > TickStartTime(m_CurrentGameTick + 1))
 			{
 				GameServer()->OnPreTickTeehistorian();
+
+#ifdef CONF_DEBUG
+				UpdateDebugDummies(false);
+#endif
 
 				for(int c = 0; c < MAX_CLIENTS; c++)
 				{
@@ -3868,7 +3916,7 @@ void CServer::GetClientAddr(int ClientID, NETADDR *pAddr) const
 	}
 }
 
-const char *CServer::GetAnnouncementLine(char const *pFileName)
+const char *CServer::GetAnnouncementLine(const char *pFileName)
 {
 	if(str_comp(pFileName, m_aAnnouncementFile) != 0)
 	{

@@ -59,6 +59,7 @@ chillpw_*
 config_retrieve
 config_store
 crapnet
+demo_extract_chat
 dilate
 dummy_map
 fake_server

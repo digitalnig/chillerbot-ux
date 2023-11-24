@@ -83,8 +83,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_ReckoningTick = 0;
 	m_SendCore = CCharacterCore();
-	m_ReckoningCore = m_Core;
-	m_ReckoningCore.SetCoreWorld(nullptr, Collision(), nullptr);
+	m_ReckoningCore = CCharacterCore();
 
 	GameServer()->m_World.InsertEntity(this);
 	m_Alive = true;
@@ -526,7 +525,7 @@ void CCharacter::FireWeapon()
 				MouseTarget //InitDir
 			);
 
-			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, TeamMask());
+			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, TeamMask()); // NOLINT(clang-analyzer-unix.Malloc)
 		}
 	}
 	break;
@@ -540,7 +539,7 @@ void CCharacter::FireWeapon()
 			LaserReach = TuningList()[m_TuneZone].m_LaserReach;
 
 		new CLaser(&GameServer()->m_World, m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_SHOTGUN);
-		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, TeamMask());
+		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, TeamMask()); // NOLINT(clang-analyzer-unix.Malloc)
 	}
 	break;
 
@@ -578,7 +577,7 @@ void CCharacter::FireWeapon()
 			LaserReach = TuningList()[m_TuneZone].m_LaserReach;
 
 		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_LASER);
-		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, TeamMask());
+		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, TeamMask()); // NOLINT(clang-analyzer-unix.Malloc)
 	}
 	break;
 
@@ -790,6 +789,9 @@ void CCharacter::TickDeferred()
 {
 	// advance the dummy
 	{
+		CWorldCore TempWorld;
+		m_ReckoningCore.Init(&TempWorld, Collision(), &Teams()->m_Core, m_pTeleOuts);
+		m_ReckoningCore.m_Id = m_pPlayer->GetCID();
 		m_ReckoningCore.Tick(false);
 		m_ReckoningCore.Move();
 		m_ReckoningCore.Quantize();
@@ -878,8 +880,6 @@ void CCharacter::TickDeferred()
 			m_ReckoningTick = Server()->Tick();
 			m_SendCore = m_Core;
 			m_ReckoningCore = m_Core;
-			m_ReckoningCore.SetCoreWorld(nullptr, Collision(), nullptr);
-			m_ReckoningCore.m_Tuning = CTuningParams();
 			m_Core.m_Reset = false;
 		}
 	}
@@ -1060,7 +1060,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 	if(Emote == EMOTE_NORMAL)
 	{
-		if(250 - ((Server()->Tick() - m_LastAction) % (250)) < 5)
+		if(5 * Server()->TickSpeed() - ((Server()->Tick() - m_LastAction) % (5 * Server()->TickSpeed())) < 5)
 			Emote = EMOTE_BLINK;
 	}
 

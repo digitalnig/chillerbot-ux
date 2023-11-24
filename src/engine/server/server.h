@@ -122,6 +122,11 @@ class CServer : public IServer
 
 	class CDbConnectionPool *m_pConnectionPool;
 
+#ifdef CONF_DEBUG
+	int m_PreviousDebugDummies = 0;
+	void UpdateDebugDummies(bool ForceDisconnect);
+#endif
+
 public:
 	class IGameServer *GameServer() { return m_pGameServer; }
 	class CConfig *Config() { return m_pConfig; }
@@ -192,6 +197,7 @@ public:
 		int m_NextMapChunk;
 		int m_Flags;
 		bool m_ShowIps;
+		bool m_DebugDummy;
 
 		const IConsole::CCommandInfo *m_pRconCmdToSend;
 
@@ -215,6 +221,11 @@ public:
 		std::shared_ptr<CHostLookup> m_pDnsblLookup;
 
 		bool m_Sixup;
+
+		bool IncludedInServerInfo() const
+		{
+			return m_State != STATE_EMPTY && !m_DebugDummy;
+		}
 	};
 
 	CClient m_aClients[MAX_CLIENTS];
@@ -288,7 +299,7 @@ public:
 
 	bool WouldClientNameChange(int ClientID, const char *pNameRequest) override;
 	void SetClientName(int ClientID, const char *pName) override;
-	void SetClientClan(int ClientID, char const *pClan) override;
+	void SetClientClan(int ClientID, const char *pClan) override;
 	void SetClientCountry(int ClientID, int Country) override;
 	void SetClientScore(int ClientID, std::optional<int> Score) override;
 	void SetClientFlags(int ClientID, int Flags) override;
@@ -457,7 +468,7 @@ public:
 
 	void GetClientAddr(int ClientID, NETADDR *pAddr) const override;
 	int m_aPrevStates[MAX_CLIENTS];
-	const char *GetAnnouncementLine(char const *pFileName) override;
+	const char *GetAnnouncementLine(const char *pFileName) override;
 
 	int *GetIdMap(int ClientID) override;
 
