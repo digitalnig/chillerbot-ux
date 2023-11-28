@@ -1933,6 +1933,7 @@ set_src(ENGINE_SHARED GLOB_RECURSE src/engine/shared
   assertion_logger.h
   chillerbot/langparser.cpp
   chillerbot/langparser.h
+  chillerbot/variables.h
   compression.cpp
   compression.h
   config.cpp
@@ -2043,7 +2044,6 @@ set_src(GAME_SHARED GLOB src/game
   teamscore.cpp
   teamscore.h
   tuning.h
-  variables.h
   version.h
   voting.h
 )
