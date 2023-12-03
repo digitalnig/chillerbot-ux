@@ -1563,6 +1563,7 @@ set(EXPECTED_DATA
   particles.png
   playerpics/ChillerDragon.png
   playerpics/jao.png
+  race_flag.png
   shader/pipeline.frag
   shader/pipeline.vert
   shader/prim.frag
@@ -2273,10 +2274,10 @@ if(CLIENT)
     components/ghost.h
     components/hud.cpp
     components/hud.h
+    components/infomessages.cpp
+    components/infomessages.h
     components/items.cpp
     components/items.h
-    components/killmessages.cpp
-    components/killmessages.h
     components/mapimages.cpp
     components/mapimages.h
     components/maplayers.cpp
