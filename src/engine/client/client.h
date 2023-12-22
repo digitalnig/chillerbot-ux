@@ -39,6 +39,7 @@ class IEngineSound;
 class IFriends;
 class ILogger;
 class ISteam;
+class INotifications;
 class IStorage;
 class IUpdater;
 
@@ -71,6 +72,7 @@ class CClient : public IClient, public CDemoPlayer::IListener
 	IEngineMap *m_pMap = nullptr;
 	IEngineSound *m_pSound = nullptr;
 	ISteam *m_pSteam = nullptr;
+	INotifications *m_pNotifications = nullptr;
 	IStorage *m_pStorage = nullptr;
 	IEngineTextRender *m_pTextRender = nullptr;
 	IUpdater *m_pUpdater = nullptr;
@@ -90,6 +92,7 @@ class CClient : public IClient, public CDemoPlayer::IListener
 
 	CUuid m_ConnectionID = UUID_ZEROED;
 
+	bool m_HaveGlobalTcpAddr = false;
 	NETADDR m_GlobalTcpAddr = NETADDR_ZEROED;
 
 	uint64_t m_aSnapshotParts[NUM_DUMMIES] = {0, 0};
@@ -259,6 +262,7 @@ public:
 	IEngineInput *Input() { return m_pInput; }
 	IEngineSound *Sound() { return m_pSound; }
 	ISteam *Steam() { return m_pSteam; }
+	INotifications *Notifications() { return m_pNotifications; }
 	IStorage *Storage() { return m_pStorage; }
 	IEngineTextRender *TextRender() { return m_pTextRender; }
 	IUpdater *Updater() { return m_pUpdater; }

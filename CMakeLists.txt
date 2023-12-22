@@ -1917,6 +1917,7 @@ set_src(ENGINE_INTERFACE GLOB src/engine
   keys.h
   map.h
   message.h
+  notifications.h
   rust.h
   server.h
   serverbrowser.h
@@ -2190,6 +2191,7 @@ if(CLIENT)
     updater.h
     video.cpp
     video.h
+    warning.cpp
   )
   set_src(GAME_CLIENT GLOB_RECURSE src/game/client
     animstate.cpp
@@ -2366,13 +2368,22 @@ if(CLIENT)
     component.h
     editor.cpp
     editor.h
+    editor_action.h
+    editor_actions.cpp
+    editor_actions.h
+    editor_history.cpp
+    editor_history.h
     editor_object.cpp
     editor_object.h
+    editor_props.cpp
+    editor_trackers.cpp
+    editor_trackers.h
     explanations.cpp
     map_grid.cpp
     map_grid.h
     map_view.cpp
     map_view.h
+    mapitems.h
     mapitems/envelope.cpp
     mapitems/envelope.h
     mapitems/image.cpp
@@ -3161,15 +3172,12 @@ if(NOT DEV)
   if(ANTIBOT)
     install(TARGETS ${TARGET_ANTIBOT} DESTINATION ${CMAKE_INSTALL_LIBDIR}/ddnet COMPONENT server)
   endif()
-  install(TARGETS ${TARGETS_TOOLS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/chillerbot-ux COMPONENT tools)
+  install(TARGETS ${TARGETS_TOOLS} DESTINATION ${CMAKE_INSTALL_LIBDIR}/ddnet COMPONENT tools)
   install(FILES other/chillerbot-ux.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications COMPONENT client)
-  install(FILES other/chillerbot-ux.appdata.xml DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo COMPONENT client)
-  if(NOT CURSES_CLIENT)
-    foreach(SIZE 16 32 48 256)
-      install(FILES other/icons/chillerbot-ux_${SIZE}x${SIZE}x32.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${SIZE}x${SIZE}/apps RENAME chillerbot-ux.png COMPONENT client)
-      install(FILES other/icons/DDNet-Server_${SIZE}x${SIZE}x32.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${SIZE}x${SIZE}/apps RENAME ddnet-server.png COMPONENT server)
-    endforeach()
-  endif()
+  foreach(SIZE 16 32 48 256)
+    install(FILES other/icons/chillerbot-ux_${SIZE}x${SIZE}x32.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${SIZE}x${SIZE}/apps RENAME chillerbot-ux.png COMPONENT client)
+    install(FILES other/icons/DDNet-Server_${SIZE}x${SIZE}x32.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/${SIZE}x${SIZE}/apps RENAME ddnet-server.png COMPONENT server)
+  endforeach()
   foreach(file ${VULKAN_SHADER_FILE_LIST})
     install(FILES ${PROJECT_BINARY_DIR}/${file} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/ddnet/data/shader/vulkan COMPONENT client)
   endforeach()

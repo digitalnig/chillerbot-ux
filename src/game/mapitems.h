@@ -520,6 +520,9 @@ struct CMapItemSound
 
 	int m_SoundName;
 	int m_SoundData;
+	// Deprecated. Do not read this value, it could be wrong.
+	// Use GetDataSize instead, which returns the de facto size.
+	// Value must still be written for compatibility.
 	int m_SoundDataSize;
 };
 
@@ -578,5 +581,6 @@ bool IsValidTuneTile(int Index);
 bool IsValidEntity(int Index);
 bool IsRotatableTile(int Index);
 bool IsCreditsTile(int TileIndex);
+int PackColor(CColor Color);
 
 #endif

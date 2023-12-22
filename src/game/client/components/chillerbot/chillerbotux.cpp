@@ -208,7 +208,7 @@ void CChillerBotUX::ChangeTileNotifyTick()
 		IEngineGraphics *pGraphics = ((IEngineGraphics *)Kernel()->RequestInterface<IEngineGraphics>());
 		if(pGraphics && !pGraphics->WindowActive() && Graphics())
 		{
-			NotificationsNotify("chillerbot-ux", "current tile changed");
+			Client()->Notify("chillerbot-ux", "current tile changed");
 			Graphics()->NotifyWindow();
 		}
 		m_LastNotification = time_get();

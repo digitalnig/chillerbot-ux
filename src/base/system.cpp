@@ -182,7 +182,7 @@ bool dbg_assert_has_failed()
 	return dbg_assert_failing.load(std::memory_order_acquire);
 }
 
-void dbg_assert_imp(const char *filename, int line, int test, const char *msg)
+void dbg_assert_imp(const char *filename, int line, bool test, const char *msg)
 {
 	if(!test)
 	{
@@ -1470,7 +1470,7 @@ std::string windows_format_system_message(unsigned long error)
 
 	std::optional<std::string> message = windows_wide_to_utf8(wide_message);
 	LocalFree(wide_message);
-	return message.value_or("invalid error");
+	return message.value_or("(invalid UTF-16 in error message)");
 }
 #endif
 
@@ -1560,14 +1560,17 @@ NETSOCKET net_udp_create(NETADDR bindaddr)
 
 			/* set broadcast */
 			if(setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcast, sizeof(broadcast)) != 0)
-				dbg_msg("socket", "Setting BROADCAST on ipv4 failed: %d", errno);
+			{
+				dbg_msg("socket", "Setting BROADCAST on ipv4 failed: %d", net_errno());
+			}
 
 			{
 				/* set DSCP/TOS */
 				int iptos = 0x10 /* IPTOS_LOWDELAY */;
-				//int iptos = 46; /* High Priority */
 				if(setsockopt(socket, IPPROTO_IP, IP_TOS, (char *)&iptos, sizeof(iptos)) != 0)
-					dbg_msg("socket", "Setting TOS on ipv4 failed: %d", errno);
+				{
+					dbg_msg("socket", "Setting TOS on ipv4 failed: %d", net_errno());
+				}
 			}
 		}
 	}
@@ -1605,15 +1608,21 @@ NETSOCKET net_udp_create(NETADDR bindaddr)
 
 			/* set broadcast */
 			if(setsockopt(socket, SOL_SOCKET, SO_BROADCAST, (const char *)&broadcast, sizeof(broadcast)) != 0)
-				dbg_msg("socket", "Setting BROADCAST on ipv6 failed: %d", errno);
+			{
+				dbg_msg("socket", "Setting BROADCAST on ipv6 failed: %d", net_errno());
+			}
 
+			// TODO: setting IP_TOS on ipv6 with setsockopt is not supported on Windows, see https://github.com/ddnet/ddnet/issues/7605
+#if !defined(CONF_FAMILY_WINDOWS)
 			{
 				/* set DSCP/TOS */
 				int iptos = 0x10 /* IPTOS_LOWDELAY */;
-				//int iptos = 46; /* High Priority */
 				if(setsockopt(socket, IPPROTO_IP, IP_TOS, (char *)&iptos, sizeof(iptos)) != 0)
-					dbg_msg("socket", "Setting TOS on ipv6 failed: %d", errno);
+				{
+					dbg_msg("socket", "Setting TOS on ipv6 failed: %d", net_errno());
+				}
 			}
+#endif
 		}
 	}
 
@@ -4439,7 +4448,8 @@ void os_locale_str(char *locale, size_t length)
 	dbg_assert(GetUserDefaultLocaleName(wide_buffer, std::size(wide_buffer)) > 0, "GetUserDefaultLocaleName failure");
 
 	const std::optional<std::string> buffer = windows_wide_to_utf8(wide_buffer);
-	str_copy(locale, buffer.value_or("en-US").c_str(), length);
+	dbg_assert(buffer.has_value(), "GetUserDefaultLocaleName returned invalid UTF-16");
+	str_copy(locale, buffer.value().c_str(), length);
 #elif defined(CONF_PLATFORM_MACOS)
 	CFLocaleRef locale_ref = CFLocaleCopyCurrent();
 	CFStringRef locale_identifier_ref = static_cast<CFStringRef>(CFLocaleGetValue(locale_ref, kCFLocaleIdentifier));
