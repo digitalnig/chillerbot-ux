@@ -439,7 +439,12 @@ bool CChatHelper::FilterChat(int ClientID, int Team, const char *pLine)
 		if(aChatFilter[0] == '\0')
 			continue;
 		if(str_find_nocase(pLine, aChatFilter))
+		{
+			char aBuf[2048];
+			str_format(aBuf, sizeof(aBuf), "filter '%s' filtered msg: %s", aChatFilter, pLine);
+			Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "chillerbot", aBuf);
 			return true;
+		}
 	}
 	int Spam = IsSpam(ClientID, Team, pLine);
 	if(Spam)
