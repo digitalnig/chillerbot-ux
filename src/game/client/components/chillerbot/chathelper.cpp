@@ -438,7 +438,7 @@ bool CChatHelper::FilterChat(int ClientID, int Team, const char *pLine)
 	{
 		if(aChatFilter[0] == '\0')
 			continue;
-		if(str_find(pLine, aChatFilter))
+		if(str_find_nocase(pLine, aChatFilter))
 			return true;
 	}
 	int Spam = IsSpam(ClientID, Team, pLine);
