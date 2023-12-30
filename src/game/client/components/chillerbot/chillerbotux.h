@@ -150,7 +150,7 @@ public:
 
 	int GetTotalJumps();
 	int GetUnusedJumps();
-	int GetPlayTimeHours();
+	int GetPlayTimeHours() const;
 };
 
 #endif

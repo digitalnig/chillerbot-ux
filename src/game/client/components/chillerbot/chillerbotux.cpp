@@ -123,7 +123,7 @@ void CChillerBotUX::OnRender()
 	m_LastForceDir = m_ForceDir;
 }
 
-int CChillerBotUX::GetPlayTimeHours()
+int CChillerBotUX::GetPlayTimeHours() const
 {
 	if(m_PlaytimeMinutes == -1)
 		return 0;
