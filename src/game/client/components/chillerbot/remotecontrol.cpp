@@ -15,6 +15,8 @@ void CRemoteControl::OnChatMessage(int ClientID, int Team, const char *pMsg)
 {
 	if(!g_Config.m_ClRemoteControl)
 		return;
+	if(ClientID < 0 || ClientID >= 64)
+		return;
 
 	char aName[64];
 	str_copy(aName, m_pClient->m_aClients[ClientID].m_aName, sizeof(aName));
