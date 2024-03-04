@@ -248,6 +248,10 @@ function run_tests() {
 		srv_log="$(grep -F ' chat: ' server.log | tail -n2)"
 		if ! echo "$srv_log" | grep -qF "$out_msg"
 		then
+			# the sleep of 0.2 works fine on my laptop
+			# this sleep of 1 and 2 seconds is needed in the CI
+			# if the CI ever starts to fail it might be cleaner to
+			# increase the base sleep from 0.2 to 0.5 again
 			echo ""
 			echo "Warning: message not found retrying with delay!"
 			echo ""
