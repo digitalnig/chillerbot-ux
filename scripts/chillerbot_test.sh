@@ -242,15 +242,17 @@ function run_tests() {
 		in_msg="${ins[$i]}"
 		out_msg="${outs[$i]}"
 		echo "say $in_msg" > client1.fifo
-		sleep 0.5
+		sleep 0.2
 		echo "reply_to_last_ping" > client2.fifo
-		sleep 0.5
+		sleep 0.2
 		srv_log="$(grep -F ' chat: ' server.log | tail -n2)"
 		if ! echo "$srv_log" | grep -qF "$out_msg"
 		then
 			echo ""
 			echo "Warning: message not found retrying with delay!"
 			echo ""
+			sleep 1
+			echo "reply_to_last_ping" > client2.fifo
 			sleep 2
 			srv_log="$(grep -F ' chat: ' server.log | tail -n2)"
 			if ! echo "$srv_log" | grep -qF "$out_msg"
@@ -273,6 +275,8 @@ function run_tests() {
 				fi
 				echo ""
 				exit 1
+			else
+				printf '.'
 			fi
 		else
 			printf '.'
