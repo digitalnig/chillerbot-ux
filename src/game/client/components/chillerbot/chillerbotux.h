@@ -25,7 +25,7 @@ class CChillerBotUX : public CComponent
 	};
 	int m_HeartbeatState;
 	int m_PlaytimeMinutes;
-	std::shared_ptr<CHttpRequest> m_pAliveGet;
+	std::shared_ptr<CHttpRequest> m_pAliveGet = nullptr;
 	int64_t m_NextHeartbeat;
 	int64_t m_AfkTill;
 

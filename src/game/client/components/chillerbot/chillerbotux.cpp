@@ -53,9 +53,9 @@ void CChillerBotUX::OnRender()
 				str_append(aUrl, aEscaped, sizeof(aUrl));
 
 				m_pAliveGet = HttpGet(aUrl);
-				// 10 seconds connection timeout, lower than 8KB/s for 10 seconds to fail.
-				m_pAliveGet->Timeout(CTimeout{10000, 8000, 10});
-				// m_pClient->Engine()->AddJob(m_pAliveGet);
+				m_pAliveGet->Timeout(CTimeout{10000, 0, 500, 10});
+				m_pAliveGet->IpResolve(IPRESOLVE::V4);
+				Http()->Run(m_pAliveGet);
 				m_HeartbeatState = STATE_REFRESHING;
 			}
 			else if(m_HeartbeatState == STATE_REFRESHING)
