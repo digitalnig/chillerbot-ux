@@ -128,6 +128,11 @@ protected:
 	 */
 	float LocalTime() const;
 
+	/**
+	 * Get the http interface
+	 */
+	class IHttp *Http() const;
+
 public:
 	/**
 	 * The component virtual destructor.
@@ -177,6 +182,10 @@ public:
 	 * Called when the window has been resized.
 	 */
 	virtual void OnWindowResize() {}
+	/**
+	 * Called when skins have been invalidated and must be updated.
+	 */
+	virtual void OnRefreshSkins() {}
 	/**
 	 * Called when the component should get rendered.
 	 *

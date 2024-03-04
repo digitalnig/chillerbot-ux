@@ -55,12 +55,12 @@ void CChillerBotUX::OnRender()
 				m_pAliveGet = HttpGet(aUrl);
 				// 10 seconds connection timeout, lower than 8KB/s for 10 seconds to fail.
 				m_pAliveGet->Timeout(CTimeout{10000, 8000, 10});
-				m_pClient->Engine()->AddJob(m_pAliveGet);
+				// m_pClient->Engine()->AddJob(m_pAliveGet);
 				m_HeartbeatState = STATE_REFRESHING;
 			}
 			else if(m_HeartbeatState == STATE_REFRESHING)
 			{
-				if(m_pAliveGet->State() == HTTP_QUEUED || m_pAliveGet->State() == HTTP_RUNNING)
+				if(m_pAliveGet->State() == EHttpState::QUEUED || m_pAliveGet->State() == EHttpState::RUNNING)
 				{
 					return;
 				}

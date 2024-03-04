@@ -2,6 +2,7 @@
 #include "gamecontext.h"
 #include <engine/shared/config.h>
 #include <engine/shared/protocol.h>
+#include <game/mapitems.h>
 #include <game/server/gamemodes/DDRace.h>
 #include <game/server/teams.h>
 #include <game/version.h>
@@ -150,7 +151,7 @@ void CGameContext::ConSettings(IConsole::IResult *pResult, void *pUserData)
 		float HookTemp;
 		pSelf->m_Tuning.Get("player_collision", &ColTemp);
 		pSelf->m_Tuning.Get("player_hooking", &HookTemp);
-		if(str_comp(pArg, "teams") == 0)
+		if(str_comp_nocase(pArg, "teams") == 0)
 		{
 			str_format(aBuf, sizeof(aBuf), "%s %s",
 				g_Config.m_SvTeam == SV_TEAM_ALLOWED ?
@@ -161,61 +162,61 @@ void CGameContext::ConSettings(IConsole::IResult *pResult, void *pUserData)
 				"and all of your team will die if the team is locked");
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp", aBuf);
 		}
-		else if(str_comp(pArg, "cheats") == 0)
+		else if(str_comp_nocase(pArg, "cheats") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				g_Config.m_SvTestingCommands ?
 					"Cheats are enabled on this server" :
 					"Cheats are disabled on this server");
 		}
-		else if(str_comp(pArg, "collision") == 0)
+		else if(str_comp_nocase(pArg, "collision") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				ColTemp ?
 					"Players can collide on this server" :
 					"Players can't collide on this server");
 		}
-		else if(str_comp(pArg, "hooking") == 0)
+		else if(str_comp_nocase(pArg, "hooking") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				HookTemp ?
 					"Players can hook each other on this server" :
 					"Players can't hook each other on this server");
 		}
-		else if(str_comp(pArg, "endlesshooking") == 0)
+		else if(str_comp_nocase(pArg, "endlesshooking") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				g_Config.m_SvEndlessDrag ?
 					"Players hook time is unlimited" :
 					"Players hook time is limited");
 		}
-		else if(str_comp(pArg, "hitting") == 0)
+		else if(str_comp_nocase(pArg, "hitting") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				g_Config.m_SvHit ?
 					"Players weapons affect others" :
 					"Players weapons has no affect on others");
 		}
-		else if(str_comp(pArg, "oldlaser") == 0)
+		else if(str_comp_nocase(pArg, "oldlaser") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				g_Config.m_SvOldLaser ?
 					"Lasers can hit you if you shot them and they pull you towards the bounce origin (Like DDRace Beta)" :
 					"Lasers can't hit you if you shot them, and they pull others towards the shooter");
 		}
-		else if(str_comp(pArg, "me") == 0)
+		else if(str_comp_nocase(pArg, "me") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				g_Config.m_SvSlashMe ?
 					"Players can use /me commands the famous IRC Command" :
 					"Players can't use the /me command");
 		}
-		else if(str_comp(pArg, "timeout") == 0)
+		else if(str_comp_nocase(pArg, "timeout") == 0)
 		{
 			str_format(aBuf, sizeof(aBuf), "The Server Timeout is currently set to %d seconds", g_Config.m_ConnTimeout);
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp", aBuf);
 		}
-		else if(str_comp(pArg, "votes") == 0)
+		else if(str_comp_nocase(pArg, "votes") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				g_Config.m_SvVoteKick ?
@@ -232,14 +233,14 @@ void CGameContext::ConSettings(IConsole::IResult *pResult, void *pUserData)
 						"Players are just kicked and not banned if they get voted off");
 			}
 		}
-		else if(str_comp(pArg, "pause") == 0)
+		else if(str_comp_nocase(pArg, "pause") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				g_Config.m_SvPauseable ?
 					"/spec will pause you and your tee will vanish" :
 					"/spec will pause you but your tee will not vanish");
 		}
-		else if(str_comp(pArg, "scores") == 0)
+		else if(str_comp_nocase(pArg, "scores") == 0)
 		{
 			pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chatresp",
 				g_Config.m_SvHideScore ?
@@ -413,7 +414,7 @@ void CGameContext::ConTeamTop5(IConsole::IResult *pResult, void *pUserData)
 		}
 		else
 		{
-			const char *pRequestedName = (str_comp(pResult->GetString(0), "me") == 0) ?
+			const char *pRequestedName = (str_comp_nocase(pResult->GetString(0), "me") == 0) ?
 							     pSelf->Server()->ClientName(pResult->m_ClientID) :
 							     pResult->GetString(0);
 			pSelf->Score()->ShowPlayerTeamTop5(pResult->m_ClientID, pRequestedName, 0);
@@ -421,7 +422,7 @@ void CGameContext::ConTeamTop5(IConsole::IResult *pResult, void *pUserData)
 	}
 	else if(pResult->NumArguments() == 2 && pResult->GetInteger(1) != 0)
 	{
-		const char *pRequestedName = (str_comp(pResult->GetString(0), "me") == 0) ?
+		const char *pRequestedName = (str_comp_nocase(pResult->GetString(0), "me") == 0) ?
 						     pSelf->Server()->ClientName(pResult->m_ClientID) :
 						     pResult->GetString(0);
 		pSelf->Score()->ShowPlayerTeamTop5(pResult->m_ClientID, pRequestedName, pResult->GetInteger(1));
@@ -471,7 +472,7 @@ void CGameContext::ConTimes(IConsole::IResult *pResult, void *pUserData)
 		}
 		else
 		{
-			const char *pRequestedName = (str_comp(pResult->GetString(0), "me") == 0) ?
+			const char *pRequestedName = (str_comp_nocase(pResult->GetString(0), "me") == 0) ?
 							     pSelf->Server()->ClientName(pResult->m_ClientID) :
 							     pResult->GetString(0);
 			pSelf->Score()->ShowTimes(pResult->m_ClientID, pRequestedName, pResult->GetInteger(1));
@@ -479,7 +480,7 @@ void CGameContext::ConTimes(IConsole::IResult *pResult, void *pUserData)
 	}
 	else if(pResult->NumArguments() == 2 && pResult->GetInteger(1) != 0)
 	{
-		const char *pRequestedName = (str_comp(pResult->GetString(0), "me") == 0) ?
+		const char *pRequestedName = (str_comp_nocase(pResult->GetString(0), "me") == 0) ?
 						     pSelf->Server()->ClientName(pResult->m_ClientID) :
 						     pResult->GetString(0);
 		pSelf->Score()->ShowTimes(pResult->m_ClientID, pRequestedName, pResult->GetInteger(1));
@@ -1254,19 +1255,19 @@ void CGameContext::ConEyeEmote(IConsole::IResult *pResult, void *pUserData)
 			return;
 
 		int EmoteType = 0;
-		if(!str_comp(pResult->GetString(0), "angry"))
+		if(!str_comp_nocase(pResult->GetString(0), "angry"))
 			EmoteType = EMOTE_ANGRY;
-		else if(!str_comp(pResult->GetString(0), "blink"))
+		else if(!str_comp_nocase(pResult->GetString(0), "blink"))
 			EmoteType = EMOTE_BLINK;
-		else if(!str_comp(pResult->GetString(0), "close"))
+		else if(!str_comp_nocase(pResult->GetString(0), "close"))
 			EmoteType = EMOTE_BLINK;
-		else if(!str_comp(pResult->GetString(0), "happy"))
+		else if(!str_comp_nocase(pResult->GetString(0), "happy"))
 			EmoteType = EMOTE_HAPPY;
-		else if(!str_comp(pResult->GetString(0), "pain"))
+		else if(!str_comp_nocase(pResult->GetString(0), "pain"))
 			EmoteType = EMOTE_PAIN;
-		else if(!str_comp(pResult->GetString(0), "surprise"))
+		else if(!str_comp_nocase(pResult->GetString(0), "surprise"))
 			EmoteType = EMOTE_SURPRISE;
-		else if(!str_comp(pResult->GetString(0), "normal"))
+		else if(!str_comp_nocase(pResult->GetString(0), "normal"))
 			EmoteType = EMOTE_NORMAL;
 		else
 		{
@@ -1536,29 +1537,36 @@ void CGameContext::ConRescue(IConsole::IResult *pResult, void *pUserData)
 	pChr->UnFreeze();
 }
 
-void CGameContext::ConTele(IConsole::IResult *pResult, void *pUserData)
+void CGameContext::ConTeleTo(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
-	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
-	if(!pPlayer)
+	CPlayer *pCallingPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	if(!pCallingPlayer)
 		return;
-	CCharacter *pChr = pPlayer->GetCharacter();
-	if(!pChr)
+	CCharacter *pCallingCharacter = pCallingPlayer->GetCharacter();
+	if(!pCallingCharacter)
 		return;
 
 	CGameTeams &Teams = pSelf->m_pController->Teams();
 	int Team = pSelf->GetDDRaceTeam(pResult->m_ClientID);
 	if(!Teams.IsPractice(Team))
 	{
-		pSelf->SendChatTarget(pPlayer->GetCID(), "You're not in a team with /practice turned on. Note that you can't earn a rank with practice enabled.");
+		pSelf->SendChatTarget(pCallingPlayer->GetCID(), "You're not in a team with /practice turned on. Note that you can't earn a rank with practice enabled.");
 		return;
 	}
 
-	vec2 Pos = pPlayer->m_ViewPos;
-	if(pResult->NumArguments() > 0)
+	vec2 Pos = {};
+
+	if(pResult->NumArguments() == 0)
 	{
+		// Set calling tee's position to the origin of its spectating viewport
+		Pos = pCallingPlayer->m_ViewPos;
+	}
+	else
+	{
+		// Search for player with this name
 		int ClientID;
 		for(ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
 		{
@@ -1567,21 +1575,103 @@ void CGameContext::ConTele(IConsole::IResult *pResult, void *pUserData)
 		}
 		if(ClientID == MAX_CLIENTS)
 		{
-			pSelf->SendChatTarget(pPlayer->GetCID(), "No player with this name found.");
+			pSelf->SendChatTarget(pCallingPlayer->GetCID(), "No player with this name found.");
 			return;
 		}
-		CPlayer *pPlayerTo = pSelf->m_apPlayers[ClientID];
-		if(!pPlayerTo)
+
+		CPlayer *pDestPlayer = pSelf->m_apPlayers[ClientID];
+		if(!pDestPlayer)
 			return;
-		CCharacter *pChrTo = pPlayerTo->GetCharacter();
-		if(!pChrTo)
+		CCharacter *pDestCharacter = pDestPlayer->GetCharacter();
+		if(!pDestCharacter)
 			return;
-		Pos = pChrTo->m_Pos;
+
+		// Set calling tee's position to that of the destination tee
+		Pos = pDestCharacter->m_Pos;
 	}
-	pSelf->Teleport(pChr, Pos);
-	pChr->UnFreeze();
-	pChr->Core()->m_Vel = vec2(0, 0);
-	pPlayer->m_LastTeleTee.Save(pChr);
+
+	// Teleport tee
+	pSelf->Teleport(pCallingCharacter, Pos);
+	pCallingCharacter->UnFreeze();
+	pCallingCharacter->ResetVelocity();
+	pCallingPlayer->m_LastTeleTee.Save(pCallingCharacter);
+}
+
+void CGameContext::ConTeleXY(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if(!CheckClientID(pResult->m_ClientID))
+		return;
+	CPlayer *pCallingPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	if(!pCallingPlayer)
+		return;
+	CCharacter *pCallingCharacter = pCallingPlayer->GetCharacter();
+	if(!pCallingCharacter)
+		return;
+
+	CGameTeams &Teams = pSelf->m_pController->Teams();
+	int Team = pSelf->GetDDRaceTeam(pResult->m_ClientID);
+	if(!Teams.IsPractice(Team))
+	{
+		pSelf->SendChatTarget(pCallingPlayer->GetCID(), "You're not in a team with /practice turned on. Note that you can't earn a rank with practice enabled.");
+		return;
+	}
+
+	vec2 Pos = {};
+
+	if(pResult->NumArguments() != 2)
+	{
+		pSelf->SendChatTarget(pCallingPlayer->GetCID(), "Can't recognize specified arguments. Usage: /tpxy x y, e.g. /tpxy 9 3.");
+		return;
+	}
+	else
+	{
+		float BaseX = 0.f, BaseY = 0.f;
+
+		CMapItemLayerTilemap *pGameLayer = pSelf->m_Layers.GameLayer();
+		constexpr float OuterKillTileBoundaryDistance = 201 * 32.f;
+		float MapWidth = (pGameLayer->m_Width * 32) + (OuterKillTileBoundaryDistance * 2.f), MapHeight = (pGameLayer->m_Height * 32) + (OuterKillTileBoundaryDistance * 2.f);
+
+		const auto DetermineCoordinateRelativity = [](const char *pInString, const float AbsoluteDefaultValue, float &OutFloat) -> bool {
+			// mode 0 = abs, 1 = sub, 2 = add
+
+			// Relative?
+			const char *pStrDelta = str_startswith(pInString, "~");
+
+			float d;
+			if(!str_tofloat(pStrDelta ? pStrDelta : pInString, &d))
+				return false;
+
+			// Is the number valid?
+			if(std::isnan(d) || std::isinf(d))
+				return false;
+
+			// Convert our gleaned 'display' coordinate to an actual map coordinate
+			d *= 32.f;
+
+			OutFloat = (pStrDelta ? AbsoluteDefaultValue : 0) + d;
+			return true;
+		};
+
+		if(!DetermineCoordinateRelativity(pResult->GetString(0), pCallingPlayer->m_ViewPos.x, BaseX))
+		{
+			pSelf->SendChatTarget(pCallingPlayer->GetCID(), "Invalid X coordinate.");
+			return;
+		}
+		if(!DetermineCoordinateRelativity(pResult->GetString(1), pCallingPlayer->m_ViewPos.y, BaseY))
+		{
+			pSelf->SendChatTarget(pCallingPlayer->GetCID(), "Invalid Y coordinate.");
+			return;
+		}
+
+		Pos = {std::clamp(BaseX, (-OuterKillTileBoundaryDistance) + 1.f, (-OuterKillTileBoundaryDistance) + MapWidth - 1.f), std::clamp(BaseY, (-OuterKillTileBoundaryDistance) + 1.f, (-OuterKillTileBoundaryDistance) + MapHeight - 1.f)};
+	}
+
+	// Teleport tee
+	pSelf->Teleport(pCallingCharacter, Pos);
+	pCallingCharacter->UnFreeze();
+	pCallingCharacter->ResetVelocity();
+	pCallingPlayer->m_LastTeleTee.Save(pCallingCharacter);
 }
 
 void CGameContext::ConTeleCursor(IConsole::IResult *pResult, void *pUserData)
@@ -1632,7 +1722,7 @@ void CGameContext::ConTeleCursor(IConsole::IResult *pResult, void *pUserData)
 	}
 	pSelf->Teleport(pChr, Pos);
 	pChr->UnFreeze();
-	pChr->Core()->m_Vel = vec2(0, 0);
+	pChr->ResetVelocity();
 	pPlayer->m_LastTeleTee.Save(pChr);
 }
 
@@ -1693,6 +1783,35 @@ void CGameContext::ConPracticeUnSolo(IConsole::IResult *pResult, void *pUserData
 	pChr->SetSolo(false);
 }
 
+void CGameContext::ConPracticeSolo(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if(!CheckClientID(pResult->m_ClientID))
+		return;
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	if(!pPlayer)
+		return;
+	CCharacter *pChr = pPlayer->GetCharacter();
+	if(!pChr)
+		return;
+
+	if(g_Config.m_SvTeam == SV_TEAM_FORBIDDEN || g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO)
+	{
+		pSelf->SendChatTarget(pPlayer->GetCID(), "Command is not available on solo servers");
+		return;
+	}
+
+	CGameTeams &Teams = pSelf->m_pController->Teams();
+	int Team = pSelf->GetDDRaceTeam(pResult->m_ClientID);
+	if(!Teams.IsPractice(Team))
+	{
+		pSelf->SendChatTarget(pPlayer->GetCID(), "You're not in a team with /practice turned on. Note that you can't earn a rank with practice enabled.");
+		return;
+	}
+
+	pChr->SetSolo(true);
+}
+
 void CGameContext::ConPracticeUnDeep(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -1715,6 +1834,29 @@ void CGameContext::ConPracticeUnDeep(IConsole::IResult *pResult, void *pUserData
 
 	pChr->SetDeepFrozen(false);
 	pChr->UnFreeze();
+}
+
+void CGameContext::ConPracticeDeep(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if(!CheckClientID(pResult->m_ClientID))
+		return;
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	if(!pPlayer)
+		return;
+	CCharacter *pChr = pPlayer->GetCharacter();
+	if(!pChr)
+		return;
+
+	CGameTeams &Teams = pSelf->m_pController->Teams();
+	int Team = pSelf->GetDDRaceTeam(pResult->m_ClientID);
+	if(!Teams.IsPractice(Team))
+	{
+		pSelf->SendChatTarget(pPlayer->GetCID(), "You're not in a team with /practice turned on. Note that you can't earn a rank with practice enabled.");
+		return;
+	}
+
+	pChr->SetDeepFrozen(true);
 }
 
 void CGameContext::ConProtectedKill(IConsole::IResult *pResult, void *pUserData)

@@ -37,7 +37,8 @@ struct CSoundSource_DEPRECATED
 bool CEditorMap::Save(const char *pFileName)
 {
 	char aFileNameTmp[IO_MAX_PATH_LENGTH];
-	str_format(aFileNameTmp, sizeof(aFileNameTmp), "%s.%d.tmp", pFileName, pid());
+	IStorage::FormatTmpPath(aFileNameTmp, sizeof(aFileNameTmp), pFileName);
+
 	char aBuf[IO_MAX_PATH_LENGTH + 64];
 	str_format(aBuf, sizeof(aBuf), "saving to '%s'...", aFileNameTmp);
 	m_pEditor->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "editor", aBuf);
@@ -917,7 +918,20 @@ bool CEditorMap::Load(const char *pFileName, int StorageType, const std::functio
 		for(int e = 0; e < EnvNum; e++)
 		{
 			CMapItemEnvelope *pItem = (CMapItemEnvelope *)DataFile.GetItem(EnvStart + e);
-			std::shared_ptr<CEnvelope> pEnv = std::make_shared<CEnvelope>(pItem->m_Channels);
+			int Channels = pItem->m_Channels;
+			if(Channels <= 0 || Channels == 2 || Channels > CEnvPoint::MAX_CHANNELS)
+			{
+				// Fall back to showing all channels if the number of channels is unsupported
+				Channels = CEnvPoint::MAX_CHANNELS;
+			}
+			if(Channels != pItem->m_Channels)
+			{
+				char aBuf[128];
+				str_format(aBuf, sizeof(aBuf), "Error: Envelope %d had an invalid number of channels, %d, which was changed to %d.", e, pItem->m_Channels, Channels);
+				ErrorHandler(aBuf);
+			}
+
+			std::shared_ptr<CEnvelope> pEnv = std::make_shared<CEnvelope>(Channels);
 			pEnv->m_vPoints.resize(pItem->m_NumPoints);
 			for(int p = 0; p < pItem->m_NumPoints; p++)
 			{

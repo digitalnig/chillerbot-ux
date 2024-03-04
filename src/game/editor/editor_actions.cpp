@@ -476,24 +476,24 @@ void CEditorActionBulk::Redo()
 
 // ---------
 
-CEditorActionAutoMap::CEditorActionAutoMap(CEditor *pEditor, int GroupIndex, int LayerIndex, const EditorTileStateChangeHistory<STileStateChange> &Changes) :
+CEditorActionTileChanges::CEditorActionTileChanges(CEditor *pEditor, int GroupIndex, int LayerIndex, const char *pAction, const EditorTileStateChangeHistory<STileStateChange> &Changes) :
 	CEditorActionLayerBase(pEditor, GroupIndex, LayerIndex), m_Changes(Changes)
 {
 	ComputeInfos();
-	str_format(m_aDisplayText, sizeof(m_aDisplayText), "Auto map (x%d)", m_TotalChanges);
+	str_format(m_aDisplayText, sizeof(m_aDisplayText), "%s (x%d)", pAction, m_TotalChanges);
 }
 
-void CEditorActionAutoMap::Undo()
+void CEditorActionTileChanges::Undo()
 {
 	Apply(true);
 }
 
-void CEditorActionAutoMap::Redo()
+void CEditorActionTileChanges::Redo()
 {
 	Apply(false);
 }
 
-void CEditorActionAutoMap::Apply(bool Undo)
+void CEditorActionTileChanges::Apply(bool Undo)
 {
 	auto &Map = m_pEditor->m_Map;
 	std::shared_ptr<CLayerTiles> pLayerTiles = std::static_pointer_cast<CLayerTiles>(m_pLayer);
@@ -512,7 +512,7 @@ void CEditorActionAutoMap::Apply(bool Undo)
 	Map.OnModify();
 }
 
-void CEditorActionAutoMap::ComputeInfos()
+void CEditorActionTileChanges::ComputeInfos()
 {
 	m_TotalChanges = 0;
 	for(auto &Line : m_Changes)
@@ -794,12 +794,14 @@ void CEditorActionEditLayerProp::Apply(int Value)
 	if(m_Prop == ELayerProp::PROP_GROUP)
 	{
 		auto pCurrentGroup = m_pEditor->m_Map.m_vpGroups[Value == m_Previous ? m_Current : m_Previous];
-		auto Position = std::find(pCurrentGroup->m_vpLayers.begin(), pCurrentGroup->m_vpLayers.end(), m_pLayer);
-		if(Position != pCurrentGroup->m_vpLayers.end())
-			pCurrentGroup->m_vpLayers.erase(Position);
-		m_pEditor->m_Map.m_vpGroups[Value]->m_vpLayers.push_back(m_pLayer);
+		auto pPreviousGroup = m_pEditor->m_Map.m_vpGroups[Value];
+		pCurrentGroup->m_vpLayers.erase(pCurrentGroup->m_vpLayers.begin() + pCurrentGroup->m_vpLayers.size() - 1);
+		if(Value == m_Previous)
+			pPreviousGroup->m_vpLayers.insert(pPreviousGroup->m_vpLayers.begin() + m_LayerIndex, m_pLayer);
+		else
+			pPreviousGroup->m_vpLayers.push_back(m_pLayer);
 		m_pEditor->m_SelectedGroup = Value;
-		m_pEditor->SelectLayer(m_pEditor->m_Map.m_vpGroups[Value]->m_vpLayers.size() - 1);
+		m_pEditor->SelectLayer(m_LayerIndex);
 	}
 	else if(m_Prop == ELayerProp::PROP_HQ)
 	{
@@ -2064,4 +2066,24 @@ void CEditorActionNewQuad::Redo()
 {
 	std::shared_ptr<CLayerQuads> pLayerQuads = std::static_pointer_cast<CLayerQuads>(m_pLayer);
 	pLayerQuads->m_vQuads.emplace_back(m_Quad);
+}
+
+// --------------
+
+CEditorActionMoveSoundSource::CEditorActionMoveSoundSource(CEditor *pEditor, int GroupIndex, int LayerIndex, int SourceIndex, CPoint OriginalPosition, CPoint CurrentPosition) :
+	CEditorActionLayerBase(pEditor, GroupIndex, LayerIndex), m_SourceIndex(SourceIndex), m_OriginalPosition(OriginalPosition), m_CurrentPosition(CurrentPosition)
+{
+	str_format(m_aDisplayText, sizeof(m_aDisplayText), "Move sound source %d of layer %d in group %d", SourceIndex, LayerIndex, GroupIndex);
+}
+
+void CEditorActionMoveSoundSource::Undo()
+{
+	dbg_assert(m_pLayer->m_Type == LAYERTYPE_SOUNDS, "Layer type does not match a sound layer");
+	std::static_pointer_cast<CLayerSounds>(m_pLayer)->m_vSources[m_SourceIndex].m_Position = m_OriginalPosition;
+}
+
+void CEditorActionMoveSoundSource::Redo()
+{
+	dbg_assert(m_pLayer->m_Type == LAYERTYPE_SOUNDS, "Layer type does not match a sound layer");
+	std::static_pointer_cast<CLayerSounds>(m_pLayer)->m_vSources[m_SourceIndex].m_Position = m_CurrentPosition;
 }

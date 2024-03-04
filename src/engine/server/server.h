@@ -11,6 +11,7 @@
 #include <engine/shared/demo.h>
 #include <engine/shared/econ.h>
 #include <engine/shared/fifo.h>
+#include <engine/shared/http.h>
 #include <engine/shared/netban.h>
 #include <engine/shared/network.h>
 #include <engine/shared/protocol.h>
@@ -25,6 +26,7 @@
 #include "antibot.h"
 #include "authmanager.h"
 #include "name_ban.h"
+#include "snap_id_pool.h"
 
 #if defined(CONF_UPNP)
 #include "upnp.h"
@@ -35,49 +37,9 @@ class CHostLookup;
 class CLogMessage;
 class CMsgPacker;
 class CPacker;
+class IEngine;
 class IEngineMap;
 class ILogger;
-
-class CSnapIDPool
-{
-	enum
-	{
-		MAX_IDS = 32 * 1024,
-	};
-
-	// State of a Snap ID
-	enum
-	{
-		ID_FREE = 0,
-		ID_ALLOCATED = 1,
-		ID_TIMED = 2,
-	};
-
-	class CID
-	{
-	public:
-		short m_Next;
-		short m_State; // 0 = free, 1 = allocated, 2 = timed
-		int m_Timeout;
-	};
-
-	CID m_aIDs[MAX_IDS];
-
-	int m_FirstFree;
-	int m_FirstTimed;
-	int m_LastTimed;
-	int m_Usage;
-	int m_InUsage;
-
-public:
-	CSnapIDPool();
-
-	void Reset();
-	void RemoveFirstTimeout();
-	int NewID();
-	void TimeoutIDs();
-	void FreeID(int ID);
-};
 
 class CServerBan : public CNetBan
 {
@@ -109,6 +71,7 @@ class CServer : public IServer
 	class IStorage *m_pStorage;
 	class IEngineAntibot *m_pAntibot;
 	class IRegister *m_pRegister;
+	IEngine *m_pEngine;
 
 #if defined(CONF_UPNP)
 	CUPnP m_UPnP;
@@ -135,6 +98,7 @@ public:
 	class IStorage *Storage() { return m_pStorage; }
 	class IEngineAntibot *Antibot() { return m_pAntibot; }
 	class CDbConnectionPool *DbPool() { return m_pConnectionPool; }
+	IEngine *Engine() { return m_pEngine; }
 
 	enum
 	{
@@ -238,6 +202,7 @@ public:
 	CEcon m_Econ;
 	CFifo m_Fifo;
 	CServerBan m_ServerBan;
+	CHttp m_Http;
 
 	IEngineMap *m_pMap;
 
@@ -336,6 +301,7 @@ public:
 	const char *ClientName(int ClientID) const override;
 	const char *ClientClan(int ClientID) const override;
 	int ClientCountry(int ClientID) const override;
+	bool ClientSlotEmpty(int ClientID) const override;
 	bool ClientIngame(int ClientID) const override;
 	bool ClientAuthed(int ClientID) const override;
 	int Port() const override;

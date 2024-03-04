@@ -465,8 +465,8 @@ private:
 						if(GetX >= 0 && GetY >= 0 && GetX < w && GetY < h)
 						{
 							int Index = GetY * w + GetX;
-							if(pIn[Index] > c)
-								c = pIn[Index];
+							float Mask = 1.f - clamp(length(vec2(sx, sy)) - OutlineCount, 0.f, 1.f);
+							c = maximum(c, int(pIn[Index] * Mask));
 						}
 					}
 				}
@@ -1668,7 +1668,7 @@ public:
 
 			while(pCurrent < pBatchEnd && pCurrent != pEllipsis)
 			{
-				const int PrevCharCount = pCursor->m_CharCount;
+				const int PrevCharCount = pCursor->m_GlyphCount;
 				pCursor->m_CharCount += pTmp - pCurrent;
 				pCurrent = pTmp;
 				int Character = NextCharacter;
@@ -1754,10 +1754,18 @@ public:
 					if(ColorOption < (int)pCursor->m_vColorSplits.size())
 					{
 						STextColorSplit &Split = pCursor->m_vColorSplits.at(ColorOption);
-						if(PrevCharCount >= Split.m_CharIndex && PrevCharCount < Split.m_CharIndex + Split.m_Length)
+						if(PrevCharCount >= Split.m_CharIndex && (Split.m_Length == -1 || PrevCharCount < Split.m_CharIndex + Split.m_Length))
 							Color = Split.m_Color;
-						if(PrevCharCount >= (Split.m_CharIndex + Split.m_Length - 1))
+						if(Split.m_Length != -1 && PrevCharCount >= (Split.m_CharIndex + Split.m_Length - 1))
+						{
 							ColorOption++;
+							if(ColorOption < (int)pCursor->m_vColorSplits.size())
+							{ // Handle splits that are
+								Split = pCursor->m_vColorSplits.at(ColorOption);
+								if(PrevCharCount >= Split.m_CharIndex)
+									Color = Split.m_Color;
+							}
+						}
 					}
 
 					// don't add text that isn't drawn, the color overwrite is used for that
@@ -1867,7 +1875,7 @@ public:
 
 					if(SelectionStarted && IsRendered)
 					{
-						if(!vSelectionQuads.empty() && SelectionQuadLine == pCursor->m_LineCount)
+						if(!vSelectionQuads.empty() && SelectionQuadLine == LineCount)
 						{
 							vSelectionQuads.back().m_Width += SelWidth;
 						}
@@ -1877,7 +1885,7 @@ public:
 							const float SelectionY = DrawY + (1.0f - pCursor->m_SelectionHeightFactor) * SelectionHeight;
 							const float ScaledSelectionHeight = pCursor->m_SelectionHeightFactor * SelectionHeight;
 							vSelectionQuads.emplace_back(SelX, SelectionY, SelWidth, ScaledSelectionHeight);
-							SelectionQuadLine = pCursor->m_LineCount;
+							SelectionQuadLine = LineCount;
 						}
 					}
 

@@ -274,11 +274,14 @@ void CGameTeams::Tick()
 		{
 			continue;
 		}
+		bool TeamHasCheatCharacter = false;
 		int NumPlayersNotStarted = 0;
 		char aPlayerNames[256];
 		aPlayerNames[0] = 0;
 		for(int j = 0; j < MAX_CLIENTS; j++)
 		{
+			if(Character(j) && Character(j)->m_DDRaceState == DDRACE_CHEAT)
+				TeamHasCheatCharacter = true;
 			if(m_Core.Team(j) == i && !m_aTeeStarted[j])
 			{
 				if(aPlayerNames[0])
@@ -289,7 +292,7 @@ void CGameTeams::Tick()
 				NumPlayersNotStarted += 1;
 			}
 		}
-		if(!aPlayerNames[0])
+		if(!aPlayerNames[0] || TeamHasCheatCharacter)
 		{
 			continue;
 		}
@@ -369,7 +372,7 @@ const char *CGameTeams::SetCharacterTeam(int ClientID, int Team)
 		return "Invalid client ID";
 	if(Team < 0 || Team >= MAX_CLIENTS + 1)
 		return "Invalid team number";
-	if(Team != TEAM_SUPER && m_aTeamState[Team] > TEAMSTATE_OPEN)
+	if(Team != TEAM_SUPER && m_aTeamState[Team] > TEAMSTATE_OPEN && !m_aPractice[Team])
 		return "This team started already";
 	if(m_Core.Team(ClientID) == Team)
 		return "You are in this team already";
@@ -1099,7 +1102,7 @@ void CGameTeams::OnCharacterDeath(int ClientID, int Weapon)
 	}
 	else
 	{
-		if(m_aTeamState[m_Core.Team(ClientID)] == CGameTeams::TEAMSTATE_STARTED && !m_aTeeStarted[ClientID])
+		if(m_aTeamState[m_Core.Team(ClientID)] == CGameTeams::TEAMSTATE_STARTED && !m_aTeeStarted[ClientID] && !m_aPractice[Team])
 		{
 			char aBuf[128];
 			str_format(aBuf, sizeof(aBuf), "This team cannot finish anymore because '%s' left the team before hitting the start", Server()->ClientName(ClientID));
