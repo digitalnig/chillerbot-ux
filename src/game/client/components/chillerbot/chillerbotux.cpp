@@ -123,6 +123,15 @@ void CChillerBotUX::OnRender()
 	m_LastForceDir = m_ForceDir;
 }
 
+void CChillerBotUX::OnStateChange(int NewState, int OldState)
+{
+	if(NewState == IClient::STATE_OFFLINE && m_pClient->Client()->ReconnectTime() == 0)
+	{
+		if(g_Config.m_ClAlwaysReconnect)
+			m_pClient->Client()->SetReconnectTime(time_get() + time_freq() * g_Config.m_ClReconnectTimeout + 10);
+	}
+}
+
 int CChillerBotUX::GetPlayTimeHours() const
 {
 	if(m_PlaytimeMinutes == -1)

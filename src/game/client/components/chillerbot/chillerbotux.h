@@ -113,6 +113,7 @@ class CChillerBotUX : public CComponent
 	virtual void OnShutdown() override;
 	virtual bool OnCursorMove(float x, float y, IInput::ECursorType CursorType) override;
 	virtual bool OnInput(const IInput::CEvent &Event) override;
+	virtual void OnStateChange(int NewState, int OldState) override;
 
 	static void ConPlaytime(IConsole::IResult *pResult, void *pUserData);
 	static void ConAfk(IConsole::IResult *pResult, void *pUserData);
