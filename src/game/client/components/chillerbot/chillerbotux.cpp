@@ -185,7 +185,7 @@ void CChillerBotUX::SkinStealTick()
 		m_pClient->SendInfo(false);
 		// only steal skin every 10 seconds to not get ratelimited
 		m_NextSkinSteal = time_get() + time_freq() * 10;
-		dbg_msg("chillerbot", "sv_skin_stealer yoinked skin '%s'", g_Config.m_ClPlayerSkin);
+		dbg_msg("chillerbot", "cl_skin_stealer yoinked skin '%s'", g_Config.m_ClPlayerSkin);
 	}
 }
 
