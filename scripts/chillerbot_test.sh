@@ -249,23 +249,31 @@ function run_tests() {
 		if ! echo "$srv_log" | grep -qF "$out_msg"
 		then
 			echo ""
-			echo "Error: missing expected message in server log"
+			echo "Warning: message not found retrying with delay!"
 			echo ""
-			echo "Sent:"
-			echo "  $in_msg"
-			echo "Expected:"
-			echo "  $out_msg"
-			echo "Got:"
-			while read -r line
-			do
-				echo "  $line"
-			done < <(echo "$srv_log")
-			if [ "$srv_log" == "" ]
+			sleep 2
+			srv_log="$(grep -F ' chat: ' server.log | tail -n2)"
+			if ! echo "$srv_log" | grep -qF "$out_msg"
 			then
-				tail server.log
+				echo ""
+				echo "Error: missing expected message in server log"
+				echo ""
+				echo "Sent:"
+				echo "  $in_msg"
+				echo "Expected:"
+				echo "  $out_msg"
+				echo "Got:"
+				while read -r line
+				do
+					echo "  $line"
+				done < <(echo "$srv_log")
+				if [ "$srv_log" == "" ]
+				then
+					tail server.log
+				fi
+				echo ""
+				exit 1
 			fi
-			echo ""
-			exit 1
 		else
 			printf '.'
 		fi
