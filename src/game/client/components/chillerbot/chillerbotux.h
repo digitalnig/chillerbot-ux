@@ -48,13 +48,13 @@ class CChillerBotUX : public CComponent
 	{
 		int m_Weapon;
 
-		int m_VictimID;
+		int m_VictimId;
 		int m_VictimTeam;
 		int m_VictimDDTeam;
 		char m_aVictimName[64];
 		CTeeRenderInfo m_VictimRenderInfo;
 
-		int m_KillerID;
+		int m_KillerId;
 		int m_KillerTeam;
 		char m_aKillerName[64];
 		CTeeRenderInfo m_KillerRenderInfo;
@@ -84,9 +84,9 @@ class CChillerBotUX : public CComponent
 	int m_BroadcastTick;
 	bool m_IsLeftSidedBroadcast;
 
-	bool IsPlayerInfoAvailable(int ClientID) const;
+	bool IsPlayerInfoAvailable(int ClientId) const;
 
-	void OnChatMessage(int ClientID, int Team, const char *pMsg);
+	void OnChatMessage(int ClientId, int Team, const char *pMsg);
 	void GoAfk(int Minutes, const char *pMsg = 0);
 	void SkinStealTick();
 	void ChangeTileNotifyTick();

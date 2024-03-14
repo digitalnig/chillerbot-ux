@@ -3604,8 +3604,8 @@ void CEditor::DoMapEditor(CUIRect View)
 		m_ShowEnvelopePreview = SHOWENV_NONE;
 	}
 
-	UI()->MapScreen();
-	//UI()->ClipDisable();
+	Ui()->MapScreen();
+	//Ui()->ClipDisable();
 	m_ChillerEditor.DoMapEditor();
 }
 

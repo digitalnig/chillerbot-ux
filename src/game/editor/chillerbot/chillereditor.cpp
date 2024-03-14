@@ -82,8 +82,8 @@ void CChillerEditor::Init(class CEditor *pEditor)
 
 void CChillerEditor::SetCursor()
 {
-	float wx = m_pEditor->UI()->MouseWorldX();
-	float wy = m_pEditor->UI()->MouseWorldY();
+	float wx = m_pEditor->Ui()->MouseWorldX();
+	float wy = m_pEditor->Ui()->MouseWorldY();
 	m_TextIndexX = (int)(wx / 32);
 	m_TextIndexY = (int)(wy / 32);
 	m_TextLineLen = 0;
@@ -101,7 +101,7 @@ void CChillerEditor::DoMapEditor()
 	// debug
 	if(m_pEditor->Input()->KeyPress(KEY_D))
 		dbg_msg("chillerbot", "editormode=%d dialog=%d editbox=%p", m_EditorMode, m_pEditor->m_Dialog, CLineInput::GetActiveInput());
-	if(m_pEditor->UI()->MouseButton(0))
+	if(m_pEditor->Ui()->MouseButton(0))
 		SetCursor();
 	if(m_pEditor->Input()->KeyPress(KEY_T) && m_EditorMode != CE_MODE_TEXT && m_pEditor->m_Dialog == DIALOG_NONE && CLineInput::GetActiveInput() == nullptr)
 	{
@@ -149,7 +149,7 @@ void CChillerEditor::DoMapEditor()
 			m_pEditor->Graphics()->QuadsDrawTL(&QuadItem, 1);
 			m_pEditor->Graphics()->QuadsEnd();
 			m_pEditor->Graphics()->WrapNormal();
-			m_pEditor->Graphics()->MapScreen(m_pEditor->UI()->Screen()->x, m_pEditor->UI()->Screen()->y, m_pEditor->UI()->Screen()->w, m_pEditor->UI()->Screen()->h);
+			m_pEditor->Graphics()->MapScreen(m_pEditor->Ui()->Screen()->x, m_pEditor->Ui()->Screen()->y, m_pEditor->Ui()->Screen()->w, m_pEditor->Ui()->Screen()->h);
 		}
 		// handle key presses
 		for(size_t i = 0; i < m_pEditor->Input()->NumEvents(); i++)

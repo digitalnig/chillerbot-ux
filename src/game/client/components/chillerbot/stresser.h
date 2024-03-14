@@ -18,7 +18,7 @@ private:
 
 	static void ConchainPenTest(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
-	void OnChatMessage(int ClientID, int Team, const char *pMsg);
+	void OnChatMessage(int ClientId, int Team, const char *pMsg);
 
 	const char *GetPentestCommand(const char *pFilename);
 	const char *GetRandomChatCommand();

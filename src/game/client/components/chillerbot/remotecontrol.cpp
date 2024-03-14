@@ -11,23 +11,23 @@
 
 #include "remotecontrol.h"
 
-void CRemoteControl::OnChatMessage(int ClientID, int Team, const char *pMsg)
+void CRemoteControl::OnChatMessage(int ClientId, int Team, const char *pMsg)
 {
 	if(!g_Config.m_ClRemoteControl)
 		return;
-	if(ClientID < 0 || ClientID >= 64)
+	if(ClientId < 0 || ClientId >= 64)
 		return;
 
 	char aName[64];
-	str_copy(aName, m_pClient->m_aClients[ClientID].m_aName, sizeof(aName));
-	if(ClientID == 63 && !str_comp_num(m_pClient->m_aClients[ClientID].m_aName, " ", 2))
+	str_copy(aName, m_pClient->m_aClients[ClientId].m_aName, sizeof(aName));
+	if(ClientId == 63 && !str_comp_num(m_pClient->m_aClients[ClientId].m_aName, " ", 2))
 	{
 		m_pClient->m_ChatHelper.Get128Name(pMsg, aName);
 	}
 	// ignore own and dummys messages
-	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName))
+	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIds[0]].m_aName))
 		return;
-	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName))
+	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIds[1]].m_aName))
 		return;
 	if(Team != 3) // whisper only
 		return;
@@ -127,6 +127,6 @@ void CRemoteControl::OnMessage(int MsgType, void *pRawMsg)
 	if(MsgType == NETMSGTYPE_SV_CHAT)
 	{
 		CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
-		OnChatMessage(pMsg->m_ClientID, pMsg->m_Team, pMsg->m_pMessage);
+		OnChatMessage(pMsg->m_ClientId, pMsg->m_Team, pMsg->m_pMessage);
 	}
 }

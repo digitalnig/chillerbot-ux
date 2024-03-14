@@ -34,7 +34,7 @@ void CSpectator::SpectateNext(bool Reverse)
 	{
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if(apPlayerInfos[i] && apPlayerInfos[i]->m_ClientID == m_pClient->m_Snap.m_SpecInfo.m_SpectatorID)
+			if(apPlayerInfos[i] && apPlayerInfos[i]->m_ClientId == m_pClient->m_Snap.m_SpecInfo.m_SpectatorId)
 			{
 				CurIndex = i;
 				break;

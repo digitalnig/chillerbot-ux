@@ -16,7 +16,7 @@
     otherwise the print looks ugly or the code will not compile if you have some -> in your
     variable for example. Here is an example on how to use it:
 
-    int curX = m_pClient->m_aClients[ClientID].m_RenderCur.m_X;
+    int curX = m_pClient->m_aClients[ClientId].m_RenderCur.m_X;
     int mx = 5;
     DBG_II(curX, mx);
 

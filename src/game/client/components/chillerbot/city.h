@@ -15,10 +15,10 @@ private:
 
 	static void ConAutoDropMoney(IConsole::IResult *pResult, void *pUserData);
 
-	void SetAutoDrop(bool Drop, int Delay, int ClientID);
+	void SetAutoDrop(bool Drop, int Delay, int ClientId);
 	void OnServerMsg(const char *pMsg);
-	void OnChatMsg(int ClientID, int Team, const char *pMsg);
-	int ClosestClientIDToPos(vec2 Pos, int Dummy);
+	void OnChatMsg(int ClientId, int Team, const char *pMsg);
+	int ClosestClientIdToPos(vec2 Pos, int Dummy);
 
 	bool m_AutoDropMoney[NUM_DUMMIES];
 
@@ -28,8 +28,8 @@ private:
 	int m_LastDummy;
 
 	void AddWalletEntry(std::vector<std::pair<std::string, int>> *pVec, const std::pair<std::string, int> &Entry);
-	void SetWalletMoney(int Money, int ClientID = -1);
-	void AddWalletMoney(int Money, int ClientID = -1);
+	void SetWalletMoney(int Money, int ClientId = -1);
+	void AddWalletMoney(int Money, int ClientId = -1);
 
 public:
 	virtual int Sizeof() const override { return sizeof(*this); }
@@ -37,9 +37,9 @@ public:
 	std::vector<std::pair<std::string, int>> m_vWalletMain;
 	std::vector<std::pair<std::string, int>> m_vWalletDummy;
 
-	void PrintWalletToChat(int ClientID = -1, const char *pWhisper = NULL);
-	void DropAllMoney(int ClientID);
-	int WalletMoney(int ClientID = -1);
+	void PrintWalletToChat(int ClientId = -1, const char *pWhisper = NULL);
+	void DropAllMoney(int ClientId);
+	int WalletMoney(int ClientId = -1);
 };
 
 #endif

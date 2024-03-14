@@ -121,11 +121,11 @@ void CPlayerPics::RenderNameplate(
 	const CNetObj_Character *pPlayerChar,
 	const CNetObj_PlayerInfo *pPlayerInfo)
 {
-	int ClientID = pPlayerInfo->m_ClientID;
+	int ClientId = pPlayerInfo->m_ClientId;
 
 	vec2 Position;
-	if(ClientID >= 0 && ClientID < MAX_CLIENTS)
-		Position = m_pClient->m_aClients[ClientID].m_RenderPos;
+	if(ClientId >= 0 && ClientId < MAX_CLIENTS)
+		Position = m_pClient->m_aClients[ClientId].m_RenderPos;
 	else
 		Position = mix(vec2(pPrevChar->m_X, pPrevChar->m_Y), vec2(pPlayerChar->m_X, pPlayerChar->m_Y), Client()->IntraGameTick(g_Config.m_ClDummy));
 
@@ -134,14 +134,14 @@ void CPlayerPics::RenderNameplate(
 
 void CPlayerPics::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pPlayerInfo, float Alpha, bool ForceAlpha)
 {
-	int ClientID = pPlayerInfo->m_ClientID;
+	int ClientId = pPlayerInfo->m_ClientId;
 	float FontSizeClan = 18.0f + 20.0f * g_Config.m_ClNameplatesClanSize / 100.0f;
 	float YOffset = Position.y - (g_Config.m_ClRenderPicHeight + (g_Config.m_ClNameplatesClan ? 90.0f : 60.0f));
 
 	// render playerpic
 	if(!pPlayerInfo->m_Local || g_Config.m_ClNameplatesOwn)
 	{
-		const char *pName = m_pClient->m_aClients[pPlayerInfo->m_ClientID].m_aName;
+		const char *pName = m_pClient->m_aClients[pPlayerInfo->m_ClientId].m_aName;
 		if(g_Config.m_ClRenderPic)
 		{
 			// render player pics
@@ -158,13 +158,13 @@ void CPlayerPics::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 		m_pClient->m_WarList.GetWarReason(pName, aWarReason, sizeof(aWarReason));
 		if(g_Config.m_ClNameplatesWarReason && aWarReason[0])
 		{
-			if(str_comp(aWarReason, m_aNamePlates[ClientID].m_aWarReason) != 0 || FontSizeClan != m_aNamePlates[ClientID].m_WarReasonTextFontSize)
+			if(str_comp(aWarReason, m_aNamePlates[ClientId].m_aWarReason) != 0 || FontSizeClan != m_aNamePlates[ClientId].m_WarReasonTextFontSize)
 			{
-				mem_copy(m_aNamePlates[ClientID].m_aWarReason, aWarReason, sizeof(m_aNamePlates[ClientID].m_aWarReason));
-				m_aNamePlates[ClientID].m_WarReasonTextFontSize = FontSizeClan;
+				mem_copy(m_aNamePlates[ClientId].m_aWarReason, aWarReason, sizeof(m_aNamePlates[ClientId].m_aWarReason));
+				m_aNamePlates[ClientId].m_WarReasonTextFontSize = FontSizeClan;
 
-				if(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex.Valid())
-					TextRender()->DeleteTextContainer(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex);
+				if(m_aNamePlates[ClientId].m_WarReasonTextContainerIndex.Valid())
+					TextRender()->DeleteTextContainer(m_aNamePlates[ClientId].m_WarReasonTextContainerIndex);
 
 				CTextCursor Cursor;
 				TextRender()->SetCursor(&Cursor, 0, 0, FontSizeClan, TEXTFLAG_RENDER);
@@ -175,16 +175,16 @@ void CPlayerPics::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 				Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
 				RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), m_pClient->m_Camera.m_Zoom);
 
-				m_aNamePlates[ClientID].m_WarReasonTextWidth = TextRender()->TextWidth(FontSizeClan, aWarReason, -1, -1.0f);
+				m_aNamePlates[ClientId].m_WarReasonTextWidth = TextRender()->TextWidth(FontSizeClan, aWarReason, -1, -1.0f);
 
-				TextRender()->CreateTextContainer(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex, &Cursor, aWarReason);
+				TextRender()->CreateTextContainer(m_aNamePlates[ClientId].m_WarReasonTextContainerIndex, &Cursor, aWarReason);
 				Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 			}
 			YOffset += FontSizeClan;
 			ColorRGBA TColor = ColorRGBA(0.0f, 0.0f, 0.0f, 0.6f);
 			ColorRGBA TOutlineColor = ColorRGBA(1.0f, 0.0f, 0.0f, 0.7f);
-			if(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex.Valid())
-				TextRender()->RenderTextContainer(m_aNamePlates[ClientID].m_WarReasonTextContainerIndex, TColor, TOutlineColor, Position.x - m_aNamePlates[ClientID].m_WarReasonTextWidth / 2.0f, YOffset);
+			if(m_aNamePlates[ClientId].m_WarReasonTextContainerIndex.Valid())
+				TextRender()->RenderTextContainer(m_aNamePlates[ClientId].m_WarReasonTextContainerIndex, TColor, TOutlineColor, Position.x - m_aNamePlates[ClientId].m_WarReasonTextWidth / 2.0f, YOffset);
 		}
 	}
 }

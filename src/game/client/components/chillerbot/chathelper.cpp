@@ -250,30 +250,30 @@ int CChatHelper::Get128Name(const char *pMsg, char *pName)
 	return -1;
 }
 
-void CChatHelper::OnChatMessage(int ClientID, int Team, const char *pMsg)
+void CChatHelper::OnChatMessage(int ClientId, int Team, const char *pMsg)
 {
-	if(ClientID < 0 || ClientID > MAX_CLIENTS)
+	if(ClientId < 0 || ClientId > MAX_CLIENTS)
 		return;
 	bool Highlighted = false;
-	if(LineShouldHighlight(pMsg, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName))
+	if(LineShouldHighlight(pMsg, m_pClient->m_aClients[m_pClient->m_aLocalIds[0]].m_aName))
 		Highlighted = true;
-	if(m_pClient->Client()->DummyConnected() && LineShouldHighlight(pMsg, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName))
+	if(m_pClient->Client()->DummyConnected() && LineShouldHighlight(pMsg, m_pClient->m_aClients[m_pClient->m_aLocalIds[1]].m_aName))
 		Highlighted = true;
 	if(Team == 3) // whisper recv
 		Highlighted = true;
 	if(!Highlighted)
 		return;
 	char aName[64];
-	str_copy(aName, m_pClient->m_aClients[ClientID].m_aName, sizeof(aName));
-	if(ClientID == 63 && !str_comp_num(m_pClient->m_aClients[ClientID].m_aName, " ", 2))
+	str_copy(aName, m_pClient->m_aClients[ClientId].m_aName, sizeof(aName));
+	if(ClientId == 63 && !str_comp_num(m_pClient->m_aClients[ClientId].m_aName, " ", 2))
 	{
 		Get128Name(pMsg, aName);
-		// dbg_msg("chillerbot", "fixname 128 player '%s' -> '%s'", m_pClient->m_aClients[ClientID].m_aName, aName);
+		// dbg_msg("chillerbot", "fixname 128 player '%s' -> '%s'", m_pClient->m_aClients[ClientId].m_aName, aName);
 	}
 	// ignore own and dummys messages
-	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName))
+	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIds[0]].m_aName))
 		return;
-	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName))
+	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIds[1]].m_aName))
 		return;
 	if(m_LangParser.IsGreeting(pMsg))
 	{
@@ -285,7 +285,7 @@ void CChatHelper::OnChatMessage(int ClientID, int Team, const char *pMsg)
 	if(!str_comp(m_aLastPings[0].m_aMessage, pMsg))
 		return;
 	char aBuf[2048];
-	PushPing(aName, m_pClient->m_aClients[ClientID].m_aClan, pMsg);
+	PushPing(aName, m_pClient->m_aClients[ClientId].m_aClan, pMsg);
 	int64_t AfkTill = m_pChillerBot->GetAfkTime();
 	if(m_pChillerBot->IsAfk())
 	{
@@ -310,13 +310,13 @@ void CChatHelper::OnChatMessage(int ClientID, int Team, const char *pMsg)
 		{
 			SayBuffer(aBuf, true);
 		}
-		str_format(m_aLastAfkPing, sizeof(m_aLastAfkPing), "%s: %s", m_pClient->m_aClients[ClientID].m_aName, pMsg);
+		str_format(m_aLastAfkPing, sizeof(m_aLastAfkPing), "%s: %s", m_pClient->m_aClients[ClientId].m_aName, pMsg);
 		m_pChillerBot->SetComponentNoteLong("afk", m_aLastAfkPing);
 		return;
 	}
 	if(g_Config.m_ClShowLastPing)
 	{
-		str_format(aBuf, sizeof(aBuf), "%s: %s", m_pClient->m_aClients[ClientID].m_aName, pMsg);
+		str_format(aBuf, sizeof(aBuf), "%s: %s", m_pClient->m_aClients[ClientId].m_aName, pMsg);
 		m_pChillerBot->SetComponentNoteLong("last ping", aBuf);
 	}
 	if(g_Config.m_ClTabbedOutMsg)
@@ -338,7 +338,7 @@ void CChatHelper::OnMessage(int MsgType, void *pRawMsg)
 	if(MsgType == NETMSGTYPE_SV_CHAT)
 	{
 		CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
-		OnChatMessage(pMsg->m_ClientID, pMsg->m_Team, pMsg->m_pMessage);
+		OnChatMessage(pMsg->m_ClientId, pMsg->m_Team, pMsg->m_pMessage);
 	}
 }
 
@@ -366,14 +366,14 @@ void CChatHelper::AddChatFilter(const char *pFilter)
 	}
 }
 
-int CChatHelper::IsSpam(int ClientID, int Team, const char *pMsg)
+int CChatHelper::IsSpam(int ClientId, int Team, const char *pMsg)
 {
 	if(!g_Config.m_ClChatSpamFilter)
 		return SPAM_NONE;
 	int MsgLen = str_length(pMsg);
 	int NameLen = 0;
-	const char *pName = m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName;
-	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName;
+	const char *pName = m_pClient->m_aClients[m_pClient->m_aLocalIds[0]].m_aName;
+	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_aLocalIds[1]].m_aName;
 	bool Highlighted = false;
 	if(LineShouldHighlight(pMsg, pName))
 	{
@@ -392,17 +392,17 @@ int CChatHelper::IsSpam(int ClientID, int Team, const char *pMsg)
 	if(!Highlighted)
 		return SPAM_NONE;
 	char aName[64];
-	str_copy(aName, m_pClient->m_aClients[ClientID].m_aName, sizeof(aName));
-	if(ClientID == 63 && !str_comp_num(m_pClient->m_aClients[ClientID].m_aName, " ", 2))
+	str_copy(aName, m_pClient->m_aClients[ClientId].m_aName, sizeof(aName));
+	if(ClientId == 63 && !str_comp_num(m_pClient->m_aClients[ClientId].m_aName, " ", 2))
 	{
 		Get128Name(pMsg, aName);
 		MsgLen -= str_length(aName) + 2;
-		// dbg_msg("chillerbot", "fixname 128 player '%s' -> '%s'", m_pClient->m_aClients[ClientID].m_aName, aName);
+		// dbg_msg("chillerbot", "fixname 128 player '%s' -> '%s'", m_pClient->m_aClients[ClientId].m_aName, aName);
 	}
 	// ignore own and dummys messages
-	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName))
+	if(!str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIds[0]].m_aName))
 		return SPAM_NONE;
-	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName))
+	if(Client()->DummyConnected() && !str_comp(aName, m_pClient->m_aClients[m_pClient->m_aLocalIds[1]].m_aName))
 		return SPAM_NONE;
 
 	// ping without further context
@@ -432,7 +432,7 @@ int CChatHelper::IsSpam(int ClientID, int Team, const char *pMsg)
 	return SPAM_NONE;
 }
 
-bool CChatHelper::FilterChat(int ClientID, int Team, const char *pLine)
+bool CChatHelper::FilterChat(int ClientId, int Team, const char *pLine)
 {
 	for(auto &aChatFilter : m_aaChatFilter)
 	{
@@ -446,7 +446,7 @@ bool CChatHelper::FilterChat(int ClientID, int Team, const char *pLine)
 			return true;
 		}
 	}
-	int Spam = IsSpam(ClientID, Team, pLine);
+	int Spam = IsSpam(ClientId, Team, pLine);
 	if(Spam)
 	{
 		if(g_Config.m_ClChatSpamFilter != 2)
@@ -458,15 +458,15 @@ bool CChatHelper::FilterChat(int ClientID, int Team, const char *pLine)
 		if(!m_pChillerBot->IsAfk())
 		{
 			char aName[64];
-			str_copy(aName, m_pClient->m_aClients[ClientID].m_aName, sizeof(aName));
-			if(ClientID == 63 && !str_comp_num(m_pClient->m_aClients[ClientID].m_aName, " ", 2))
+			str_copy(aName, m_pClient->m_aClients[ClientId].m_aName, sizeof(aName));
+			if(ClientId == 63 && !str_comp_num(m_pClient->m_aClients[ClientId].m_aName, " ", 2))
 			{
 				Get128Name(pLine, aName);
-				// dbg_msg("chillerbot", "fixname 128 player '%s' -> '%s'", m_pClient->m_aClients[ClientID].m_aName, aName);
+				// dbg_msg("chillerbot", "fixname 128 player '%s' -> '%s'", m_pClient->m_aClients[ClientId].m_aName, aName);
 			}
 			char aResponse[1024];
-			// if(m_pReplyToPing->ReplyToLastPing(aName, m_pClient->m_aClients[ClientID].m_aClan, pLine, aResponse, sizeof(aResponse)))
-			CReplyToPing ReplyToPing = CReplyToPing(this, aName, m_pClient->m_aClients[ClientID].m_aClan, pLine, aResponse, sizeof(aResponse));
+			// if(m_pReplyToPing->ReplyToLastPing(aName, m_pClient->m_aClients[ClientId].m_aClan, pLine, aResponse, sizeof(aResponse)))
+			CReplyToPing ReplyToPing = CReplyToPing(this, aName, m_pClient->m_aClients[ClientId].m_aClan, pLine, aResponse, sizeof(aResponse));
 			if(ReplyToPing.Reply())
 			{
 				if(aResponse[0])

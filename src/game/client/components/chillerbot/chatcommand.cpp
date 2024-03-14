@@ -14,32 +14,32 @@ void CChatCommand::OnServerMsg(const char *pMsg)
 {
 }
 
-void CChatCommand::OnChatMsg(int ClientID, int Team, const char *pMsg)
+void CChatCommand::OnChatMsg(int ClientId, int Team, const char *pMsg)
 {
 	if(!pMsg[1])
 		return;
 	if(pMsg[0] == '.' || pMsg[0] == ':' || pMsg[0] == '!' || pMsg[0] == '#' || pMsg[0] == '$' || pMsg[0] == '/')
-		if(ParseChatCmd(pMsg[0], ClientID, Team, pMsg + 1))
+		if(ParseChatCmd(pMsg[0], ClientId, Team, pMsg + 1))
 			return;
 
-	OnNoChatCommandMatches(ClientID, Team, pMsg);
+	OnNoChatCommandMatches(ClientId, Team, pMsg);
 }
 
-void CChatCommand::OnNoChatCommandMatches(int ClientID, int Team, const char *pMsg)
+void CChatCommand::OnNoChatCommandMatches(int ClientId, int Team, const char *pMsg)
 {
 	// ux components
 
-	// m_pClient->m_WarList.OnNoChatCommandMatches(ClientID, Team, pMsg);
+	// m_pClient->m_WarList.OnNoChatCommandMatches(ClientId, Team, pMsg);
 
 	// zx components
 }
 
-bool CChatCommand::OnChatCmd(char Prefix, int ClientID, int Team, const char *pCmd, int NumArgs, const char **ppArgs)
+bool CChatCommand::OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs)
 {
 	bool match = false;
 	// ux components
 
-	if(m_pClient->m_WarList.OnChatCmd(Prefix, ClientID, Team, pCmd, NumArgs, ppArgs))
+	if(m_pClient->m_WarList.OnChatCmd(Prefix, ClientId, Team, pCmd, NumArgs, ppArgs))
 		match = true;
 
 	// zx components
@@ -47,7 +47,7 @@ bool CChatCommand::OnChatCmd(char Prefix, int ClientID, int Team, const char *pC
 	return match;
 }
 
-bool CChatCommand::ParseChatCmd(char Prefix, int ClientID, int Team, const char *pCmdWithArgs)
+bool CChatCommand::ParseChatCmd(char Prefix, int ClientId, int Team, const char *pCmdWithArgs)
 {
 	const int MAX_ARG_LEN = 256;
 	char aCmd[MAX_ARG_LEN];
@@ -130,7 +130,7 @@ bool CChatCommand::ParseChatCmd(char Prefix, int ClientID, int Team, const char 
 	// char aBuf[512];
 	// str_format(aBuf, sizeof(aBuf), "got cmd '%s' with %d args: %s", aCmd, NumArgs, aArgsStr);
 	// Say(aBuf);
-	bool match = OnChatCmd(Prefix, ClientID, Team, aCmd, NumArgs, (const char **)ppArgs);
+	bool match = OnChatCmd(Prefix, ClientId, Team, aCmd, NumArgs, (const char **)ppArgs);
 	for(int x = 0; x < 8; ++x)
 		delete[] ppArgs[x];
 	delete[] ppArgs;
@@ -142,9 +142,9 @@ void CChatCommand::OnMessage(int MsgType, void *pRawMsg)
 	if(MsgType == NETMSGTYPE_SV_CHAT)
 	{
 		CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
-		if(pMsg->m_ClientID == -1 && pMsg->m_Team < 2)
+		if(pMsg->m_ClientId == -1 && pMsg->m_Team < 2)
 			OnServerMsg(pMsg->m_pMessage);
 		else
-			OnChatMsg(pMsg->m_ClientID, pMsg->m_Team, pMsg->m_pMessage);
+			OnChatMsg(pMsg->m_ClientId, pMsg->m_Team, pMsg->m_pMessage);
 	}
 }

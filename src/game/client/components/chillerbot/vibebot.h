@@ -25,7 +25,7 @@ private:
 	int m_Mode[NUM_DUMMIES];
 	int m_EmoteBot[NUM_DUMMIES];
 	int m_EmoteBotDelay[NUM_DUMMIES];
-	int m_MoveID;
+	int m_MoveId;
 
 	enum
 	{
@@ -54,8 +54,8 @@ public:
 	vec2 m_CurrentAim[NUM_DUMMIES];
 	vec2 m_WantedAim[NUM_DUMMIES];
 
-	int MoveID() { return m_MoveID; };
-	bool IsVibing(int ClientID) { return m_Mode[ClientID] != VB_OFF; }
+	int MoveId() { return m_MoveId; };
+	bool IsVibing(int ClientId) { return m_Mode[ClientId] != VB_OFF; }
 
 	enum
 	{
@@ -68,8 +68,8 @@ public:
 		EB_OFF = 0,
 	};
 
-	void SetMode(int Mode, int ClientID);
-	void SetEmoteBot(int Mode, int Delay, int ClientID);
+	void SetMode(int Mode, int ClientId);
+	void SetEmoteBot(int Mode, int Delay, int ClientId);
 	void PrintInput(const CNetObj_PlayerInput *pInput);
 
 	CNetObj_PlayerInput m_aInputData[NUM_DUMMIES];

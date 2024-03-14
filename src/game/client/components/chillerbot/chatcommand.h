@@ -8,8 +8,8 @@ class CChatCommand : public CComponent
 	virtual void OnMessage(int MsgType, void *pRawMsg) override;
 
 	void OnServerMsg(const char *pMsg);
-	void OnChatMsg(int ClientID, int Team, const char *pMsg);
-	bool ParseChatCmd(char Prefix, int ClientID, int Team, const char *pCmdWithArgs);
+	void OnChatMsg(int ClientId, int Team, const char *pMsg);
+	bool ParseChatCmd(char Prefix, int ClientId, int Team, const char *pCmdWithArgs);
 
 	/*
 		Function: OnChatCmd
@@ -21,7 +21,7 @@ class CChatCommand : public CComponent
 
 		only return true if a valid command was matched
 	*/
-	bool OnChatCmd(char Prefix, int ClientID, int Team, const char *pCmd, int NumArgs, const char **ppArgs);
+	bool OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs);
 
 	/*
 		Function: OnNoChatCommandMatches
@@ -32,7 +32,7 @@ class CChatCommand : public CComponent
 		will be called if no component matched
 		a valid chat command in this message
 	*/
-	void OnNoChatCommandMatches(int ClientID, int Team, const char *pMsg);
+	void OnNoChatCommandMatches(int ClientId, int Team, const char *pMsg);
 
 public:
 	virtual int Sizeof() const override { return sizeof(*this); }

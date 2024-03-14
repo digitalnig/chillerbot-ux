@@ -276,7 +276,7 @@ class CEditor : public IEditor
 	class ISound *m_pSound = nullptr;
 	class IStorage *m_pStorage = nullptr;
 	CRenderTools m_RenderTools;
-	CUI m_UI;
+	CUi m_UI;
 	CChillerEditor m_ChillerEditor;
 
 	std::vector<std::reference_wrapper<CEditorComponent>> m_vComponents;

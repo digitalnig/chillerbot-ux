@@ -1819,10 +1819,10 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 		MainView.HSplitTop(20.0f, &GpuDropDown, &MainView);
 		Ui()->DoLabel(&Text, Localize("Graphics card"), 16.0f, TEXTALIGN_MC);
 
-		static std::vector<const char *> s_vpGpuIDNames;
+		static std::vector<const char *> s_vpGpuIdNames;
 
 		size_t GPUCount = GPUList.m_vGpus.size() + 1;
-		s_vpGpuIDNames.resize(GPUCount);
+		s_vpGpuIdNames.resize(GPUCount);
 
 		char aCurDeviceName[256 + 4];
 
@@ -1832,7 +1832,7 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 			if(i == 0)
 			{
 				str_format(aCurDeviceName, sizeof(aCurDeviceName), "%s (%s)", Localize("auto"), GPUList.m_AutoGpu.m_aName);
-				s_vpGpuIDNames[i] = aCurDeviceName;
+				s_vpGpuIdNames[i] = aCurDeviceName;
 				if(str_comp("auto", g_Config.m_GfxGpuName) == 0)
 				{
 					OldSelectedGpu = 0;
@@ -1840,7 +1840,7 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 			}
 			else
 			{
-				s_vpGpuIDNames[i] = GPUList.m_vGpus[i - 1].m_aName;
+				s_vpGpuIdNames[i] = GPUList.m_vGpus[i - 1].m_aName;
 				if(str_comp(GPUList.m_vGpus[i - 1].m_aName, g_Config.m_GfxGpuName) == 0)
 				{
 					OldSelectedGpu = i;
@@ -1855,7 +1855,7 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 		static CUi::SDropDownState s_GpuDropDownState;
 		static CScrollRegion s_GpuDropDownScrollRegion;
 		s_GpuDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_GpuDropDownScrollRegion;
-		const int NewGpu = Ui()->DoDropDown(&GpuDropDown, OldSelectedGpu, s_vpGpuIDNames.data(), GPUCount, s_GpuDropDownState);
+		const int NewGpu = Ui()->DoDropDown(&GpuDropDown, OldSelectedGpu, s_vpGpuIdNames.data(), GPUCount, s_GpuDropDownState);
 		if(OldSelectedGpu != NewGpu)
 		{
 			if(NewGpu == 0)
@@ -3454,11 +3454,11 @@ void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 		Button.VSplitLeft(200.0f, &Button, &Checkbox);
 		Button.VSplitLeft(150.0f, &Button, 0);
 		str_format(aBuf, sizeof(aBuf), "%s:", "Finish name");
-		UI()->DoLabel(&Label, aBuf, 14.0f, -1);
+		Ui()->DoLabel(&Label, aBuf, 14.0f, -1);
 		static CLineInput s_NameInput;
 		s_NameInput.SetBuffer(g_Config.m_ClFinishName, sizeof(g_Config.m_ClFinishName));
 		s_NameInput.SetEmptyText("chillerbot-ux");
-		UI()->DoEditBox(&s_NameInput, &Button, 14.0f);
+		Ui()->DoEditBox(&s_NameInput, &Button, 14.0f);
 		if(DoButton_CheckBox(&g_Config.m_ClFinishRename, "Rename on finish", g_Config.m_ClFinishRename, &Checkbox))
 		{
 			g_Config.m_ClFinishRename ^= 1;
@@ -3476,11 +3476,11 @@ void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 		Button.VSplitLeft(200.0f, &Button, &Checkbox);
 		Button.VSplitLeft(150.0f, &Button, 0);
 		str_format(aBuf, sizeof(aBuf), "%s:", "auto reply msg");
-		UI()->DoLabel(&Label, aBuf, 14.0f, -1);
+		Ui()->DoLabel(&Label, aBuf, 14.0f, -1);
 		static CLineInput s_ReplyMsg;
 		s_ReplyMsg.SetBuffer(g_Config.m_ClAutoReplyMsg, sizeof(g_Config.m_ClAutoReplyMsg));
 		s_ReplyMsg.SetEmptyText("I use chillerbot-ux");
-		UI()->DoEditBox(&s_ReplyMsg, &Button, 14.0f);
+		Ui()->DoEditBox(&s_ReplyMsg, &Button, 14.0f);
 		if(DoButton_CheckBox(&g_Config.m_ClAutoReply, "Auto reply", g_Config.m_ClAutoReply, &Checkbox))
 		{
 			g_Config.m_ClAutoReply ^= 1;
@@ -3553,6 +3553,6 @@ void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 		MainView.HSplitTop(20.0f, &Button, &MainView);
 		Button.VSplitLeft(120.0f, &Label, &Button);
 		str_format(aBuf, sizeof(aBuf), "chillerbot-ux playtime: %d hours", m_pClient->m_ChillerBotUX.GetPlayTimeHours());
-		UI()->DoLabel(&Label, aBuf, 14.0f, -1);
+		Ui()->DoLabel(&Label, aBuf, 14.0f, -1);
 	}
 }

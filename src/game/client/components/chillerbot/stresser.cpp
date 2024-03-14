@@ -167,14 +167,14 @@ void CStresser::OnMessage(int MsgType, void *pRawMsg)
 	if(MsgType == NETMSGTYPE_SV_CHAT)
 	{
 		CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
-		OnChatMessage(pMsg->m_ClientID, pMsg->m_Team, pMsg->m_pMessage);
+		OnChatMessage(pMsg->m_ClientId, pMsg->m_Team, pMsg->m_pMessage);
 	}
 }
 
-void CStresser::OnChatMessage(int ClientID, int Team, const char *pMsg)
+void CStresser::OnChatMessage(int ClientId, int Team, const char *pMsg)
 {
 	char aBuf[2048];
-	if(ClientID == -1) // server message
+	if(ClientId == -1) // server message
 	{
 		if(m_RequestCmdlist > 0)
 		{

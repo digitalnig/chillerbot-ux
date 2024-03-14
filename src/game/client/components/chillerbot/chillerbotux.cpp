@@ -146,10 +146,10 @@ void CChillerBotUX::PrintPlaytime()
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
 }
 
-inline bool CChillerBotUX::IsPlayerInfoAvailable(int ClientID) const
+inline bool CChillerBotUX::IsPlayerInfoAvailable(int ClientId) const
 {
-	const void *pPrevInfo = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_PLAYERINFO, ClientID);
-	const void *pInfo = Client()->SnapFindItem(IClient::SNAP_CURRENT, NETOBJTYPE_PLAYERINFO, ClientID);
+	const void *pPrevInfo = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_PLAYERINFO, ClientId);
+	const void *pInfo = Client()->SnapFindItem(IClient::SNAP_CURRENT, NETOBJTYPE_PLAYERINFO, ClientId);
 	return pPrevInfo && pInfo;
 }
 
@@ -162,25 +162,25 @@ void CChillerBotUX::SkinStealTick()
 	if(!GameClient()->m_Snap.m_pLocalCharacter)
 		return;
 
-	int LocalClientID = m_pClient->m_Snap.m_LocalClientID;
-	for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
+	int LocalClientId = m_pClient->m_Snap.m_LocalClientId;
+	for(int ClientId = 0; ClientId < MAX_CLIENTS; ClientId++)
 	{
-		if(ClientID == LocalClientID || !m_pClient->m_Snap.m_aCharacters[ClientID].m_Active || !IsPlayerInfoAvailable(ClientID))
+		if(ClientId == LocalClientId || !m_pClient->m_Snap.m_aCharacters[ClientId].m_Active || !IsPlayerInfoAvailable(ClientId))
 			continue;
 
 		// only steal close by
-		vec2 *pRenderPos = &m_pClient->m_aClients[ClientID].m_RenderPos;
+		vec2 *pRenderPos = &m_pClient->m_aClients[ClientId].m_RenderPos;
 		vec2 Current = vec2(GameClient()->m_Snap.m_pLocalCharacter->m_X, GameClient()->m_Snap.m_pLocalCharacter->m_Y);
 		float dist = distance(*pRenderPos, Current);
 		if(dist > 32 * g_Config.m_ClSkinStealRadius)
 			continue;
 
-		str_copy(g_Config.m_ClPlayerSkin, GameClient()->m_aClients[ClientID].m_aSkinName, sizeof(g_Config.m_ClPlayerSkin));
+		str_copy(g_Config.m_ClPlayerSkin, GameClient()->m_aClients[ClientId].m_aSkinName, sizeof(g_Config.m_ClPlayerSkin));
 		if(g_Config.m_ClSkinStealColor)
 		{
-			g_Config.m_ClPlayerUseCustomColor = GameClient()->m_aClients[ClientID].m_UseCustomColor;
-			g_Config.m_ClPlayerColorBody = GameClient()->m_aClients[ClientID].m_ColorBody;
-			g_Config.m_ClPlayerColorFeet = GameClient()->m_aClients[ClientID].m_ColorFeet;
+			g_Config.m_ClPlayerUseCustomColor = GameClient()->m_aClients[ClientId].m_UseCustomColor;
+			g_Config.m_ClPlayerColorBody = GameClient()->m_aClients[ClientId].m_ColorBody;
+			g_Config.m_ClPlayerColorFeet = GameClient()->m_aClients[ClientId].m_ColorFeet;
 		}
 		m_pClient->SendInfo(false);
 		// only steal skin every 10 seconds to not get ratelimited
@@ -209,8 +209,8 @@ void CChillerBotUX::ChangeTileNotifyTick()
 	if(!GameClient()->m_Snap.m_pLocalCharacter)
 		return;
 	static int LastTile = -1;
-	float X = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[g_Config.m_ClDummy]].m_Cur.m_X;
-	float Y = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[g_Config.m_ClDummy]].m_Cur.m_Y;
+	float X = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIds[g_Config.m_ClDummy]].m_Cur.m_X;
+	float Y = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIds[g_Config.m_ClDummy]].m_Cur.m_Y;
 	int CurrentTile = Collision()->GetTileIndex(Collision()->GetPureMapIndex(X, Y));
 	if(LastTile != CurrentTile && m_LastNotification + time_freq() * 10 < time_get())
 	{
@@ -229,7 +229,7 @@ void CChillerBotUX::RenderWeaponHud()
 {
 	if(!g_Config.m_ClWeaponHud)
 		return;
-	if(CCharacter *pChar = m_pClient->m_GameWorld.GetCharacterByID(m_pClient->m_aLocalIDs[g_Config.m_ClDummy]))
+	if(CCharacter *pChar = m_pClient->m_GameWorld.GetCharacterById(m_pClient->m_aLocalIds[g_Config.m_ClDummy]))
 	{
 		char aWeapons[1024];
 		aWeapons[0] = '\0';
@@ -411,7 +411,7 @@ void CChillerBotUX::RenderDbgIntersect()
 	if(!Config()->m_ClDbgIntersect)
 		return;
 
-	vec2 Position = m_pClient->m_aClients[m_pClient->m_Snap.m_LocalClientID].m_RenderPos;
+	vec2 Position = m_pClient->m_aClients[m_pClient->m_Snap.m_LocalClientId].m_RenderPos;
 	float Angle = 0.0f;
 	if(Client()->State() != IClient::STATE_DEMOPLAYBACK)
 	{
@@ -929,16 +929,16 @@ void CChillerBotUX::DumpPlayers(const char *pSearch)
 
 		// id | name
 		if(pSearch && pSearch[0] != 0)
-			if(str_find_nocase(m_pClient->m_aClients[pInfo->m_ClientID].m_aName, pSearch))
+			if(str_find_nocase(m_pClient->m_aClients[pInfo->m_ClientId].m_aName, pSearch))
 				IsMatch = true;
-		str_format(aBuf, sizeof(aBuf), "%2d|%16s|", pInfo->m_ClientID, m_pClient->m_aClients[pInfo->m_ClientID].m_aName);
+		str_format(aBuf, sizeof(aBuf), "%2d|%16s|", pInfo->m_ClientId, m_pClient->m_aClients[pInfo->m_ClientId].m_aName);
 		str_append(aLine, aBuf, sizeof(aLine));
 
 		// clan
 		if(pSearch && pSearch[0] != 0)
-			if(str_find_nocase(m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, pSearch))
+			if(str_find_nocase(m_pClient->m_aClients[pInfo->m_ClientId].m_aClan, pSearch))
 				IsMatch = true;
-		str_format(aBuf, sizeof(aBuf), "%16s|", m_pClient->m_aClients[pInfo->m_ClientID].m_aClan);
+		str_format(aBuf, sizeof(aBuf), "%16s|", m_pClient->m_aClients[pInfo->m_ClientId].m_aClan);
 		str_append(aLine, aBuf, sizeof(aLine));
 
 		// ping
@@ -946,7 +946,7 @@ void CChillerBotUX::DumpPlayers(const char *pSearch)
 		str_append(aLine, aBuf, sizeof(aLine));
 
 		// team
-		int DDTeam = m_pClient->m_Teams.Team(pInfo->m_ClientID);
+		int DDTeam = m_pClient->m_Teams.Team(pInfo->m_ClientId);
 		int NextDDTeam = 0;
 
 		for(int j = i + 1; j < MAX_CLIENTS; j++)
@@ -956,7 +956,7 @@ void CChillerBotUX::DumpPlayers(const char *pSearch)
 			if(!pInfo2)
 				continue;
 
-			NextDDTeam = m_pClient->m_Teams.Team(pInfo2->m_ClientID);
+			NextDDTeam = m_pClient->m_Teams.Team(pInfo2->m_ClientId);
 			break;
 		}
 
@@ -969,7 +969,7 @@ void CChillerBotUX::DumpPlayers(const char *pSearch)
 				if(!pInfo2)
 					continue;
 
-				OldDDTeam = m_pClient->m_Teams.Team(pInfo2->m_ClientID);
+				OldDDTeam = m_pClient->m_Teams.Team(pInfo2->m_ClientId);
 				break;
 			}
 		}
@@ -1054,8 +1054,8 @@ void CChillerBotUX::TraceSpikes()
 	if(!m_pClient->m_Snap.m_pLocalCharacter)
 		return;
 
-	// int CurrentX = (int)(m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[0]].m_Cur.m_X / 32);
-	// int CurrentY = (int)(m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[0]].m_Cur.m_Y / 32);
+	// int CurrentX = (int)(m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIds[0]].m_Cur.m_X / 32);
+	// int CurrentY = (int)(m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIds[0]].m_Cur.m_Y / 32);
 	int CurrentX = (int)(m_pClient->m_Snap.m_pLocalCharacter->m_X / 32);
 	int CurrentY = (int)(m_pClient->m_Snap.m_pLocalCharacter->m_Y / 32);
 	int FromX = maximum(0, CurrentX - g_Config.m_ClSpikeTracer);
@@ -1108,21 +1108,21 @@ void CChillerBotUX::OnMessage(int MsgType, void *pRawMsg)
 		Kill.m_aVictimName[0] = '\0';
 		Kill.m_aKillerName[0] = '\0';
 
-		Kill.m_VictimID = pMsg->m_Victim;
-		if(Kill.m_VictimID >= 0 && Kill.m_VictimID < MAX_CLIENTS)
+		Kill.m_VictimId = pMsg->m_Victim;
+		if(Kill.m_VictimId >= 0 && Kill.m_VictimId < MAX_CLIENTS)
 		{
-			Kill.m_VictimTeam = m_pClient->m_aClients[Kill.m_VictimID].m_Team;
-			Kill.m_VictimDDTeam = m_pClient->m_Teams.Team(Kill.m_VictimID);
-			str_copy(Kill.m_aVictimName, m_pClient->m_aClients[Kill.m_VictimID].m_aName, sizeof(Kill.m_aVictimName));
-			Kill.m_VictimRenderInfo = m_pClient->m_aClients[Kill.m_VictimID].m_RenderInfo;
+			Kill.m_VictimTeam = m_pClient->m_aClients[Kill.m_VictimId].m_Team;
+			Kill.m_VictimDDTeam = m_pClient->m_Teams.Team(Kill.m_VictimId);
+			str_copy(Kill.m_aVictimName, m_pClient->m_aClients[Kill.m_VictimId].m_aName, sizeof(Kill.m_aVictimName));
+			Kill.m_VictimRenderInfo = m_pClient->m_aClients[Kill.m_VictimId].m_RenderInfo;
 		}
 
-		Kill.m_KillerID = pMsg->m_Killer;
-		if(Kill.m_KillerID >= 0 && Kill.m_KillerID < MAX_CLIENTS)
+		Kill.m_KillerId = pMsg->m_Killer;
+		if(Kill.m_KillerId >= 0 && Kill.m_KillerId < MAX_CLIENTS)
 		{
-			Kill.m_KillerTeam = m_pClient->m_aClients[Kill.m_KillerID].m_Team;
-			str_copy(Kill.m_aKillerName, m_pClient->m_aClients[Kill.m_KillerID].m_aName, sizeof(Kill.m_aKillerName));
-			Kill.m_KillerRenderInfo = m_pClient->m_aClients[Kill.m_KillerID].m_RenderInfo;
+			Kill.m_KillerTeam = m_pClient->m_aClients[Kill.m_KillerId].m_Team;
+			str_copy(Kill.m_aKillerName, m_pClient->m_aClients[Kill.m_KillerId].m_aName, sizeof(Kill.m_aKillerName));
+			Kill.m_KillerRenderInfo = m_pClient->m_aClients[Kill.m_KillerId].m_RenderInfo;
 		}
 
 		Kill.m_Weapon = pMsg->m_Weapon;
@@ -1133,12 +1133,12 @@ void CChillerBotUX::OnMessage(int MsgType, void *pRawMsg)
 
 		bool KillMsgValid = (Kill.m_VictimRenderInfo.m_CustomColoredSkin && Kill.m_VictimRenderInfo.m_ColorableRenderSkin.m_Body.IsValid()) || (!Kill.m_VictimRenderInfo.m_CustomColoredSkin && Kill.m_VictimRenderInfo.m_OriginalRenderSkin.m_Body.IsValid());
 		// if killer != victim, killer must be valid too
-		KillMsgValid &= Kill.m_KillerID == Kill.m_VictimID || ((Kill.m_KillerRenderInfo.m_CustomColoredSkin && Kill.m_KillerRenderInfo.m_ColorableRenderSkin.m_Body.IsValid()) || (!Kill.m_KillerRenderInfo.m_CustomColoredSkin && Kill.m_KillerRenderInfo.m_OriginalRenderSkin.m_Body.IsValid()));
-		if(KillMsgValid && Kill.m_KillerID != Kill.m_VictimID)
+		KillMsgValid &= Kill.m_KillerId == Kill.m_VictimId || ((Kill.m_KillerRenderInfo.m_CustomColoredSkin && Kill.m_KillerRenderInfo.m_ColorableRenderSkin.m_Body.IsValid()) || (!Kill.m_KillerRenderInfo.m_CustomColoredSkin && Kill.m_KillerRenderInfo.m_OriginalRenderSkin.m_Body.IsValid()));
+		if(KillMsgValid && Kill.m_KillerId != Kill.m_VictimId)
 		{
 			for(int i = 0; i < 2; i++)
 			{
-				if(m_pClient->m_aLocalIDs[i] != Kill.m_VictimID)
+				if(m_pClient->m_aLocalIds[i] != Kill.m_VictimId)
 					continue;
 
 				str_copy(m_aLastKiller[i], Kill.m_aKillerName, sizeof(m_aLastKiller[i]));
@@ -1222,20 +1222,20 @@ int CChillerBotUX::CountOnlinePlayers()
 
 int CChillerBotUX::GetTotalJumps()
 {
-	int ClientID = GameClient()->m_aLocalIDs[g_Config.m_ClDummy];
-	CCharacterCore *pCharacter = &m_pClient->m_aClients[ClientID].m_Predicted;
-	if(m_pClient->m_Snap.m_aCharacters[ClientID].m_HasExtendedDisplayInfo)
+	int ClientId = GameClient()->m_aLocalIds[g_Config.m_ClDummy];
+	CCharacterCore *pCharacter = &m_pClient->m_aClients[ClientId].m_Predicted;
+	if(m_pClient->m_Snap.m_aCharacters[ClientId].m_HasExtendedDisplayInfo)
 		return maximum(minimum(abs(pCharacter->m_Jumps), 10), 0);
 	else
-		return abs(m_pClient->m_Snap.m_aCharacters[ClientID].m_ExtendedData.m_Jumps);
+		return abs(m_pClient->m_Snap.m_aCharacters[ClientId].m_ExtendedData.m_Jumps);
 }
 
 int CChillerBotUX::GetUnusedJumps()
 {
-	int ClientID = GameClient()->m_aLocalIDs[g_Config.m_ClDummy];
-	CCharacterCore *pCharacter = &m_pClient->m_aClients[ClientID].m_Predicted;
+	int ClientId = GameClient()->m_aLocalIds[g_Config.m_ClDummy];
+	CCharacterCore *pCharacter = &m_pClient->m_aClients[ClientId].m_Predicted;
 	int TotalJumpsToDisplay = 0, AvailableJumpsToDisplay = 0;
-	if(m_pClient->m_Snap.m_aCharacters[ClientID].m_HasExtendedDisplayInfo)
+	if(m_pClient->m_Snap.m_aCharacters[ClientId].m_HasExtendedDisplayInfo)
 	{
 		bool Grounded = false;
 		if(Collision()->CheckPoint(pCharacter->m_Pos.x + CCharacterCore::PhysicalSize() / 2,
@@ -1281,7 +1281,7 @@ int CChillerBotUX::GetUnusedJumps()
 	}
 	else
 	{
-		AvailableJumpsToDisplay = abs(m_pClient->m_Snap.m_aCharacters[ClientID].m_ExtendedData.m_Jumps);
+		AvailableJumpsToDisplay = abs(m_pClient->m_Snap.m_aCharacters[ClientId].m_ExtendedData.m_Jumps);
 	}
 	return AvailableJumpsToDisplay;
 }

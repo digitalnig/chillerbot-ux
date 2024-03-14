@@ -147,9 +147,9 @@ class CChatHelper : public CComponent
 		SPAM_OTHER,
 		SPAM_INSULT
 	};
-	int IsSpam(int ClientID, int Team, const char *pMsg);
+	int IsSpam(int ClientId, int Team, const char *pMsg);
 
-	void OnChatMessage(int ClientID, int Team, const char *pMsg);
+	void OnChatMessage(int ClientId, int Team, const char *pMsg);
 
 	virtual void OnRender() override;
 	virtual void OnMessage(int MsgType, void *pRawMsg) override;
@@ -205,7 +205,7 @@ public:
 			StayAfk - Do not deactivate afk mode.
 	*/
 	void SayBuffer(const char *pMsg, bool StayAfk = false);
-	bool FilterChat(int ClientID, int Team, const char *pLine);
+	bool FilterChat(int ClientId, int Team, const char *pLine);
 	bool OnAutocomplete(CLineInput *pInput, const char *pCompletionBuffer, int PlaceholderOffset, int PlaceholderLength, int *pOldChatStringLength, int *pCompletionChosen, bool ReverseTAB);
 };
 

@@ -1178,10 +1178,10 @@ void CGameClient::ProcessEvents()
 				continue;
 
 			if(!g_Config.m_SndLongPain)
-				if(pEvent->m_SoundID == SOUND_PLAYER_PAIN_LONG)
-					pEvent->m_SoundID = SOUND_PICKUP_HEALTH;
+				if(pEvent->m_SoundId == SOUND_PLAYER_PAIN_LONG)
+					pEvent->m_SoundId = SOUND_PICKUP_HEALTH;
 
-			m_Sounds.PlayAt(CSounds::CHN_WORLD, pEvent->m_SoundID, 1.0f, vec2(pEvent->m_X, pEvent->m_Y));
+			m_Sounds.PlayAt(CSounds::CHN_WORLD, pEvent->m_SoundId, 1.0f, vec2(pEvent->m_X, pEvent->m_Y));
 		}
 	}
 }

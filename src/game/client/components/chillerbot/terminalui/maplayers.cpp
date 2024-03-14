@@ -17,10 +17,10 @@
 
 #if defined(CONF_CURSES_CLIENT)
 
-inline bool CTerminalUI::IsPlayerInfoAvailable(int ClientID) const
+inline bool CTerminalUI::IsPlayerInfoAvailable(int ClientId) const
 {
-	const void *pPrevInfo = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_PLAYERINFO, ClientID);
-	const void *pInfo = Client()->SnapFindItem(IClient::SNAP_CURRENT, NETOBJTYPE_PLAYERINFO, ClientID);
+	const void *pPrevInfo = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_PLAYERINFO, ClientId);
+	const void *pInfo = Client()->SnapFindItem(IClient::SNAP_CURRENT, NETOBJTYPE_PLAYERINFO, ClientId);
 	return pPrevInfo && pInfo;
 }
 
@@ -51,7 +51,7 @@ void CTerminalUI::RenderItems()
 
 			if(pPickup->InDDNetTile())
 			{
-				if(auto *pPrev = (CPickup *)GameClient()->m_PrevPredictedWorld.GetEntity(pPickup->GetID(), CGameWorld::ENTTYPE_PICKUP))
+				if(auto *pPrev = (CPickup *)GameClient()->m_PrevPredictedWorld.GetEntity(pPickup->GetId(), CGameWorld::ENTTYPE_PICKUP))
 				{
 					CNetObj_Pickup Data, Prev;
 					pPickup->FillInfo(&Data);
@@ -77,11 +77,11 @@ void CTerminalUI::RenderItems()
 				continue;
 			if(UsePredicted)
 			{
-				auto *pPickup = (CPickup *)GameClient()->m_GameWorld.FindMatch(Item.m_ID, Item.m_Type, pData);
+				auto *pPickup = (CPickup *)GameClient()->m_GameWorld.FindMatch(Item.m_Id, Item.m_Type, pData);
 				if(pPickup && pPickup->InDDNetTile())
 					continue;
 			}
-			const void *pPrev = Client()->SnapFindItem(IClient::SNAP_PREV, Item.m_Type, Item.m_ID);
+			const void *pPrev = Client()->SnapFindItem(IClient::SNAP_PREV, Item.m_Type, Item.m_Id);
 			if(pPrev)
 				RenderPickup((const CNetObj_Pickup *)pPrev, (const CNetObj_Pickup *)pData);
 		}
@@ -180,18 +180,18 @@ void CTerminalUI::RenderPlayers(int offX, int offY, int w, int h)
 			mx *= 32;
 			my *= 32;
 			my += 64;
-			for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
+			for(int ClientId = 0; ClientId < MAX_CLIENTS; ClientId++)
 			{
-				if(!m_pClient->m_Snap.m_aCharacters[ClientID].m_Active || !IsPlayerInfoAvailable(ClientID))
+				if(!m_pClient->m_Snap.m_aCharacters[ClientId].m_Active || !IsPlayerInfoAvailable(ClientId))
 					continue;
 
-				// int curX = m_pClient->m_aClients[ClientID].m_RenderCur.m_X;
+				// int curX = m_pClient->m_aClients[ClientId].m_RenderCur.m_X;
 				// DBG_II(curX, mx);
 
-				int PlayerX = m_pClient->m_aClients[ClientID].m_RenderCur.m_X;
-				int PlayerY = m_pClient->m_aClients[ClientID].m_RenderCur.m_Y;
+				int PlayerX = m_pClient->m_aClients[ClientId].m_RenderCur.m_X;
+				int PlayerY = m_pClient->m_aClients[ClientId].m_RenderCur.m_Y;
 				const char *pPlayerSkin = "o";
-				if(m_pClient->m_Snap.m_aCharacters[ClientID].m_Cur.m_Weapon == WEAPON_NINJA)
+				if(m_pClient->m_Snap.m_aCharacters[ClientId].m_Cur.m_Weapon == WEAPON_NINJA)
 					pPlayerSkin = "ø";
 				if(PlayerX > mx - 16 && PlayerX < mx + 16)
 					if(PlayerY > my - 16 && PlayerY < my + 16)

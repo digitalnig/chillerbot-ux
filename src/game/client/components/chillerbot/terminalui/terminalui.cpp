@@ -1007,7 +1007,7 @@ void CTerminalUI::CompleteNames(bool IsReverse)
 		if(!PlayerInfo)
 			continue;
 
-		PlayerName = m_pClient->m_aClients[PlayerInfo->m_ClientID].m_aName;
+		PlayerName = m_pClient->m_aClients[PlayerInfo->m_ClientId].m_aName;
 		FoundInput = str_utf8_find_nocase(PlayerName, m_aCompletionBuffer);
 		if(!FoundInput)
 			continue;

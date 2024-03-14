@@ -23,12 +23,12 @@ void CCityHelper::OnInit()
 	m_LastDummy = 0;
 }
 
-void CCityHelper::SetAutoDrop(bool Drop, int Delay, int ClientID)
+void CCityHelper::SetAutoDrop(bool Drop, int Delay, int ClientId)
 {
 	char aBuf[128];
-	m_AutoDropMoney[ClientID] = Drop;
-	m_WalletDropDelay[ClientID] = Delay;
-	str_format(aBuf, sizeof(aBuf), "turn drop %s on %s", Drop ? "on" : "off", ClientID ? "dummy" : "main");
+	m_AutoDropMoney[ClientId] = Drop;
+	m_WalletDropDelay[ClientId] = Delay;
+	str_format(aBuf, sizeof(aBuf), "turn drop %s on %s", Drop ? "on" : "off", ClientId ? "dummy" : "main");
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "city", aBuf);
 	str_format(aBuf, sizeof(aBuf), "drop main=%d dummy=%d", m_AutoDropMoney[0], m_AutoDropMoney[1]);
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "city", aBuf);
@@ -51,15 +51,15 @@ void CCityHelper::ConchainShowWallet(IConsole::IResult *pResult, void *pUserData
 		pSelf->GameClient()->m_ChillerBotUX.DisableComponent("money");
 }
 
-void CCityHelper::PrintWalletToChat(int ClientID, const char *pWhisper)
+void CCityHelper::PrintWalletToChat(int ClientId, const char *pWhisper)
 {
-	if(ClientID == -1)
-		ClientID = g_Config.m_ClDummy;
+	if(ClientId == -1)
+		ClientId = g_Config.m_ClDummy;
 
 	char aWallet[128];
 	char aBuf[512];
-	str_format(aWallet, sizeof(aWallet), "money: %d", WalletMoney(ClientID));
-	if(!ClientID)
+	str_format(aWallet, sizeof(aWallet), "money: %d", WalletMoney(ClientId));
+	if(!ClientId)
 	{
 		for(auto &Entry : m_vWalletMain)
 		{
@@ -84,52 +84,52 @@ void CCityHelper::PrintWalletToChat(int ClientID, const char *pWhisper)
 		m_pClient->m_Chat.Say(0, aWallet);
 }
 
-int CCityHelper::WalletMoney(int ClientID)
+int CCityHelper::WalletMoney(int ClientId)
 {
-	if(ClientID == -1)
-		ClientID = g_Config.m_ClDummy;
-	if(m_WalletMoney[ClientID] == 0)
+	if(ClientId == -1)
+		ClientId = g_Config.m_ClDummy;
+	if(m_WalletMoney[ClientId] == 0)
 	{
-		if(ClientID)
+		if(ClientId)
 			m_vWalletDummy.clear();
 		else
 			m_vWalletMain.clear();
 	}
-	return m_WalletMoney[ClientID];
+	return m_WalletMoney[ClientId];
 }
 
-void CCityHelper::SetWalletMoney(int Money, int ClientID)
+void CCityHelper::SetWalletMoney(int Money, int ClientId)
 {
-	if(ClientID == -1)
-		ClientID = g_Config.m_ClDummy;
-	m_WalletMoney[ClientID] = Money;
+	if(ClientId == -1)
+		ClientId = g_Config.m_ClDummy;
+	m_WalletMoney[ClientId] = Money;
 	if(g_Config.m_ClShowWallet)
 	{
 		char aBuf[128];
-		str_format(aBuf, sizeof(aBuf), "%d", m_WalletMoney[ClientID]);
+		str_format(aBuf, sizeof(aBuf), "%d", m_WalletMoney[ClientId]);
 		m_pClient->m_ChillerBotUX.SetComponentNoteLong("money", aBuf);
 	}
 }
 
-void CCityHelper::AddWalletMoney(int Money, int ClientID)
+void CCityHelper::AddWalletMoney(int Money, int ClientId)
 {
-	if(ClientID == -1)
-		ClientID = g_Config.m_ClDummy;
-	SetWalletMoney(WalletMoney(ClientID) + Money);
+	if(ClientId == -1)
+		ClientId = g_Config.m_ClDummy;
+	SetWalletMoney(WalletMoney(ClientId) + Money);
 }
 
 void CCityHelper::ConAutoDropMoney(IConsole::IResult *pResult, void *pUserData)
 {
 	CCityHelper *pSelf = (CCityHelper *)pUserData;
-	int ClientID = pResult->NumArguments() > 1 ? pResult->GetInteger(1) : g_Config.m_ClDummy;
-	bool Drop = !pSelf->m_AutoDropMoney[ClientID];
+	int ClientId = pResult->NumArguments() > 1 ? pResult->GetInteger(1) : g_Config.m_ClDummy;
+	bool Drop = !pSelf->m_AutoDropMoney[ClientId];
 	int Delay = pResult->NumArguments() > 0 ? pResult->GetInteger(0) : 4;
 	if(pResult->NumArguments() > 2)
 		Drop = !str_comp(pResult->GetString(2), "on");
 	pSelf->SetAutoDrop(
 		Drop,
 		Delay < 1 ? 1 : Delay,
-		ClientID);
+		ClientId);
 }
 
 void CCityHelper::OnMessage(int MsgType, void *pRawMsg)
@@ -158,10 +158,10 @@ void CCityHelper::OnMessage(int MsgType, void *pRawMsg)
 	else if(MsgType == NETMSGTYPE_SV_CHAT)
 	{
 		CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
-		if(pMsg->m_ClientID == -1 && pMsg->m_Team < 2)
+		if(pMsg->m_ClientId == -1 && pMsg->m_Team < 2)
 			OnServerMsg(pMsg->m_pMessage);
 		else
-			OnChatMsg(pMsg->m_ClientID, pMsg->m_Team, pMsg->m_pMessage);
+			OnChatMsg(pMsg->m_ClientId, pMsg->m_Team, pMsg->m_pMessage);
 	}
 }
 
@@ -184,7 +184,7 @@ void CCityHelper::OnServerMsg(const char *pMsg)
 	int n = sscanf(pMsg, "Collected %d money", &Money);
 	if(n == 1)
 	{
-		int Owner = ClosestClientIDToPos(
+		int Owner = ClosestClientIdToPos(
 			vec2(m_pClient->m_LocalCharacterPos.x, m_pClient->m_LocalCharacterPos.y),
 			g_Config.m_ClDummy);
 		if(Owner != -1)
@@ -232,7 +232,7 @@ void CCityHelper::OnServerMsg(const char *pMsg)
 	}
 }
 
-int CCityHelper::ClosestClientIDToPos(vec2 Pos, int Dummy)
+int CCityHelper::ClosestClientIdToPos(vec2 Pos, int Dummy)
 {
 	float ClosestRange = 0.f;
 	int ClosestId = -1;
@@ -240,10 +240,10 @@ int CCityHelper::ClosestClientIDToPos(vec2 Pos, int Dummy)
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		int ClientID = m_pClient->m_aLocalIDs[Dummy];
+		int ClientId = m_pClient->m_aLocalIds[Dummy];
 		if(!m_pClient->m_Snap.m_aCharacters[i].m_Active)
 			continue;
-		if(ClientID == i)
+		if(ClientId == i)
 			continue;
 
 		const void *pPrevInfo = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_PLAYERINFO, i);
@@ -264,11 +264,11 @@ int CCityHelper::ClosestClientIDToPos(vec2 Pos, int Dummy)
 	return ClosestId;
 }
 
-void CCityHelper::OnChatMsg(int ClientID, int Team, const char *pMsg)
+void CCityHelper::OnChatMsg(int ClientId, int Team, const char *pMsg)
 {
 	// TODO: move this to chat helper? or do I want a new chat command system in each component? -.-
-	const char *pName = m_pClient->m_aClients[m_pClient->m_aLocalIDs[0]].m_aName;
-	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_aLocalIDs[1]].m_aName;
+	const char *pName = m_pClient->m_aClients[m_pClient->m_aLocalIds[0]].m_aName;
+	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_aLocalIds[1]].m_aName;
 	int NameLen = 0;
 
 	if(str_startswith(pMsg, pName))
@@ -288,8 +288,8 @@ void CCityHelper::OnChatMsg(int ClientID, int Team, const char *pMsg)
 	// if whisper respond in whisper
 	if(Team >= 2)
 	{
-		str_copy(aName, m_pClient->m_aClients[ClientID].m_aName, sizeof(aName));
-		if(IsFDDRace && ClientID == 63 && !str_comp_num(m_pClient->m_aClients[ClientID].m_aName, " ", 2))
+		str_copy(aName, m_pClient->m_aClients[ClientId].m_aName, sizeof(aName));
+		if(IsFDDRace && ClientId == 63 && !str_comp_num(m_pClient->m_aClients[ClientId].m_aName, " ", 2))
 		{
 			MsgOffset = m_pClient->m_ChatHelper.Get128Name(pMsg, aName);
 			if(MsgOffset == -1)
@@ -318,18 +318,18 @@ void CCityHelper::OnChatMsg(int ClientID, int Team, const char *pMsg)
 		PrintWalletToChat(g_Config.m_ClDummy, aName);
 }
 
-void CCityHelper::DropAllMoney(int ClientID)
+void CCityHelper::DropAllMoney(int ClientId)
 {
-	if(WalletMoney(ClientID) < 1)
+	if(WalletMoney(ClientId) < 1)
 		return;
 
 	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "/money drop %d", WalletMoney(ClientID) > 100000 ? 100000 : WalletMoney(ClientID));
+	str_format(aBuf, sizeof(aBuf), "/money drop %d", WalletMoney(ClientId) > 100000 ? 100000 : WalletMoney(ClientId));
 
 	CMsgPacker Msg(NETMSGTYPE_CL_SAY, false);
 	Msg.AddInt(0);
 	Msg.AddString(aBuf, -1);
-	Client()->SendMsg(ClientID, &Msg, MSGFLAG_VITAL);
+	Client()->SendMsg(ClientId, &Msg, MSGFLAG_VITAL);
 }
 
 void CCityHelper::OnRender()

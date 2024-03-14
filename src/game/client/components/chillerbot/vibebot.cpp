@@ -12,7 +12,7 @@
 
 CNetObj_Character *CVibeBot::GetCharacter() const
 {
-	return &m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIDs[m_MoveID]].m_Cur;
+	return &m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIds[m_MoveId]].m_Cur;
 }
 
 void CVibeBot::Reset()
@@ -30,7 +30,7 @@ void CVibeBot::OnInit()
 	m_EmoteBot[1] = EB_OFF;
 	m_EmoteBotDelay[0] = 0;
 	m_EmoteBotDelay[1] = 0;
-	m_MoveID = 0;
+	m_MoveId = 0;
 	m_NextEmote[0] = 0;
 	m_NextEmote[1] = 0;
 	m_NextAim[0] = 0;
@@ -43,42 +43,42 @@ void CVibeBot::OnInit()
 	m_WantedAim[1] = vec2(100, 100);
 }
 
-void CVibeBot::SetMode(int Mode, int ClientID)
+void CVibeBot::SetMode(int Mode, int ClientId)
 {
-	int ID = 0;
+	int Id = 0;
 	if(Mode == VB_OFF)
 	{
-		ID = ClientID ? !g_Config.m_ClDummy : g_Config.m_ClDummy;
-		m_pClient->m_Controls.m_aInputData[ID].m_Fire = m_aInputData[ClientID].m_Fire;
-		m_pClient->m_Controls.m_aInputData[ID].m_WantedWeapon = m_aInputData[ClientID].m_WantedWeapon;
+		Id = ClientId ? !g_Config.m_ClDummy : g_Config.m_ClDummy;
+		m_pClient->m_Controls.m_aInputData[Id].m_Fire = m_aInputData[ClientId].m_Fire;
+		m_pClient->m_Controls.m_aInputData[Id].m_WantedWeapon = m_aInputData[ClientId].m_WantedWeapon;
 	}
 	else
 	{
-		ID = g_Config.m_ClDummy ? !ClientID : ClientID;
-		m_aInputData[ClientID].m_Fire = m_pClient->m_Controls.m_aInputData[ID].m_Fire;
-		m_aInputData[ClientID].m_WantedWeapon = m_pClient->m_Controls.m_aInputData[ID].m_WantedWeapon;
+		Id = g_Config.m_ClDummy ? !ClientId : ClientId;
+		m_aInputData[ClientId].m_Fire = m_pClient->m_Controls.m_aInputData[Id].m_Fire;
+		m_aInputData[ClientId].m_WantedWeapon = m_pClient->m_Controls.m_aInputData[Id].m_WantedWeapon;
 	}
-	m_Mode[ClientID] = Mode;
+	m_Mode[ClientId] = Mode;
 	UpdateComponents();
 }
 
-void CVibeBot::SetEmoteBot(int Mode, int Delay, int ClientID)
+void CVibeBot::SetEmoteBot(int Mode, int Delay, int ClientId)
 {
-	int ID = 0;
+	int Id = 0;
 	if(Mode == EB_OFF)
 	{
-		ID = ClientID ? !g_Config.m_ClDummy : g_Config.m_ClDummy;
-		m_pClient->m_Controls.m_aInputData[ID].m_Fire = m_aInputData[ClientID].m_Fire;
-		m_pClient->m_Controls.m_aInputData[ID].m_WantedWeapon = m_aInputData[ClientID].m_WantedWeapon;
+		Id = ClientId ? !g_Config.m_ClDummy : g_Config.m_ClDummy;
+		m_pClient->m_Controls.m_aInputData[Id].m_Fire = m_aInputData[ClientId].m_Fire;
+		m_pClient->m_Controls.m_aInputData[Id].m_WantedWeapon = m_aInputData[ClientId].m_WantedWeapon;
 	}
 	else
 	{
-		ID = g_Config.m_ClDummy ? !ClientID : ClientID;
-		m_aInputData[ClientID].m_Fire = m_pClient->m_Controls.m_aInputData[ID].m_Fire;
-		m_aInputData[ClientID].m_WantedWeapon = m_pClient->m_Controls.m_aInputData[ID].m_WantedWeapon;
+		Id = g_Config.m_ClDummy ? !ClientId : ClientId;
+		m_aInputData[ClientId].m_Fire = m_pClient->m_Controls.m_aInputData[Id].m_Fire;
+		m_aInputData[ClientId].m_WantedWeapon = m_pClient->m_Controls.m_aInputData[Id].m_WantedWeapon;
 	}
-	m_EmoteBot[ClientID] = Mode;
-	m_EmoteBotDelay[ClientID] = Delay;
+	m_EmoteBot[ClientId] = Mode;
+	m_EmoteBotDelay[ClientId] = Delay;
 	UpdateComponents();
 }
 
@@ -171,26 +171,26 @@ void CVibeBot::ConVibes(IConsole::IResult *pResult, void *pUserData)
 
 void CVibeBot::EmoteBotTick()
 {
-	if(m_EmoteBot[MoveID()] == EB_OFF)
+	if(m_EmoteBot[MoveId()] == EB_OFF)
 		return;
 
-	if(time_get() > m_NextEmoteBot[MoveID()])
+	if(time_get() > m_NextEmoteBot[MoveId()])
 	{
-		m_NextEmoteBot[MoveID()] = time_get() + time_freq() * m_EmoteBotDelay[MoveID()];
-		Emote(m_EmoteBot[MoveID()]);
+		m_NextEmoteBot[MoveId()] = time_get() + time_freq() * m_EmoteBotDelay[MoveId()];
+		Emote(m_EmoteBot[MoveId()]);
 	}
 }
 
 void CVibeBot::VibeEmote(int Emoticon)
 {
-	if(time_get() > m_NextEmote[MoveID()])
+	if(time_get() > m_NextEmote[MoveId()])
 	{
-		m_NextEmote[MoveID()] = time_get() + time_freq() * (rand() % 10) + 5;
+		m_NextEmote[MoveId()] = time_get() + time_freq() * (rand() % 10) + 5;
 		Emote(Emoticon);
 	}
-	if(time_get() > m_NextAim[MoveID()])
+	if(time_get() > m_NextAim[MoveId()])
 	{
-		m_NextAim[MoveID()] = time_get() + time_freq() * (rand() % 5) + 5;
+		m_NextAim[MoveId()] = time_get() + time_freq() * (rand() % 5) + 5;
 		Aim(rand() % 200 - 100, rand() % 200 - 100);
 	}
 }
@@ -199,44 +199,44 @@ void CVibeBot::Emote(int Emoticon)
 {
 	CMsgPacker Msg(NETMSGTYPE_CL_EMOTICON, false);
 	Msg.AddInt(Emoticon);
-	Client()->SendMsg(m_MoveID, &Msg, MSGFLAG_VITAL);
+	Client()->SendMsg(m_MoveId, &Msg, MSGFLAG_VITAL);
 }
 
 void CVibeBot::Aim(int TargetX, int TargetY)
 {
-	m_WantedAim[MoveID()].x = TargetX;
-	m_WantedAim[MoveID()].y = TargetY;
+	m_WantedAim[MoveId()].x = TargetX;
+	m_WantedAim[MoveId()].y = TargetY;
 }
 
 void CVibeBot::AimTick()
 {
 	vec2 ControlsAim = vec2(
-		m_pClient->m_Controls.m_aInputData[MoveID()].m_TargetX,
-		m_pClient->m_Controls.m_aInputData[MoveID()].m_TargetY);
-	if(distance(m_CurrentAim[MoveID()], m_WantedAim[MoveID()]) > 60.0f)
+		m_pClient->m_Controls.m_aInputData[MoveId()].m_TargetX,
+		m_pClient->m_Controls.m_aInputData[MoveId()].m_TargetY);
+	if(distance(m_CurrentAim[MoveId()], m_WantedAim[MoveId()]) > 60.0f)
 	{
-		m_SendData[MoveID()] = true;
-		if(time_get() > m_NextAimMove[MoveID()])
+		m_SendData[MoveId()] = true;
+		if(time_get() > m_NextAimMove[MoveId()])
 		{
-			m_NextAimMove[MoveID()] = time_get() + (time_freq() / 10);
-			if(m_CurrentAim[MoveID()].x < m_WantedAim[MoveID()].x)
-				m_CurrentAim[MoveID()].x++;
+			m_NextAimMove[MoveId()] = time_get() + (time_freq() / 10);
+			if(m_CurrentAim[MoveId()].x < m_WantedAim[MoveId()].x)
+				m_CurrentAim[MoveId()].x++;
 			else
-				m_CurrentAim[MoveID()].x--;
-			if(m_CurrentAim[MoveID()].y < m_WantedAim[MoveID()].y)
-				m_CurrentAim[MoveID()].y++;
+				m_CurrentAim[MoveId()].x--;
+			if(m_CurrentAim[MoveId()].y < m_WantedAim[MoveId()].y)
+				m_CurrentAim[MoveId()].y++;
 			else
-				m_CurrentAim[MoveID()].y--;
+				m_CurrentAim[MoveId()].y--;
 		}
 	}
-	else if(distance(ControlsAim, m_CurrentAim[MoveID()]) > 5.0f)
+	else if(distance(ControlsAim, m_CurrentAim[MoveId()]) > 5.0f)
 	{
-		m_SendData[MoveID()] = true;
-		m_WantedAim[MoveID()].x = m_pClient->m_Controls.m_aInputData[MoveID()].m_TargetX;
-		m_WantedAim[MoveID()].y = m_pClient->m_Controls.m_aInputData[MoveID()].m_TargetY;
+		m_SendData[MoveId()] = true;
+		m_WantedAim[MoveId()].x = m_pClient->m_Controls.m_aInputData[MoveId()].m_TargetX;
+		m_WantedAim[MoveId()].y = m_pClient->m_Controls.m_aInputData[MoveId()].m_TargetY;
 	}
-	m_aInputData[MoveID()].m_TargetX = m_CurrentAim[MoveID()].x;
-	m_aInputData[MoveID()].m_TargetY = m_CurrentAim[MoveID()].y;
+	m_aInputData[MoveId()].m_TargetX = m_CurrentAim[MoveId()].x;
+	m_aInputData[MoveId()].m_TargetY = m_CurrentAim[MoveId()].y;
 }
 
 void CVibeBot::OnRender()
@@ -247,10 +247,10 @@ void CVibeBot::OnRender()
 		EmoteBotTick();
 		if(m_Mode[Dummy] == VB_OFF)
 			continue;
-		m_MoveID = Dummy;
+		m_MoveId = Dummy;
 		if(!GetCharacter())
 			continue;
-		m_aInputData[MoveID()] = m_pClient->m_Controls.m_aInputData[MoveID()];
+		m_aInputData[MoveId()] = m_pClient->m_Controls.m_aInputData[MoveId()];
 		AimTick();
 		if(m_Mode[Dummy] == VB_HAPPY)
 			VibeEmote(E_HAPPY);

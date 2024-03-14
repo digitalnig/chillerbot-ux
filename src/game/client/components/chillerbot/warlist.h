@@ -119,7 +119,7 @@ class CWarList : public CComponent
 public:
 	virtual int Sizeof() const override { return sizeof(*this); }
 
-	bool OnChatCmd(char Prefix, int ClientID, int Team, const char *pCmd, int NumArgs, const char **ppArgs);
+	bool OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs);
 
 	void GetWarReason(const char *pName, char *pReason, int ReasonSize);
 	void GetWarClansStr(char *pBuf, int Size);
@@ -134,13 +134,13 @@ public:
 	bool IsWarClanmate(const char *pClan);
 
 	// cached use during render
-	bool IsWar(int ClientID);
-	bool IsTeam(int ClientID);
-	bool IsTraitor(int ClientID);
-	bool IsWarClan(int ClientID);
-	bool IsTeamClan(int ClientID);
-	bool IsWarClanmate(int ClientID);
-	void SetNameplateColor(int ClientID, ColorRGBA *pColor);
+	bool IsWar(int ClientId);
+	bool IsTeam(int ClientId);
+	bool IsTraitor(int ClientId);
+	bool IsWarClan(int ClientId);
+	bool IsTeamClan(int ClientId);
+	bool IsWarClanmate(int ClientId);
+	void SetNameplateColor(int ClientId, ColorRGBA *pColor);
 	void ReloadList();
 
 	int NumEnemies() { return m_WarDirs + m_TraitorDirs; }

@@ -10,7 +10,7 @@
 
 	Example:
 		char aResponse[1024];
-		CReplyToPing ReplyToPing = CReplyToPing(this, aName, m_pClient->m_aClients[ClientID].m_aClan, pLine, aResponse, sizeof(aResponse));
+		CReplyToPing ReplyToPing = CReplyToPing(this, aName, m_pClient->m_aClients[ClientId].m_aClan, pLine, aResponse, sizeof(aResponse));
 		if(ReplyToPing.Reply())
 			m_pClient->m_Chat.Say(0, aResponse);
 

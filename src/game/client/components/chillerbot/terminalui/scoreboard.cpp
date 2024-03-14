@@ -19,7 +19,7 @@ void CTerminalUI::RenderScoreboard(int Team, CTermWindow *pWin)
 	if(!m_ScoreboardActive)
 		return;
 
-	int NumRenderScoreIDs = 0;
+	int NumRenderScoreIds = 0;
 
 	int mx = getmaxx(pWin->m_pCursesWin);
 	int my = getmaxy(pWin->m_pCursesWin);
@@ -38,11 +38,11 @@ void CTerminalUI::RenderScoreboard(int Team, CTermWindow *pWin)
 		if(!pInfo || pInfo->m_Team != Team)
 			continue;
 
-		NumRenderScoreIDs++;
+		NumRenderScoreIds++;
 		if(offY + i > my - 8)
 			break;
 	}
-	int height = minimum(NumRenderScoreIDs, my - 5);
+	int height = minimum(NumRenderScoreIds, my - 5);
 	if(height < 1)
 		return;
 
@@ -59,7 +59,7 @@ void CTerminalUI::RenderScoreboard(int Team, CTermWindow *pWin)
 		if(!pInfo || pInfo->m_Team != Team)
 			continue;
 
-		// dbg_msg("scoreboard", "i=%d name=%s", i, m_pClient->m_aClients[pInfo->m_ClientID].m_aName);
+		// dbg_msg("scoreboard", "i=%d name=%s", i, m_pClient->m_aClients[pInfo->m_ClientId].m_aName);
 
 		char aScore[64];
 
@@ -80,8 +80,8 @@ void CTerminalUI::RenderScoreboard(int Team, CTermWindow *pWin)
 		char aBuf[1024];
 		char aName[64];
 		char aClan[64];
-		str_copy(aName, m_pClient->m_aClients[pInfo->m_ClientID].m_aName, sizeof(aName));
-		str_copy(aClan, m_pClient->m_aClients[pInfo->m_ClientID].m_aClan, sizeof(aClan));
+		str_copy(aName, m_pClient->m_aClients[pInfo->m_ClientId].m_aName, sizeof(aName));
+		str_copy(aClan, m_pClient->m_aClients[pInfo->m_ClientId].m_aClan, sizeof(aClan));
 
 		str_pad_right_utf8(aName, sizeof(aName), NAME_COL_SIZE);
 		str_pad_right_utf8(aClan, sizeof(aClan), CLAN_COL_SIZE);
