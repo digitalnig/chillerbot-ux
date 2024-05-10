@@ -40,8 +40,6 @@ IGameController::IGameController(class CGameContext *pGameServer) :
 	m_ForceBalanced = false;
 
 	m_CurrentRecord = 0;
-
-	InitTeleporter();
 }
 
 IGameController::~IGameController() = default;
@@ -412,7 +410,7 @@ void IGameController::OnPlayerDisconnect(class CPlayer *pPlayer, const char *pRe
 			str_format(aBuf, sizeof(aBuf), "'%s' has left the game (%s)", Server()->ClientName(ClientId), pReason);
 		else
 			str_format(aBuf, sizeof(aBuf), "'%s' has left the game", Server()->ClientName(ClientId));
-		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
+		GameServer()->SendChat(-1, TEAM_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
 		str_format(aBuf, sizeof(aBuf), "leave player='%d:%s'", ClientId, Server()->ClientName(ClientId));
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "game", aBuf);
@@ -484,8 +482,6 @@ void IGameController::OnCharacterSpawn(class CCharacter *pChr)
 	// give default weapons
 	pChr->GiveWeapon(WEAPON_HAMMER);
 	pChr->GiveWeapon(WEAPON_GUN);
-
-	pChr->SetTeleports(&m_TeleOuts, &m_TeleCheckOuts);
 }
 
 void IGameController::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
@@ -712,31 +708,6 @@ CClientMask IGameController::GetMaskForPlayerWorldEvent(int Asker, int ExceptId)
 	return Teams().TeamMask(GameServer()->GetDDRaceTeam(Asker), ExceptId, Asker);
 }
 
-void IGameController::InitTeleporter()
-{
-	if(!GameServer()->Collision()->Layers()->TeleLayer())
-		return;
-	int Width = GameServer()->Collision()->Layers()->TeleLayer()->m_Width;
-	int Height = GameServer()->Collision()->Layers()->TeleLayer()->m_Height;
-
-	for(int i = 0; i < Width * Height; i++)
-	{
-		int Number = GameServer()->Collision()->TeleLayer()[i].m_Number;
-		int Type = GameServer()->Collision()->TeleLayer()[i].m_Type;
-		if(Number > 0)
-		{
-			if(Type == TILE_TELEOUT)
-			{
-				m_TeleOuts[Number - 1].emplace_back(i % Width * 32.0f + 16.0f, i / Width * 32.0f + 16.0f);
-			}
-			else if(Type == TILE_TELECHECKOUT)
-			{
-				m_TeleCheckOuts[Number - 1].emplace_back(i % Width * 32.0f + 16.0f, i / Width * 32.0f + 16.0f);
-			}
-		}
-	}
-}
-
 void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 {
 	Team = ClampTeam(Team);
@@ -751,7 +722,7 @@ void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 	if(DoChatMsg)
 	{
 		str_format(aBuf, sizeof(aBuf), "'%s' joined the %s", Server()->ClientName(ClientId), GameServer()->m_pController->GetTeamName(Team));
-		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
+		GameServer()->SendChat(-1, TEAM_ALL, aBuf);
 	}
 
 	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' m_Team=%d", ClientId, Server()->ClientName(ClientId), Team);

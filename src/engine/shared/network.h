@@ -97,7 +97,8 @@ enum
 
 typedef int SECURITY_TOKEN;
 
-SECURITY_TOKEN ToSecurityToken(unsigned char *pData);
+SECURITY_TOKEN ToSecurityToken(const unsigned char *pData);
+void WriteSecurityToken(unsigned char *pData, SECURITY_TOKEN Token);
 
 extern const unsigned char SECURITY_TOKEN_MAGIC[4];
 
@@ -514,8 +515,6 @@ public:
 	void ConnectAddresses(const NETADDR **ppAddrs, int *pNumAddrs) const { m_Connection.ConnectAddresses(ppAddrs, pNumAddrs); }
 	int GotProblems(int64_t MaxLatency) const;
 	const char *ErrorString() const;
-
-	bool SecurityTokenUnknown() { return m_Connection.SecurityToken() == NET_SECURITY_TOKEN_UNKNOWN; }
 
 	// stun
 	void FeedStunServer(NETADDR StunServer);

@@ -71,7 +71,7 @@ void CChatHelper::OnRender()
 		{
 			if(m_aSendBuffer[0][0])
 			{
-				m_pClient->m_Chat.Say(0, m_aSendBuffer[0]);
+				m_pClient->m_Chat.SendChat(0, m_aSendBuffer[0]);
 				for(int i = 0; i < MAX_CHAT_BUFFER_LEN - 1; i++)
 					str_copy(m_aSendBuffer[i], m_aSendBuffer[i + 1], sizeof(m_aSendBuffer[i]));
 				m_aSendBuffer[MAX_CHAT_BUFFER_LEN - 1][0] = '\0';
@@ -129,7 +129,7 @@ void CChatHelper::ConReplyToLastPing(IConsole::IResult *pResult, void *pUserData
 		{
 			if(aResponse[0])
 			{
-				pSelf->m_pClient->m_Chat.Say(0, aResponse);
+				pSelf->m_pClient->m_Chat.SendChat(0, aResponse);
 				break;
 			}
 		}
@@ -202,7 +202,7 @@ void CChatHelper::SayFormat(const char *pMsg)
 		aBuf[buf_i++] = pMsg[i];
 	}
 	aBuf[minimum((unsigned long)sizeof(aBuf) - 1, buf_i)] = '\0';
-	m_pClient->m_Chat.Say(0, aBuf);
+	m_pClient->m_Chat.SendChat(0, aBuf);
 }
 
 bool CChatHelper::HowToJoinClan(const char *pClan, char *pResponse, int SizeOfResponse)
@@ -229,10 +229,10 @@ void CChatHelper::DoGreet()
 	{
 		char aBuf[128];
 		str_format(aBuf, sizeof(aBuf), "hi %s", m_aGreetName);
-		m_pClient->m_Chat.Say(0, aBuf);
+		m_pClient->m_Chat.SendChat(0, aBuf);
 		return;
 	}
-	m_pClient->m_Chat.Say(0, "hi");
+	m_pClient->m_Chat.SendChat(0, "hi");
 }
 
 int CChatHelper::Get128Name(const char *pMsg, char *pName)

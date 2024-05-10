@@ -698,7 +698,7 @@ int64_t time_freq();
  *
  * @return The time as a UNIX timestamp
  */
-int time_timestamp();
+int64_t time_timestamp();
 
 /**
  * Retrieves the hours since midnight (0..23)
@@ -1839,11 +1839,11 @@ int fs_makedir(const char *path);
 int fs_removedir(const char *path);
 
 /**
- * Recursively create directories for a file.
+ * Recursively creates parent directories for a file or directory.
  *
  * @ingroup Filesystem
  *
- * @param path - File for which to create directories.
+ * @param path File or directory for which to create parent directories.
  *
  * @return 0 on success. Negative value on failure.
  *
@@ -2120,6 +2120,8 @@ void str_from_int(int value, char (&dst)[N])
 int str_isspace(char c);
 
 char str_uppercase(char c);
+
+bool str_isnum(char c);
 
 int str_isallnum(const char *str);
 

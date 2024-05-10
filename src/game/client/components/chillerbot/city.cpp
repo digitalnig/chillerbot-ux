@@ -78,10 +78,10 @@ void CCityHelper::PrintWalletToChat(int ClientId, const char *pWhisper)
 	if(pWhisper && pWhisper[0])
 	{
 		str_format(aBuf, sizeof(aBuf), "/whisper \"%s\" %s", pWhisper, aWallet);
-		m_pClient->m_Chat.Say(0, aBuf);
+		m_pClient->m_Chat.SendChat(0, aBuf);
 	}
 	else
-		m_pClient->m_Chat.Say(0, aWallet);
+		m_pClient->m_Chat.SendChat(0, aWallet);
 }
 
 int CCityHelper::WalletMoney(int ClientId)

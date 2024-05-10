@@ -61,7 +61,7 @@ void CStresser::OnRender()
 	{
 		if(time_get() >= -m_RequestCmdlist)
 		{
-			m_pClient->m_Chat.SayChat("/cmdlist");
+			m_pClient->m_Chat.SendChat(0, "/cmdlist");
 			m_RequestCmdlist = time_get();
 		}
 		// dbg_msg("pentest", "time=%lld req=%lld diff=%lld", time_get(), -m_RequestCmdlist, (-m_RequestCmdlist - time_get()) / time_freq());
@@ -104,28 +104,28 @@ void CStresser::OnRender()
 		int len = rand() % 64;
 		for(int i = 0; i < len; i++)
 		{
-			char buf[2];
-			str_format(buf, sizeof(buf), "%c", pCharset[rand() % str_length(pCharset)]);
-			str_append(aArg, buf, sizeof(aArg));
+			char aBuf[2];
+			str_format(aBuf, sizeof(aBuf), "%c", pCharset[rand() % str_length(pCharset)]);
+			str_append(aArg, aBuf, sizeof(aArg));
 		}
 		str_format(aChatCmd, sizeof(aChatCmd), "/%s %s", GetRandomChatCommand(), aArg);
-		m_pClient->m_Chat.SayChat(aChatCmd);
+		m_pClient->m_Chat.SendChat(0, aChatCmd);
 	}
 	else // file messages
 	{
 		const char *pMessage = GetPentestCommand(g_Config.m_ClPenTestFile);
 		if(pMessage)
 		{
-			m_pClient->m_Chat.SayChat(pMessage);
+			m_pClient->m_Chat.SendChat(0, pMessage);
 		}
 		else
 		{
-			const int NUM_CMDS = 3;
-			char aaCmds[NUM_CMDS][512] = {
+			const int NumCmds = 3;
+			char aaCmds[NumCmds][512] = {
 				"/register xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 12831237189237189231982371938712893798",
 				"todo: configure me ( pentest file not found)",
 				"/login bang baz baz"};
-			m_pClient->m_Chat.SayChat(aaCmds[rand() % NUM_CMDS]);
+			m_pClient->m_Chat.SendChat(0, aaCmds[rand() % NumCmds]);
 		}
 	}
 }
@@ -145,9 +145,9 @@ const char *CStresser::GetPentestCommand(char const *pFileName)
 
 	std::vector<char *> v;
 	char *pLine;
-	CLineReader *lr = new CLineReader();
-	lr->Init(File);
-	while((pLine = lr->Get()))
+	CLineReader *Lr = new CLineReader();
+	Lr->Init(File);
+	while((pLine = Lr->Get()))
 		if(str_length(pLine))
 			if(pLine[0] != '#')
 				v.push_back(pLine);
@@ -184,7 +184,7 @@ void CStresser::OnChatMessage(int ClientId, int Team, const char *pMsg)
 			// dbg_msg("pentest", "cmdlist: %s", pMsg);
 			str_copy(aBuf, pMsg, sizeof(aBuf));
 			char aToken[64];
-			for(const char *tok = aBuf; (tok = str_next_token(tok, ",", aToken, sizeof(aToken)));)
+			for(const char *Tok = aBuf; (Tok = str_next_token(Tok, ",", aToken, sizeof(aToken)));)
 			{
 				char *pBuf = (char *)malloc(64 * sizeof(char));
 				str_copy(pBuf, str_skip_whitespaces(aToken), 64);

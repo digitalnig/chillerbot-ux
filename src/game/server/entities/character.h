@@ -38,6 +38,7 @@ public:
 	void TickDeferred() override;
 	void TickPaused() override;
 	void Snap(int SnappingClient) override;
+	void PostSnap() override;
 	void SwapClients(int Client1, int Client2) override;
 
 	bool CanSnapCharacter(int SnappingClient);
@@ -104,6 +105,7 @@ private:
 
 	bool m_Alive;
 	bool m_Paused;
+	int m_PausedTick;
 	int m_NeededFaketuning;
 
 	// weapon info
@@ -143,12 +145,11 @@ private:
 	int m_Health;
 	int m_Armor;
 
+	int m_TriggeredEvents7;
+
 	// the player core for the physics
 	CCharacterCore m_Core;
 	CGameTeams *m_pTeams = nullptr;
-
-	std::map<int, std::vector<vec2>> *m_pTeleOuts = nullptr;
-	std::map<int, std::vector<vec2>> *m_pTeleCheckOuts = nullptr;
 
 	// info for dead reckoning
 	int m_ReckoningTick; // tick that we are performing dead reckoning From
@@ -179,7 +180,6 @@ private:
 public:
 	CGameTeams *Teams() { return m_pTeams; }
 	void SetTeams(CGameTeams *pTeams);
-	void SetTeleports(std::map<int, std::vector<vec2>> *pTeleOuts, std::map<int, std::vector<vec2>> *pTeleCheckOuts);
 
 	void FillAntibot(CAntibotCharacterData *pData);
 	void Pause(bool Pause);
@@ -188,6 +188,7 @@ public:
 	bool UnFreeze();
 	void GiveAllWeapons();
 	void ResetPickups();
+	void ResetJumps();
 	int m_DDRaceState;
 	int Team();
 	bool CanCollide(int ClientId);

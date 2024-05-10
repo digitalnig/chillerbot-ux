@@ -39,7 +39,7 @@ int CPlayerPics::LoadImageByName(const char *pImgName, int IsDir, int DirType, v
 	char aBuf[128];
 	CImageInfo Info;
 	str_format(aBuf, sizeof(aBuf), "playerpics/%s.png", aName);
-	if(!pSelf->Graphics()->LoadPNG(&Info, aBuf, IStorage::TYPE_ALL))
+	if(!pSelf->Graphics()->LoadPng(Info, aBuf, IStorage::TYPE_ALL))
 	{
 		char aMsg[128];
 		str_format(aMsg, sizeof(aMsg), "failed to load '%s'", aBuf);
@@ -56,7 +56,7 @@ int CPlayerPics::LoadImageByName(const char *pImgName, int IsDir, int DirType, v
 	// add entry
 	CPlayerPic CountryFlag;
 	str_copy(CountryFlag.m_aPlayerName, aName, sizeof(CountryFlag.m_aPlayerName));
-	CountryFlag.m_Texture = pSelf->Graphics()->LoadTextureRaw(Info.m_Width, Info.m_Height, Info.m_Format, Info.m_pData, Info.m_Format, 0);
+	CountryFlag.m_Texture = pSelf->Graphics()->LoadTextureRaw(Info, 0);
 	free(Info.m_pData);
 	if(g_Config.m_Debug)
 	{

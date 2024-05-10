@@ -145,11 +145,13 @@ void CScore::MapInfo(int ClientId, const char *pMapName)
 	ExecPlayerThread(CScoreWorker::MapInfo, "map info", ClientId, pMapName, 0);
 }
 
-void CScore::SaveScore(int ClientId, float Time, const char *pTimestamp, const float aTimeCp[NUM_CHECKPOINTS], bool NotEligible)
+void CScore::SaveScore(int ClientId, int TimeTicks, const char *pTimestamp, const float aTimeCp[NUM_CHECKPOINTS], bool NotEligible)
 {
 	CConsole *pCon = (CConsole *)GameServer()->Console();
 	if(pCon->Cheated() || NotEligible)
 		return;
+
+	GameServer()->TeehistorianRecordPlayerFinish(ClientId, TimeTicks);
 
 	CPlayer *pCurPlayer = GameServer()->m_apPlayers[ClientId];
 	if(pCurPlayer->m_ScoreFinishResult != nullptr)
@@ -160,7 +162,7 @@ void CScore::SaveScore(int ClientId, float Time, const char *pTimestamp, const f
 	FormatUuid(GameServer()->GameUuid(), Tmp->m_aGameUuid, sizeof(Tmp->m_aGameUuid));
 	Tmp->m_ClientId = ClientId;
 	str_copy(Tmp->m_aName, Server()->ClientName(ClientId), sizeof(Tmp->m_aName));
-	Tmp->m_Time = Time;
+	Tmp->m_Time = (float)(TimeTicks) / (float)Server()->TickSpeed();
 	str_copy(Tmp->m_aTimestamp, pTimestamp, sizeof(Tmp->m_aTimestamp));
 	for(int i = 0; i < NUM_CHECKPOINTS; i++)
 		Tmp->m_aCurrentTimeCp[i] = aTimeCp[i];
@@ -168,7 +170,7 @@ void CScore::SaveScore(int ClientId, float Time, const char *pTimestamp, const f
 	m_pPool->ExecuteWrite(CScoreWorker::SaveScore, std::move(Tmp), "save score");
 }
 
-void CScore::SaveTeamScore(int *pClientIds, unsigned int Size, float Time, const char *pTimestamp)
+void CScore::SaveTeamScore(int Team, int *pClientIds, unsigned int Size, int TimeTicks, const char *pTimestamp)
 {
 	CConsole *pCon = (CConsole *)GameServer()->Console();
 	if(pCon->Cheated())
@@ -178,11 +180,14 @@ void CScore::SaveTeamScore(int *pClientIds, unsigned int Size, float Time, const
 		if(GameServer()->m_apPlayers[pClientIds[i]]->m_NotEligibleForFinish)
 			return;
 	}
+
+	GameServer()->TeehistorianRecordTeamFinish(Team, TimeTicks);
+
 	auto Tmp = std::make_unique<CSqlTeamScoreData>();
 	for(unsigned int i = 0; i < Size; i++)
 		str_copy(Tmp->m_aaNames[i], Server()->ClientName(pClientIds[i]), sizeof(Tmp->m_aaNames[i]));
 	Tmp->m_Size = Size;
-	Tmp->m_Time = Time;
+	Tmp->m_Time = (float)TimeTicks / (float)Server()->TickSpeed();
 	str_copy(Tmp->m_aTimestamp, pTimestamp, sizeof(Tmp->m_aTimestamp));
 	FormatUuid(GameServer()->GameUuid(), Tmp->m_aGameUuid, sizeof(Tmp->m_aGameUuid));
 	str_copy(Tmp->m_aMap, g_Config.m_SvMap, sizeof(Tmp->m_aMap));
@@ -288,8 +293,17 @@ void CScore::SaveTeam(int ClientId, const char *pCode, const char *pServer)
 		return;
 	auto *pController = GameServer()->m_pController;
 	int Team = pController->Teams().m_Core.Team(ClientId);
+	char aBuf[512];
 	if(pController->Teams().GetSaving(Team))
+	{
+		GameServer()->SendChatTarget(ClientId, "Team save already in progress");
 		return;
+	}
+	if(pController->Teams().IsPractice(Team))
+	{
+		GameServer()->SendChatTarget(ClientId, "Team save disabled for teams in practice mode");
+		return;
+	}
 
 	auto SaveResult = std::make_shared<CScoreSaveResult>(ClientId);
 	SaveResult->m_SaveId = RandomUuid();
@@ -306,7 +320,6 @@ void CScore::SaveTeam(int ClientId, const char *pCode, const char *pServer)
 	Tmp->m_aGeneratedCode[0] = '\0';
 	GeneratePassphrase(Tmp->m_aGeneratedCode, sizeof(Tmp->m_aGeneratedCode));
 
-	char aBuf[512];
 	if(Tmp->m_aCode[0] == '\0')
 	{
 		str_format(aBuf,
@@ -334,7 +347,10 @@ void CScore::LoadTeam(const char *pCode, int ClientId)
 	auto *pController = GameServer()->m_pController;
 	int Team = pController->Teams().m_Core.Team(ClientId);
 	if(pController->Teams().GetSaving(Team))
+	{
+		GameServer()->SendChatTarget(ClientId, "Team load already in progress");
 		return;
+	}
 	if(Team < TEAM_FLOCK || Team >= MAX_CLIENTS || (g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO && Team == TEAM_FLOCK))
 	{
 		GameServer()->SendChatTarget(ClientId, "You have to be in a team (from 1-63)");
@@ -343,6 +359,16 @@ void CScore::LoadTeam(const char *pCode, int ClientId)
 	if(pController->Teams().GetTeamState(Team) != CGameTeams::TEAMSTATE_OPEN)
 	{
 		GameServer()->SendChatTarget(ClientId, "Team can't be loaded while racing");
+		return;
+	}
+	if(pController->Teams().TeamFlock(Team))
+	{
+		GameServer()->SendChatTarget(ClientId, "Team can't be loaded while in team 0 mode");
+		return;
+	}
+	if(pController->Teams().IsPractice(Team))
+	{
+		GameServer()->SendChatTarget(ClientId, "Team can't be loaded while practice is enabled");
 		return;
 	}
 	auto SaveResult = std::make_shared<CScoreSaveResult>(ClientId);

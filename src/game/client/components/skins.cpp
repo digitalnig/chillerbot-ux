@@ -47,7 +47,7 @@ void CSkins::CGetPngFile::OnCompletion(EHttpState State)
 	// Maybe this should start another thread to load the png in instead of stalling the curl thread
 	if(State == EHttpState::DONE)
 	{
-		m_pSkins->LoadSkinPNG(m_Info, Dest(), Dest(), IStorage::TYPE_SAVE);
+		m_pSkins->LoadSkinPng(m_Info, Dest(), Dest(), IStorage::TYPE_SAVE);
 	}
 }
 
@@ -83,6 +83,7 @@ int CSkins::SkinScan(const char *pName, int IsDir, int DirType, void *pUser)
 	if(!CSkin::IsValidName(aSkinName))
 	{
 		log_error("skins", "Skin name is not valid: %s", aSkinName);
+		log_error("skins", "%s", CSkin::m_aSkinNameRestrictions);
 		return 0;
 	}
 
@@ -134,14 +135,14 @@ static void CheckMetrics(CSkin::SSkinMetricVariable &Metrics, const uint8_t *pIm
 const CSkin *CSkins::LoadSkin(const char *pName, const char *pPath, int DirType)
 {
 	CImageInfo Info;
-	if(!LoadSkinPNG(Info, pName, pPath, DirType))
+	if(!LoadSkinPng(Info, pName, pPath, DirType))
 		return nullptr;
 	return LoadSkin(pName, Info);
 }
 
-bool CSkins::LoadSkinPNG(CImageInfo &Info, const char *pName, const char *pPath, int DirType)
+bool CSkins::LoadSkinPng(CImageInfo &Info, const char *pName, const char *pPath, int DirType)
 {
-	if(!Graphics()->LoadPNG(&Info, pPath, DirType))
+	if(!Graphics()->LoadPng(Info, pPath, DirType))
 	{
 		log_error("skins", "Failed to load skin PNG: %s", pName);
 		return false;
@@ -197,20 +198,20 @@ const CSkin *CSkins::LoadSkin(const char *pName, CImageInfo &Info)
 	int BodyOutlineOffsetX = g_pData->m_aSprites[SPRITE_TEE_BODY_OUTLINE].m_X * BodyOutlineGridPixelsWidth;
 	int BodyOutlineOffsetY = g_pData->m_aSprites[SPRITE_TEE_BODY_OUTLINE].m_Y * BodyOutlineGridPixelsHeight;
 
-	int BodyWidth = g_pData->m_aSprites[SPRITE_TEE_BODY].m_W * (Info.m_Width / g_pData->m_aSprites[SPRITE_TEE_BODY].m_pSet->m_Gridx); // body width
-	int BodyHeight = g_pData->m_aSprites[SPRITE_TEE_BODY].m_H * (Info.m_Height / g_pData->m_aSprites[SPRITE_TEE_BODY].m_pSet->m_Gridy); // body height
+	size_t BodyWidth = g_pData->m_aSprites[SPRITE_TEE_BODY].m_W * (Info.m_Width / g_pData->m_aSprites[SPRITE_TEE_BODY].m_pSet->m_Gridx); // body width
+	size_t BodyHeight = g_pData->m_aSprites[SPRITE_TEE_BODY].m_H * (Info.m_Height / g_pData->m_aSprites[SPRITE_TEE_BODY].m_pSet->m_Gridy); // body height
 	if(BodyWidth > Info.m_Width || BodyHeight > Info.m_Height)
 		return nullptr;
-	unsigned char *pData = (unsigned char *)Info.m_pData;
+	uint8_t *pData = Info.m_pData;
 	const int PixelStep = 4;
 	int Pitch = Info.m_Width * PixelStep;
 
 	// dig out blood color
 	{
 		int64_t aColors[3] = {0};
-		for(int y = 0; y < BodyHeight; y++)
+		for(size_t y = 0; y < BodyHeight; y++)
 		{
-			for(int x = 0; x < BodyWidth; x++)
+			for(size_t x = 0; x < BodyWidth; x++)
 			{
 				uint8_t AlphaValue = pData[y * Pitch + x * PixelStep + 3];
 				if(AlphaValue > 128)
@@ -237,7 +238,7 @@ const CSkin *CSkins::LoadSkin(const char *pName, CImageInfo &Info)
 	CheckMetrics(Skin.m_Metrics.m_Feet, pData, Pitch, FeetOutlineOffsetX, FeetOutlineOffsetY, FeetOutlineWidth, FeetOutlineHeight);
 
 	// make the texture gray scale
-	for(int i = 0; i < Info.m_Width * Info.m_Height; i++)
+	for(size_t i = 0; i < Info.m_Width * Info.m_Height; i++)
 	{
 		int v = (pData[i * PixelStep] + pData[i * PixelStep + 1] + pData[i * PixelStep + 2]) / 3;
 		pData[i * PixelStep] = v;
@@ -250,8 +251,8 @@ const CSkin *CSkins::LoadSkin(const char *pName, CImageInfo &Info)
 	int NewWeight = 192;
 
 	// find most common frequency
-	for(int y = 0; y < BodyHeight; y++)
-		for(int x = 0; x < BodyWidth; x++)
+	for(size_t y = 0; y < BodyHeight; y++)
+		for(size_t x = 0; x < BodyWidth; x++)
 		{
 			if(pData[y * Pitch + x * PixelStep + 3] > 128)
 				aFreq[pData[y * Pitch + x * PixelStep]]++;
@@ -266,8 +267,8 @@ const CSkin *CSkins::LoadSkin(const char *pName, CImageInfo &Info)
 	// reorder
 	int InvOrgWeight = 255 - OrgWeight;
 	int InvNewWeight = 255 - NewWeight;
-	for(int y = 0; y < BodyHeight; y++)
-		for(int x = 0; x < BodyWidth; x++)
+	for(size_t y = 0; y < BodyHeight; y++)
+		for(size_t x = 0; x < BodyWidth; x++)
 		{
 			int v = pData[y * Pitch + x * PixelStep];
 			if(v <= OrgWeight && OrgWeight == 0)
@@ -293,7 +294,7 @@ const CSkin *CSkins::LoadSkin(const char *pName, CImageInfo &Info)
 	for(int i = 0; i < 6; ++i)
 		Skin.m_ColorableSkin.m_aEyes[i] = Graphics()->LoadSpriteTexture(Info, &g_pData->m_aSprites[SPRITE_TEE_EYE_NORMAL + i]);
 
-	Graphics()->FreePNG(&Info);
+	Info.Free();
 
 	if(g_Config.m_Debug)
 	{
