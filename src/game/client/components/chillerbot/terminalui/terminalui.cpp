@@ -513,9 +513,9 @@ int CTerminalUI::GetInput()
 					m_pClient->Client()->RconAuth("", g_aInputStr);
 			}
 			else if(InputMode() == INPUT_CHAT)
-				m_pClient->m_Chat.Say(0, g_aInputStr);
+				m_pClient->m_Chat.SendChat(0, g_aInputStr);
 			else if(InputMode() == INPUT_CHAT_TEAM)
-				m_pClient->m_Chat.Say(1, g_aInputStr);
+				m_pClient->m_Chat.SendChat(1, g_aInputStr);
 			else if(InputMode() == INPUT_BROWSER_SEARCH)
 			{
 				m_SelectedServer = 0;
