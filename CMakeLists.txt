@@ -3138,6 +3138,7 @@ if(TOOLS)
     demo_extract_chat
     dilate
     map_convert_07
+    map_create_pixelart
     map_diff
     map_extract
   )
