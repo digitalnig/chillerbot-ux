@@ -43,8 +43,8 @@ void CChillPw::ConChillpw(IConsole::IResult *pResult, void *pUserData)
 	str_format(aBuf, sizeof(aBuf), "loaded passwords: %d", pSelf->m_NumLoadedPasswords);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
 
-	int found = 0;
-	int foundDummy = 0;
+	int Found = 0;
+	int FoundDummy = 0;
 	for(int i = 0; i < MAX_PASSWORDS; i++)
 	{
 		if(pSelf->m_aaHostnames[i][0] == '\0')
@@ -72,19 +72,19 @@ void CChillPw::ConChillpw(IConsole::IResult *pResult, void *pUserData)
 			}
 		}
 		if(pSelf->m_aDummy[i] == 0)
-			found++;
+			Found++;
 		else
-			foundDummy++;
+			FoundDummy++;
 	}
 	str_format(aBuf, sizeof(aBuf), "curret host: '%s'", pSelf->m_aCurrentServerAddr);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
 	// main
-	str_format(aBuf, sizeof(aBuf), "  [main] known passwords: %d", found);
+	str_format(aBuf, sizeof(aBuf), "  [main] known passwords: %d", Found);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
 	str_format(aBuf, sizeof(aBuf), "  [main] attempted passwords: %d", pSelf->m_LoginOffset[0]);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
 	// dummy
-	str_format(aBuf, sizeof(aBuf), "  [dummy] known passwords: %d", foundDummy);
+	str_format(aBuf, sizeof(aBuf), "  [dummy] known passwords: %d", FoundDummy);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
 	str_format(aBuf, sizeof(aBuf), "  [dummy] attempted passwords: %d", pSelf->m_LoginOffset[1]);
 	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
@@ -177,7 +177,7 @@ void CChillPw::SavePassword(const char *pServer, const char *pPassword)
 
 bool CChillPw::AuthChatAccount(int Dummy, int Offset)
 {
-	int found = 0;
+	int Found = 0;
 	for(int i = 0; i < MAX_PASSWORDS; i++)
 	{
 		if(m_aaHostnames[i][0] == '\0')
@@ -206,7 +206,7 @@ bool CChillPw::AuthChatAccount(int Dummy, int Offset)
 		}
 		if(Dummy != m_aDummy[i])
 			continue;
-		if(Offset > ++found)
+		if(Offset > ++Found)
 			continue;
 		Console()->ExecuteLine(m_aaPasswords[i]);
 		return true;

@@ -49,10 +49,10 @@ bool CChatCommand::OnChatCmd(char Prefix, int ClientId, int Team, const char *pC
 
 bool CChatCommand::ParseChatCmd(char Prefix, int ClientId, int Team, const char *pCmdWithArgs)
 {
-	const int MAX_ARG_LEN = 256;
-	char aCmd[MAX_ARG_LEN];
+	const int MaxArgLen = 256;
+	char aCmd[MaxArgLen];
 	int i;
-	for(i = 0; pCmdWithArgs[i] && i < MAX_ARG_LEN; i++)
+	for(i = 0; pCmdWithArgs[i] && i < MaxArgLen; i++)
 	{
 		if(pCmdWithArgs[i] == ' ')
 			break;
@@ -62,23 +62,23 @@ bool CChatCommand::ParseChatCmd(char Prefix, int ClientId, int Team, const char 
 	int ROffset = m_pClient->m_ChatHelper.ChatCommandGetROffset(aCmd);
 
 	// max 8 args of 128 len each
-	const int MAX_ARGS = 16;
-	char **ppArgs = new char *[MAX_ARGS];
-	for(int x = 0; x < MAX_ARGS; ++x)
+	const int MaxArgs = 16;
+	char **ppArgs = new char *[MaxArgs];
+	for(int x = 0; x < MaxArgs; ++x)
 	{
-		ppArgs[x] = new char[MAX_ARG_LEN];
+		ppArgs[x] = new char[MaxArgLen];
 		ppArgs[x][0] = '\0';
 	}
 	int NumArgs = 0;
 	int k = 0;
 	while(pCmdWithArgs[i])
 	{
-		if(k + 1 >= MAX_ARG_LEN)
+		if(k + 1 >= MaxArgLen)
 		{
 			dbg_msg("chillerbot", "ERROR: chat command has too long arg");
 			break;
 		}
-		if(NumArgs + 1 >= MAX_ARGS)
+		if(NumArgs + 1 >= MaxArgs)
 		{
 			dbg_msg("chillerbot", "ERROR: chat command has too many args");
 			break;
