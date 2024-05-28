@@ -913,7 +913,7 @@ void CChillerBotUX::DumpPlayers(const char *pSearch)
 		bool IsMatch = !(pSearch && pSearch[0] != 0);
 		aLine[0] = '\0';
 		// score
-		if(m_pClient->m_GameInfo.m_TimeScore && g_Config.m_ClDDRaceScoreBoard)
+		if(m_pClient->m_GameInfo.m_TimeScore)
 		{
 			if(pInfo->m_Score == -9999)
 				str_format(aBuf, sizeof(aBuf), "|%10s|", " ");
