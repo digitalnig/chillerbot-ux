@@ -64,7 +64,7 @@ void CTerminalUI::RenderScoreboard(int Team, CTermWindow *pWin)
 		char aScore[64];
 
 		// score
-		if(m_pClient->m_GameInfo.m_TimeScore && g_Config.m_ClDDRaceScoreBoard)
+		if(m_pClient->m_GameInfo.m_TimeScore)
 		{
 			if(pInfo->m_Score == -9999)
 				aScore[0] = 0;
