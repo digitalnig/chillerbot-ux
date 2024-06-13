@@ -266,6 +266,10 @@ int CCityHelper::ClosestClientIdToPos(vec2 Pos, int Dummy)
 
 void CCityHelper::OnChatMsg(int ClientId, int Team, const char *pMsg)
 {
+	// in demos m_aLocalIds are bugged
+	if(Client()->State() == IClient::STATE_DEMOPLAYBACK)
+		return;
+
 	// TODO: move this to chat helper? or do I want a new chat command system in each component? -.-
 	const char *pName = m_pClient->m_aClients[m_pClient->m_aLocalIds[0]].m_aName;
 	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_aLocalIds[1]].m_aName;
