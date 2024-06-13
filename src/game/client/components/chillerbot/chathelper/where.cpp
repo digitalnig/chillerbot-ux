@@ -46,12 +46,12 @@ bool CReplyToPing::Where()
 				continue;
 			vec2 Self = pChar->m_Pos;
 			vec2 Other = Client.m_RenderPos;
-			float distY = std::abs(Self.y - Other.y);
-			float distX = std::abs(Self.x - Other.x);
+			float DistY = std::abs(Self.y - Other.y);
+			float DistX = std::abs(Self.x - Other.x);
 			// instead of some unimaginable long distance number in tiles
 			// prefer saying "finish" or "end" without any relation to the other player
 			// since it does not matter in this case
-			if(distX > 50 * 32 && distY > 50 * 32)
+			if(DistX > 50 * 32 && DistY > 50 * 32)
 			{
 				if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && CRaceHelper::IsClusterRangeFinish(ChatHelper()->GameClient(), ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
 				{
@@ -64,9 +64,9 @@ bool CReplyToPing::Where()
 					return true;
 				}
 			}
-			if(distX < 5 * 32 && distY < 5 * 32)
+			if(DistX < 5 * 32 && DistY < 5 * 32)
 			{
-				if(distX > distY)
+				if(DistX > DistY)
 				{
 					if(Self.x > Other.x)
 					{
@@ -93,52 +93,52 @@ bool CReplyToPing::Where()
 					}
 				}
 			}
-			else if(distY > distX * 8)
+			else if(DistY > DistX * 8)
 			{
 				if(Self.y > Other.y)
 				{
-					str_format(m_pResponse, m_SizeOfResponse, "%s below you (%d tiles)", m_pMessageAuthor, (int)(distY / 32));
+					str_format(m_pResponse, m_SizeOfResponse, "%s below you (%d tiles)", m_pMessageAuthor, (int)(DistY / 32));
 					return true;
 				}
 				else
 				{
-					str_format(m_pResponse, m_SizeOfResponse, "%s above you (%d tiles)", m_pMessageAuthor, (int)(distY / 32));
+					str_format(m_pResponse, m_SizeOfResponse, "%s above you (%d tiles)", m_pMessageAuthor, (int)(DistY / 32));
 					return true;
 				}
 			}
 			else if(Self.x > Other.x)
 			{
-				if(distY < 15 * 32)
+				if(DistY < 15 * 32)
 				{
-					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your right (%d tiles away)", m_pMessageAuthor, (int)(distX / 32));
+					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your right (%d tiles away)", m_pMessageAuthor, (int)(DistX / 32));
 					return true;
 				}
 				else if(Self.y > Other.y)
 				{
-					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your right (%d tiles away) and %d tiles below you", m_pMessageAuthor, (int)(distX / 32), (int)(distY / 32));
+					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your right (%d tiles away) and %d tiles below you", m_pMessageAuthor, (int)(DistX / 32), (int)(DistY / 32));
 					return true;
 				}
 				else
 				{
-					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your right (%d tiles away) and %d tiles above you", m_pMessageAuthor, (int)(distX / 32), (int)(distY / 32));
+					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your right (%d tiles away) and %d tiles above you", m_pMessageAuthor, (int)(DistX / 32), (int)(DistY / 32));
 					return true;
 				}
 			}
 			else
 			{
-				if(distY < 15 * 32)
+				if(DistY < 15 * 32)
 				{
-					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your left (%d tiles away)", m_pMessageAuthor, (int)(distX / 32));
+					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your left (%d tiles away)", m_pMessageAuthor, (int)(DistX / 32));
 					return true;
 				}
 				else if(Self.y > Other.y)
 				{
-					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your left (%d tiles away) and %d tiles below you", m_pMessageAuthor, (int)(distX / 32), (int)(distY / 32));
+					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your left (%d tiles away) and %d tiles below you", m_pMessageAuthor, (int)(DistX / 32), (int)(DistY / 32));
 					return true;
 				}
 				else
 				{
-					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your left (%d tiles away) and %d tiles above you", m_pMessageAuthor, (int)(distX / 32), (int)(distY / 32));
+					str_format(m_pResponse, m_SizeOfResponse, "%s i am on your left (%d tiles away) and %d tiles above you", m_pMessageAuthor, (int)(DistX / 32), (int)(DistY / 32));
 					return true;
 				}
 			}

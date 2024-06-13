@@ -251,12 +251,12 @@ int CCityHelper::ClosestClientIdToPos(vec2 Pos, int Dummy)
 
 		if(pPrevInfo && pInfo)
 		{
-			vec2 otherPos = m_pClient->m_aClients[i].m_Predicted.m_Pos;
-			float len = distance(otherPos, Pos);
+			vec2 OtherPos = m_pClient->m_aClients[i].m_Predicted.m_Pos;
+			float len = distance(OtherPos, Pos);
 			if(len < ClosestRange || !ClosestRange)
 			{
 				ClosestRange = len;
-				ClosestPos = otherPos;
+				ClosestPos = OtherPos;
 				ClosestId = i;
 			}
 		}

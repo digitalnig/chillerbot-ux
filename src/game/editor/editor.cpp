@@ -8338,7 +8338,6 @@ void CEditor::Init()
 	m_pBrush->m_pMap = &m_Map;
 
 	Reset(false);
-
 }
 
 void CEditor::PlaceBorderTiles()

@@ -18,7 +18,7 @@ CChatHelper::CChatHelper()
 	std::sort(m_vCommands.begin(), m_vCommands.end());
 }
 
-void CChatHelper::RegisterCommand(const char *pName, const char *pParams, int flags, const char *pHelp)
+void CChatHelper::RegisterCommand(const char *pName, const char *pParams, int Flags, const char *pHelp)
 {
 	m_vCommands.emplace_back(pName, pParams);
 }
@@ -47,14 +47,14 @@ void CChatHelper::OnInit()
 
 void CChatHelper::OnRender()
 {
-	int64_t time_now = time_get();
-	if(time_now % 10 == 0)
+	int64_t TimeNow = time_get();
+	if(TimeNow % 10 == 0)
 	{
 		for(auto &Ping : m_aLastPings)
 		{
 			if(!Ping.m_ReciveTime)
 				continue;
-			if(Ping.m_ReciveTime < time_now - time_freq() * 60)
+			if(Ping.m_ReciveTime < TimeNow - time_freq() * 60)
 			{
 				Ping.m_aName[0] = '\0';
 				Ping.m_aClan[0] = '\0';
@@ -62,12 +62,12 @@ void CChatHelper::OnRender()
 				Ping.m_ReciveTime = 0;
 			}
 		}
-		if(m_NextGreetClear < time_now)
+		if(m_NextGreetClear < TimeNow)
 		{
 			m_NextGreetClear = 0;
 			m_aGreetName[0] = '\0';
 		}
-		if(m_NextMessageSend < time_now)
+		if(m_NextMessageSend < TimeNow)
 		{
 			if(m_aSendBuffer[0][0])
 			{
@@ -75,7 +75,7 @@ void CChatHelper::OnRender()
 				for(int i = 0; i < MAX_CHAT_BUFFER_LEN - 1; i++)
 					str_copy(m_aSendBuffer[i], m_aSendBuffer[i + 1], sizeof(m_aSendBuffer[i]));
 				m_aSendBuffer[MAX_CHAT_BUFFER_LEN - 1][0] = '\0';
-				m_NextMessageSend = time_now + time_freq() * 5;
+				m_NextMessageSend = TimeNow + time_freq() * 5;
 			}
 		}
 	}
@@ -86,11 +86,11 @@ void CChatHelper::SayBuffer(const char *pMsg, bool StayAfk)
 	if(StayAfk)
 		m_pClient->m_ChillerBotUX.m_IgnoreChatAfk++;
 	// append at end
-	for(auto &buf : m_aSendBuffer)
+	for(auto &Buf : m_aSendBuffer)
 	{
-		if(buf[0])
+		if(Buf[0])
 			continue;
-		str_copy(buf, pMsg, sizeof(buf));
+		str_copy(Buf, pMsg, sizeof(Buf));
 		return;
 	}
 	// full -> shift buffer and overwrite oldest element (index 0)
@@ -179,7 +179,7 @@ void CChatHelper::SayFormat(const char *pMsg)
 {
 	char aBuf[1028] = {0};
 	long unsigned int i = 0;
-	long unsigned int buf_i = 0;
+	long unsigned int BufI = 0;
 	for(i = 0; pMsg[i] && i < sizeof(aBuf); i++)
 	{
 		if(pMsg[i] == '%' && pMsg[maximum((int)i - 1, 0)] != '\\')
@@ -187,21 +187,21 @@ void CChatHelper::SayFormat(const char *pMsg)
 			if(pMsg[i + 1] == 'n')
 			{
 				str_append(aBuf, m_aLastPings[0].m_aName, sizeof(aBuf));
-				buf_i += str_length(m_aLastPings[0].m_aName);
+				BufI += str_length(m_aLastPings[0].m_aName);
 				i++;
 				continue;
 			}
 			else if(pMsg[i + 1] == 'g')
 			{
 				str_append(aBuf, m_aGreetName, sizeof(aBuf));
-				buf_i += str_length(m_aGreetName);
+				BufI += str_length(m_aGreetName);
 				i++;
 				continue;
 			}
 		}
-		aBuf[buf_i++] = pMsg[i];
+		aBuf[BufI++] = pMsg[i];
 	}
-	aBuf[minimum((unsigned long)sizeof(aBuf) - 1, buf_i)] = '\0';
+	aBuf[minimum((unsigned long)sizeof(aBuf) - 1, BufI)] = '\0';
 	m_pClient->m_Chat.SendChat(0, aBuf);
 }
 

@@ -319,19 +319,19 @@ void CChillerBotUX::RenderEnabledComponents()
 	int offset = 0;
 	if(m_IsLeftSidedBroadcast && Client()->GameTick(g_Config.m_ClDummy) < m_BroadcastTick)
 		offset = 2;
-	for(auto &m_aEnabledComponent : m_aEnabledComponents)
+	for(auto &EnabledComponent : m_aEnabledComponents)
 	{
-		if(m_aEnabledComponent.m_aName[0] == '\0')
+		if(EnabledComponent.m_aName[0] == '\0')
 			continue;
-		float TwName = TextRender()->TextWidth(10.0f, m_aEnabledComponent.m_aName, -1, -1);
+		float TwName = TextRender()->TextWidth(10.0f, EnabledComponent.m_aName, -1, -1);
 		float TwNoteShort = 2.f;
-		if(m_aEnabledComponent.m_aNoteShort[0])
-			TwNoteShort += TextRender()->TextWidth(10.0f, m_aEnabledComponent.m_aNoteShort, -1, -1);
+		if(EnabledComponent.m_aNoteShort[0])
+			TwNoteShort += TextRender()->TextWidth(10.0f, EnabledComponent.m_aNoteShort, -1, -1);
 		Graphics()->DrawRect(4.0f, 60.f + offset * 15, TwName + TwNoteShort, 14.0f, ColorRGBA(0, 0, 0, 0.5f), IGraphics::CORNER_ALL, 3.0f);
 
-		TextRender()->Text(5.0f, 60.f + offset * 15, 10.0f, m_aEnabledComponent.m_aName, -1);
-		TextRender()->Text(5.0f + TwName + 2.f, 60.f + offset * 15, 10.0f, m_aEnabledComponent.m_aNoteShort, -1);
-		TextRender()->Text(5.0f, 60.f + offset * 15 + 10, 4.0f, m_aEnabledComponent.m_aNoteLong, -1);
+		TextRender()->Text(5.0f, 60.f + offset * 15, 10.0f, EnabledComponent.m_aName, -1);
+		TextRender()->Text(5.0f + TwName + 2.f, 60.f + offset * 15, 10.0f, EnabledComponent.m_aNoteShort, -1);
+		TextRender()->Text(5.0f, 60.f + offset * 15 + 10, 4.0f, EnabledComponent.m_aNoteLong, -1);
 		offset++;
 	}
 }
@@ -432,26 +432,26 @@ void CChillerBotUX::RenderDbgIntersect()
 	vec2 InitPos = Position;
 	vec2 FinishPos = InitPos + ExDirection * (m_pClient->m_aTuning[g_Config.m_ClDummy].m_HookLength - 42.0f);
 
-	vec2 outCol;
-	vec2 outBeforeCol;
+	vec2 OutCol;
+	vec2 OutBeforeCol;
 	vec4 Color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
 	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
 	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
 	RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), m_pClient->m_Camera.m_Zoom);
 
-	if(Collision()->IntersectLine(InitPos, FinishPos, &outCol, &outBeforeCol))
+	if(Collision()->IntersectLine(InitPos, FinishPos, &OutCol, &OutBeforeCol))
 	{
 		Graphics()->TextureClear();
 		Color = vec4(0.0f, 1.0f, 0.0f, 1.0f);
 		Graphics()->SetColor(Color);
-		Graphics()->DrawRect(outCol.x, outCol.y, 10, 10, ColorRGBA(0.0f, 0.0f, 1.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
-		Graphics()->DrawRect(outBeforeCol.x, outBeforeCol.y, 10, 10, ColorRGBA(0.0f, 1.0f, 0.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+		Graphics()->DrawRect(OutCol.x, OutCol.y, 10, 10, ColorRGBA(0.0f, 0.0f, 1.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+		Graphics()->DrawRect(OutBeforeCol.x, OutBeforeCol.y, 10, 10, ColorRGBA(0.0f, 1.0f, 0.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
 	}
 	else
 	{
-		Graphics()->DrawRect(outCol.x, outCol.y, 10, 10, ColorRGBA(0.0f, 0.0f, 1.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
-		Graphics()->DrawRect(outBeforeCol.x, outBeforeCol.y, 10, 10, ColorRGBA(0.0f, 1.0f, 0.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+		Graphics()->DrawRect(OutCol.x, OutCol.y, 10, 10, ColorRGBA(0.0f, 0.0f, 1.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
+		Graphics()->DrawRect(OutBeforeCol.x, OutBeforeCol.y, 10, 10, ColorRGBA(0.0f, 1.0f, 0.0f, 0.5f), IGraphics::CORNER_ALL, 3.0f);
 	}
 
 	Graphics()->TextureClear();
