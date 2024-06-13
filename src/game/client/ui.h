@@ -331,13 +331,29 @@ private:
 	const CScrollRegion *m_pBecomingHotScrollRegion = nullptr;
 	bool m_ActiveItemValid = false;
 
-	vec2 m_UpdatedMousePos = vec2(0.0f, 0.0f);
-	vec2 m_UpdatedMouseDelta = vec2(0.0f, 0.0f);
-	float m_MouseX, m_MouseY; // in gui space
-	float m_MouseDeltaX, m_MouseDeltaY; // in gui space
-	float m_MouseWorldX, m_MouseWorldY; // in world space
-	unsigned m_MouseButtons;
-	unsigned m_LastMouseButtons;
+	int m_ActiveButtonLogicButton = -1;
+	int m_ActiveDraggableButtonLogicButton = -1;
+	const void *m_pLastEditingItem = nullptr;
+	float m_ActiveScrollbarOffset = 0.0f;
+	float m_ProgressSpinnerOffset = 0.0f;
+	class CValueSelectorState
+	{
+	public:
+		int m_Button = -1;
+		bool m_DidScroll = false;
+		float m_ScrollValue = 0.0f;
+		CLineInputNumber m_NumberInput;
+		const void *m_pLastTextId = nullptr;
+	};
+	CValueSelectorState m_ActiveValueSelectorState;
+
+	vec2 m_UpdatedMousePos = vec2(0.0f, 0.0f); // in window screen space
+	vec2 m_UpdatedMouseDelta = vec2(0.0f, 0.0f); // in window screen space
+	vec2 m_MousePos = vec2(0.0f, 0.0f); // in gui space
+	vec2 m_MouseDelta = vec2(0.0f, 0.0f); // in gui space
+	vec2 m_MouseWorldPos = vec2(-1.0f, -1.0f); // in world space
+	unsigned m_MouseButtons = 0;
+	unsigned m_LastMouseButtons = 0;
 	bool m_MouseSlow = false;
 	bool m_MouseLock = false;
 	const void *m_pMouseLockId = nullptr;
@@ -348,8 +364,6 @@ private:
 
 	std::vector<CUIRect> m_vClips;
 	void UpdateClipping();
-
-	bool m_ValueSelectorTextMode = false;
 
 	struct SPopupMenu
 	{
@@ -423,20 +437,22 @@ public:
 
 	void SetEnabled(bool Enabled) { m_Enabled = Enabled; }
 	bool Enabled() const { return m_Enabled; }
-	void Update();
-	void Update(float MouseX, float MouseY, float MouseDeltaX, float MouseDeltaY, float MouseWorldX, float MouseWorldY);
+	void Update(vec2 MouseWorldPos = vec2(-1.0f, -1.0f));
 	void DebugRender();
 
-	float MouseDeltaX() const { return m_MouseDeltaX; }
-	float MouseDeltaY() const { return m_MouseDeltaY; }
-	float MouseX() const { return m_MouseX; }
-	float MouseY() const { return m_MouseY; }
-	vec2 MousePos() const { return vec2(m_MouseX, m_MouseY); }
-	float MouseWorldX() const { return m_MouseWorldX; }
-	float MouseWorldY() const { return m_MouseWorldY; }
+	vec2 MousePos() const { return m_MousePos; }
+	float MouseX() const { return m_MousePos.x; }
+	float MouseY() const { return m_MousePos.y; }
+	vec2 MouseDelta() const { return m_MouseDelta; }
+	float MouseDeltaX() const { return m_MouseDelta.x; }
+	float MouseDeltaY() const { return m_MouseDelta.y; }
+	vec2 MouseWorldPos() const { return m_MouseWorldPos; }
+	float MouseWorldX() const { return m_MouseWorldPos.x; }
+	float MouseWorldY() const { return m_MouseWorldPos.y; }
+	vec2 UpdatedMousePos() const { return m_UpdatedMousePos; }
+	vec2 UpdatedMouseDelta() const { return m_UpdatedMouseDelta; }
 	int MouseButton(int Index) const { return (m_MouseButtons >> Index) & 1; }
 	int MouseButtonClicked(int Index) const { return MouseButton(Index) && !((m_LastMouseButtons >> Index) & 1); }
-	int MouseButtonReleased(int Index) const { return ((m_LastMouseButtons >> Index) & 1) && !MouseButton(Index); }
 	bool CheckMouseLock()
 	{
 		if(m_MouseLock && ActiveItem() != m_pMouseLockId)
@@ -562,8 +578,6 @@ public:
 	// value selector
 	SEditResult<int64_t> DoValueSelectorWithState(const void *pId, const CUIRect *pRect, const char *pLabel, int64_t Current, int64_t Min, int64_t Max, const SValueSelectorProperties &Props = {});
 	int64_t DoValueSelector(const void *pId, const CUIRect *pRect, const char *pLabel, int64_t Current, int64_t Min, int64_t Max, const SValueSelectorProperties &Props = {});
-	bool IsValueSelectorTextMode() const { return m_ValueSelectorTextMode; }
-	void SetValueSelectorTextMode(bool TextMode) { m_ValueSelectorTextMode = TextMode; }
 
 	// scrollbars
 	enum
