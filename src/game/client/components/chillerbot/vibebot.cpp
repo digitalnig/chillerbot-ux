@@ -154,8 +154,8 @@ void CVibeBot::ConVibe(IConsole::IResult *pResult, void *pUserData)
 void CVibeBot::ConUnVibe(IConsole::IResult *pResult, void *pUserData)
 {
 	CVibeBot *pSelf = (CVibeBot *)pUserData;
-	pSelf->SetMode(pSelf->VB_OFF, 0);
-	pSelf->SetMode(pSelf->VB_OFF, 1);
+	pSelf->SetMode(CVibeBot::VB_OFF, 0);
+	pSelf->SetMode(CVibeBot::VB_OFF, 1);
 	pSelf->UpdateComponents();
 }
 
