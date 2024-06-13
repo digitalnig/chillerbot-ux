@@ -2382,8 +2382,6 @@ if(CLIENT)
   set_src(GAME_EDITOR GLOB_RECURSE src/game/editor
     auto_map.cpp
     auto_map.h
-    chillerbot/chillereditor.cpp
-    chillerbot/chillereditor.h
     component.cpp
     component.h
     editor.cpp

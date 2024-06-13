@@ -40,8 +40,6 @@
 #include "map_view.h"
 #include "smooth_value.h"
 
-#include "chillerbot/chillereditor.h"
-
 #include <deque>
 #include <functional>
 #include <map>
@@ -277,7 +275,6 @@ class CEditor : public IEditor
 	class IStorage *m_pStorage = nullptr;
 	CRenderTools m_RenderTools;
 	CUi m_UI;
-	CChillerEditor m_ChillerEditor;
 
 	std::vector<std::reference_wrapper<CEditorComponent>> m_vComponents;
 	CMapView m_MapView;

@@ -3607,7 +3607,6 @@ void CEditor::DoMapEditor(CUIRect View)
 
 	Ui()->MapScreen();
 	//Ui()->ClipDisable();
-	m_ChillerEditor.DoMapEditor();
 }
 
 void CEditor::SetHotQuadPoint(const std::shared_ptr<CLayerQuads> &pLayer)
@@ -8340,7 +8339,6 @@ void CEditor::Init()
 
 	Reset(false);
 
-	m_ChillerEditor.Init(this);
 }
 
 void CEditor::PlaceBorderTiles()
