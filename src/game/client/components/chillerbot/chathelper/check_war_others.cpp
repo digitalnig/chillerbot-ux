@@ -300,12 +300,12 @@ bool CReplyToPing::IsWarName()
 			aWhy[CutOffWar] = '\0';
 
 		// trim
-		int trim = 0;
-		while(aWhy[trim] == ' ')
-			trim++;
+		int Trim = 0;
+		while(aWhy[Trim] == ' ')
+			Trim++;
 
 		if(CutOffWar != -1)
-			if(WhyWar(aWhy + trim))
+			if(WhyWar(aWhy + Trim))
 				return true;
 
 		if(pKill)
