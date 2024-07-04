@@ -270,9 +270,14 @@ void CCityHelper::OnChatMsg(int ClientId, int Team, const char *pMsg)
 	if(Client()->State() == IClient::STATE_DEMOPLAYBACK)
 		return;
 
+	if(m_pClient->m_aLocalIds[0] == -1)
+		return;
+
 	// TODO: move this to chat helper? or do I want a new chat command system in each component? -.-
 	const char *pName = m_pClient->m_aClients[m_pClient->m_aLocalIds[0]].m_aName;
-	const char *pDummyName = m_pClient->m_aClients[m_pClient->m_aLocalIds[1]].m_aName;
+	const char *pDummyName = "";
+	if(m_pClient->Client()->DummyConnected() && m_pClient->m_aLocalIds[1] != -1)
+		pDummyName = m_pClient->m_aClients[m_pClient->m_aLocalIds[1]].m_aName;
 	int NameLen = 0;
 
 	if(str_startswith(pMsg, pName))
