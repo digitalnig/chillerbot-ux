@@ -262,6 +262,8 @@ void CChatHelper::OnChatMessage(int ClientId, int Team, const char *pMsg)
 	{
 		if(m_pClient->m_aLocalIds[0] == -1)
 			return;
+		if(m_pClient->Client()->DummyConnected() && m_pClient->m_aLocalIds[1] == -1)
+			return;
 		if(ClientId >= 0 && ClientId != m_pClient->m_aLocalIds[0] && (!m_pClient->Client()->DummyConnected() || ClientId != m_pClient->m_aLocalIds[1]))
 		{
 			// main character
