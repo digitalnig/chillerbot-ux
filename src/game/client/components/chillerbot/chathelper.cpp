@@ -272,6 +272,8 @@ void CChatHelper::OnChatMessage(int ClientId, int Team, const char *pMsg)
 	}
 	else
 	{
+		if(m_pClient->m_Snap.m_LocalClientId == -1)
+			return;
 		// on demo playback use local id from snap directly,
 		// since m_aLocalIds isn't valid there
 		Highlighted |= m_pClient->m_Snap.m_LocalClientId >= 0 && LineShouldHighlight(pMsg, m_pClient->m_aClients[m_pClient->m_Snap.m_LocalClientId].m_aName);
