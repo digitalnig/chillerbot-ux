@@ -2,6 +2,8 @@
 
 #include <cinttypes>
 
+#include <base/system.h>
+
 #include <base/math.h>
 #include <engine/shared/protocol.h>
 #include <game/client/components/chat.h>
