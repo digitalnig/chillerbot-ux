@@ -1,6 +1,9 @@
 #ifndef GAME_CLIENT_COMPONENTS_CHILLERBOT_CHILLPW_H
 #define GAME_CLIENT_COMPONENTS_CHILLERBOT_CHILLPW_H
 
+#include <engine/client.h>
+#include <engine/console.h>
+#include <engine/shared/config.h>
 #include <game/client/component.h>
 
 #define MAX_PASSWORDS 1024
@@ -10,15 +13,18 @@
 class CChillPw : public CComponent
 {
 public:
-	virtual int Sizeof() const override { return sizeof(*this); }
+	int Sizeof() const override { return sizeof(*this); }
 
 private:
-	virtual void OnMapLoad() override;
-	virtual void OnRender() override;
-	virtual void OnInit() override;
-	virtual void OnConsoleInit() override;
+	void OnMapLoad() override;
+	void OnRender() override;
+	void OnInit() override;
+	void OnConsoleInit() override;
 
 	static void ConChillpw(IConsole::IResult *pResult, void *pUserData);
+
+	void ConStatus();
+	void ConDumpHost();
 
 	bool AuthChatAccount(int Dummy, int Offset);
 	void SavePassword(const char *pServer, const char *pPassword);

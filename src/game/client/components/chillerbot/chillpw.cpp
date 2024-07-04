@@ -1,11 +1,10 @@
 // ChillerDragon 2020 - chillerbot ux
 
-#include <game/generated/protocol.h>
-
-#include <game/client/gameclient.h>
-
+#include <base/system.h>
 #include <engine/shared/linereader.h>
 #include <game/client/components/chat.h>
+#include <game/client/gameclient.h>
+#include <game/generated/protocol.h>
 
 #include "chillpw.h"
 
@@ -29,65 +28,108 @@ void CChillPw::OnMapLoad()
 
 void CChillPw::OnConsoleInit()
 {
-	Console()->Register("chillpw", "?s[status]", CFGFLAG_CLIENT, ConChillpw, this, "");
+	Console()->Register("chillpw", "?s[status|dump_host]", CFGFLAG_CLIENT, ConChillpw, this, "");
+}
+
+void CChillPw::ConStatus()
+{
+	char aBuf[512];
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", "~~~ chillpw status ~~~");
+	str_format(aBuf, sizeof(aBuf), "file: %s", g_Config.m_ClPasswordFile);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	str_format(aBuf, sizeof(aBuf), "loaded passwords: %d", m_NumLoadedPasswords);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+
+	int Found = 0;
+	int FoundDummy = 0;
+	for(int i = 0; i < MAX_PASSWORDS; i++)
+	{
+		if(m_aaHostnames[i][0] == '\0')
+			continue;
+		if(!str_find(m_aaHostnames[i], ":") || str_find(m_aaHostnames[i], ":*"))
+		{
+			if(str_comp(m_aCurrentServerAddrNoPort, m_aaHostnames[i]))
+				continue;
+		}
+		else
+		{
+			if(str_comp(m_aCurrentServerAddr, m_aaHostnames[i]))
+			{
+				// if it has a port and it does not match skip to next entry
+				if(str_find(m_aCurrentServerAddr, ":"))
+					continue;
+
+				// skip all non default port entrys
+				if(!str_endswith(m_aaHostnames[i], ":8303"))
+					continue;
+
+				// if hostname without port does not match skip
+				if(!str_startswith(m_aaHostnames[i], m_aCurrentServerAddr) || m_aaHostnames[i][str_length(m_aCurrentServerAddr)] != ':')
+					continue;
+			}
+		}
+		if(m_aDummy[i] == 0)
+			Found++;
+		else
+			FoundDummy++;
+	}
+	str_format(aBuf, sizeof(aBuf), "curret host: '%s'", m_aCurrentServerAddr);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	// main
+	str_format(aBuf, sizeof(aBuf), "  [main] known passwords: %d", Found);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	str_format(aBuf, sizeof(aBuf), "  [main] attempted passwords: %d", m_LoginOffset[0]);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	// dummy
+	str_format(aBuf, sizeof(aBuf), "  [dummy] known passwords: %d", FoundDummy);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	str_format(aBuf, sizeof(aBuf), "  [dummy] attempted passwords: %d", m_LoginOffset[1]);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", "see also 'chillpw dump_host'");
+}
+
+void CChillPw::ConDumpHost()
+{
+	for(int i = 0; i < MAX_PASSWORDS; i++)
+	{
+		if(m_aaHostnames[i][0] == '\0')
+			continue;
+		if(!str_find(m_aaHostnames[i], ":") || str_find(m_aaHostnames[i], ":*"))
+		{
+			if(str_comp(m_aCurrentServerAddrNoPort, m_aaHostnames[i]))
+				continue;
+		}
+		else
+		{
+			if(str_comp(m_aCurrentServerAddr, m_aaHostnames[i]))
+			{
+				// if it has a port and it does not match skip to next entry
+				if(str_find(m_aCurrentServerAddr, ":"))
+					continue;
+
+				// skip all non default port entrys
+				if(!str_endswith(m_aaHostnames[i], ":8303"))
+					continue;
+
+				// if hostname without port does not match skip
+				if(!str_startswith(m_aaHostnames[i], m_aCurrentServerAddr) || m_aaHostnames[i][str_length(m_aCurrentServerAddr)] != ':')
+					continue;
+			}
+		}
+		char aBuf[2048];
+		str_format(aBuf, sizeof(aBuf), "dummy=%d host=%s pass: %s", m_aDummy[i], m_aaHostnames[i], m_aaPasswords[i]);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	}
 }
 
 void CChillPw::ConChillpw(IConsole::IResult *pResult, void *pUserData)
 {
 	CChillPw *pSelf = (CChillPw *)pUserData;
 
-	char aBuf[512];
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", "~~~ chillpw status ~~~");
-	str_format(aBuf, sizeof(aBuf), "file: %s", g_Config.m_ClPasswordFile);
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
-	str_format(aBuf, sizeof(aBuf), "loaded passwords: %d", pSelf->m_NumLoadedPasswords);
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
-
-	int Found = 0;
-	int FoundDummy = 0;
-	for(int i = 0; i < MAX_PASSWORDS; i++)
-	{
-		if(pSelf->m_aaHostnames[i][0] == '\0')
-			continue;
-		if(!str_find(pSelf->m_aaHostnames[i], ":") || str_find(pSelf->m_aaHostnames[i], ":*"))
-		{
-			if(str_comp(pSelf->m_aCurrentServerAddrNoPort, pSelf->m_aaHostnames[i]))
-				continue;
-		}
-		else
-		{
-			if(str_comp(pSelf->m_aCurrentServerAddr, pSelf->m_aaHostnames[i]))
-			{
-				// if it has a port and it does not match skip to next entry
-				if(str_find(pSelf->m_aCurrentServerAddr, ":"))
-					continue;
-
-				// skip all non default port entrys
-				if(!str_endswith(pSelf->m_aaHostnames[i], ":8303"))
-					continue;
-
-				// if hostname without port does not match skip
-				if(!str_startswith(pSelf->m_aaHostnames[i], pSelf->m_aCurrentServerAddr) || pSelf->m_aaHostnames[i][str_length(pSelf->m_aCurrentServerAddr)] != ':')
-					continue;
-			}
-		}
-		if(pSelf->m_aDummy[i] == 0)
-			Found++;
-		else
-			FoundDummy++;
-	}
-	str_format(aBuf, sizeof(aBuf), "curret host: '%s'", pSelf->m_aCurrentServerAddr);
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
-	// main
-	str_format(aBuf, sizeof(aBuf), "  [main] known passwords: %d", Found);
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
-	str_format(aBuf, sizeof(aBuf), "  [main] attempted passwords: %d", pSelf->m_LoginOffset[0]);
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
-	// dummy
-	str_format(aBuf, sizeof(aBuf), "  [dummy] known passwords: %d", FoundDummy);
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
-	str_format(aBuf, sizeof(aBuf), "  [dummy] attempted passwords: %d", pSelf->m_LoginOffset[1]);
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillpw", aBuf);
+	if(!str_comp_nocase(pResult->GetString(0), "dump_host"))
+		pSelf->ConDumpHost();
+	else
+		pSelf->ConStatus();
 }
 
 void CChillPw::OnRender()

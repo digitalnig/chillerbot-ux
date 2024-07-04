@@ -68,7 +68,7 @@ void CChillerBotUX::OnRender()
 				std::shared_ptr<CHttpRequest> pGetServers = nullptr;
 				std::swap(m_pAliveGet, pGetServers);
 
-				if (pGetServers->State() != EHttpState::DONE)
+				if(pGetServers->State() != EHttpState::DONE)
 				{
 					Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", "failed to hearthbeat");
 					return;
