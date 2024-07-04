@@ -260,6 +260,8 @@ void CChatHelper::OnChatMessage(int ClientId, int Team, const char *pMsg)
 	// check for highlighted name
 	if(Client()->State() != IClient::STATE_DEMOPLAYBACK)
 	{
+		if(m_pClient->m_aLocalIds[0] == -1)
+			return;
 		if(ClientId >= 0 && ClientId != m_pClient->m_aLocalIds[0] && (!m_pClient->Client()->DummyConnected() || ClientId != m_pClient->m_aLocalIds[1]))
 		{
 			// main character
