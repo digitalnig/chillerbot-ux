@@ -344,6 +344,13 @@ void CMapLayers::OnMapLoad()
 			GameClient()->m_Menus.RenderLoading(pConnectCaption, pLoadMapContent, 0, false, false);
 	};
 
+	RefreshTileBuffers(RenderLoading);
+}
+
+void CMapLayers::RefreshTileBuffers(const std::function<void()> &RenderLoading)
+{
+	RenderLoading();
+
 	//clear everything and destroy all buffers
 	if(!m_vpTileLayerVisuals.empty())
 	{

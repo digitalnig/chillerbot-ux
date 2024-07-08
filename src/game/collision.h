@@ -25,6 +25,10 @@ struct CAntibotMapData;
 class CCollision
 {
 public:
+	// chillerbot-ux START
+	void ModifyTile(int x, int y, int Group, int Layer, int Index, int Flags);
+	// chillerbot-ux END
+
 	CCollision();
 	~CCollision();
 

@@ -15,6 +15,35 @@
 
 #include <engine/shared/config.h>
 
+void CCollision::ModifyTile(int x, int y, int Group, int Layer, int Index, int Flags)
+{
+	CMapItemGroup *pGroup = m_pLayers->GetGroup(Group);
+	CMapItemLayer *pLayer = m_pLayers->GetLayer(pGroup->m_StartLayer + Layer);
+	if(pLayer->m_Type == LAYER_GAME)
+	{
+		SetCollisionAt(x, y, Index);
+		return;
+	}
+	if(pLayer->m_Type != LAYERTYPE_TILES)
+	{
+		dbg_msg("modify_tile", "expected layertype tiles but got %d", pLayer->m_Type);
+		return;
+	}
+
+	CMapItemLayerTilemap *pTilemap = reinterpret_cast<CMapItemLayerTilemap *>(pLayer);
+	int TotalTiles = pTilemap->m_Width * pTilemap->m_Height;
+	int MapIndex = y * pTilemap->m_Width + x;
+	if(MapIndex < 0 || MapIndex >= TotalTiles)
+	{
+		dbg_msg("modify_tiles", "index %d is out of range %d-%d x=%d y=%d w=%d h=%d", 0, MapIndex, TotalTiles, x, y, pTilemap->m_Width, pTilemap->m_Height);
+		return;
+	}
+
+	CTile *pTiles = static_cast<CTile *>(m_pLayers->Map()->GetData(pTilemap->m_Data));
+	pTiles[MapIndex].m_Index = Index;
+	pTiles[MapIndex].m_Flags = Flags;
+}
+
 vec2 ClampVel(int MoveRestriction, vec2 Vel)
 {
 	if(Vel.x > 0 && (MoveRestriction & CANTMOVE_RIGHT))

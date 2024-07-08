@@ -136,6 +136,11 @@ protected:
 	virtual bool CanRenderMenuBackground() { return true; }
 
 public:
+	// chillerbot-ux START
+	// chillerbot-ux for minetee
+	void RefreshTileBuffers(const std::function<void()> &RenderLoading);
+	// chillerbot-ux END
+
 	enum
 	{
 		TYPE_BACKGROUND = 0,

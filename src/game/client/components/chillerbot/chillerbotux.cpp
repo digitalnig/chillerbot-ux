@@ -1174,6 +1174,12 @@ void CChillerBotUX::OnMessage(int MsgType, void *pRawMsg)
 		if(g_Config.m_ClRunOnVoteStart[0])
 			Console()->ExecuteLine(g_Config.m_ClRunOnVoteStart);
 	}
+	else if(MsgType == NETMSGTYPE_SV_MODIFYTILE)
+	{
+		CNetMsg_Sv_ModifyTile *pMsg = (CNetMsg_Sv_ModifyTile *)pRawMsg;
+		Collision()->ModifyTile(pMsg->m_X, pMsg->m_Y, pMsg->m_Group, pMsg->m_Layer, pMsg->m_Index, pMsg->m_Flags);
+		GameClient()->m_MapLayersForeground.RefreshTileBuffers([&]() {});
+	}
 }
 
 void CChillerBotUX::GoAfk(int Minutes, const char *pMsg)
