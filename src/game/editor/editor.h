@@ -263,6 +263,13 @@ public:
 
 class CEditor : public IEditor
 {
+	// chillerbot-ux START
+public:
+	void BrushDrawChiller(std::shared_ptr<CLayerTiles> pLayer, std::shared_ptr<CLayerTiles> pBrush, float wx, float wy);
+
+private:
+	// chillerbot-ux END
+
 	class IInput *m_pInput = nullptr;
 	class IClient *m_pClient = nullptr;
 	class IConfigManager *m_pConfigManager = nullptr;

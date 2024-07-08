@@ -42,6 +42,7 @@ MACRO_CONFIG_STR(ClPenTestFile, cl_pentest_file, 128, "pentest.txt", CFGFLAG_CLI
 MACRO_CONFIG_INT(ClDbgIntersect, cl_dbg_intersect, 0, 0, 1, CFGFLAG_CLIENT, "Show graphical output for CCollsion::IntersectLine")
 MACRO_CONFIG_INT(ClReleaseMouse, cl_release_mouse, 0, 0, 1, CFGFLAG_CLIENT, "Release the mouse (you probably do not want this)")
 MACRO_CONFIG_STR(ClRunOnVoteStart, cl_run_on_vote_start, 512, "", CFGFLAG_CLIENT | CFGFLAG_SAVE, "console command to run when a vote is called")
+MACRO_CONFIG_INT(ClMineTeeEditor, cl_mine_tee_editor, 0, 0, 1, CFGFLAG_CLIENT, "send modify map packets to the server while brushing in the editor")
 
 #if defined(CONF_CURSES_CLIENT)
 MACRO_CONFIG_INT(ClTermHistory, cl_term_history, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Persist input history in filesystem for curses client")

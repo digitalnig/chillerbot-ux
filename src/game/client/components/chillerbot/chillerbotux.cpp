@@ -1179,6 +1179,7 @@ void CChillerBotUX::OnMessage(int MsgType, void *pRawMsg)
 		CNetMsg_Sv_ModifyTile *pMsg = (CNetMsg_Sv_ModifyTile *)pRawMsg;
 		Collision()->ModifyTile(pMsg->m_X, pMsg->m_Y, pMsg->m_Group, pMsg->m_Layer, pMsg->m_Index, pMsg->m_Flags);
 		GameClient()->m_MapLayersForeground.RefreshTileBuffers([&]() {});
+		GameClient()->m_MapLayersBackground.RefreshTileBuffers([&]() {});
 	}
 }
 
