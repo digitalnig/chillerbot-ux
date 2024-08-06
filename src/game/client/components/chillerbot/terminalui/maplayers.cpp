@@ -64,7 +64,7 @@ void CTerminalUI::RenderItems()
 	for(const CSnapEntities &Ent : m_pClient->SnapEntities())
 	{
 		const IClient::CSnapItem Item = Ent.m_Item;
-		const void *pData = Ent.m_pData;
+		const void *pData = Item.m_pData;
 		const CNetObj_EntityEx *pEntEx = Ent.m_pDataEx;
 
 		bool Inactive = false;

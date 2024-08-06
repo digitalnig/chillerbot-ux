@@ -73,11 +73,19 @@ bool CTerminalUI::LoadInputHistoryFile(int Type)
 		return false;
 	}
 
-	char *pLine;
+	const char *pLine;
 	int i = (INPUT_HISTORY_MAX_LEN - 1);
-	CLineReader *lr = new CLineReader();
-	lr->Init(File);
-	while((pLine = lr->Get()))
+	CLineReader LineReader = CLineReader();
+
+	if(!LineReader.OpenFile(File))
+	{
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", g_Config.m_ClPasswordFile);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
+		return false;
+	}
+
+	while((pLine = LineReader.Get()))
 	{
 		if(pLine[0] == '\0')
 			continue;
@@ -89,7 +97,6 @@ bool CTerminalUI::LoadInputHistoryFile(int Type)
 		str_copy(m_aaInputHistory[Type][i], pLine, sizeof(m_aaInputHistory[Type][i]));
 		i--;
 	}
-	io_close(File);
 
 	// less than INPUT_HISTORY_MAX_LEN entries
 	// keeps the latest element still empty
