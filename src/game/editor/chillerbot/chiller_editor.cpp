@@ -1,4 +1,4 @@
-#include "engine/shared/config.h"
+#include <engine/shared/config.h>
 #include <game/editor/editor.h>
 
 void CEditor::BrushDrawChiller(const std::shared_ptr<CLayerTiles> &pLayer, const std::shared_ptr<CLayerTiles> &pBrush, float wx, float wy)
