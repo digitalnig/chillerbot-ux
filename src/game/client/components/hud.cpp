@@ -28,6 +28,13 @@ CHud::CHud()
 	m_FrameTimeAvg = 0.0f;
 	m_FPSTextContainerIndex.Reset();
 	m_DDRaceEffectsTextContainerIndex.Reset();
+	m_PlayerAngleTextContainerIndex.Reset();
+
+	for(int i = 0; i < 2; i++)
+	{
+		m_aPlayerSpeedTextContainers[i].Reset();
+		m_aPlayerPositionContainers[i].Reset();
+	}
 }
 
 void CHud::ResetHudContainers()
@@ -44,6 +51,12 @@ void CHud::ResetHudContainers()
 
 	TextRender()->DeleteTextContainer(m_FPSTextContainerIndex);
 	TextRender()->DeleteTextContainer(m_DDRaceEffectsTextContainerIndex);
+	TextRender()->DeleteTextContainer(m_PlayerAngleTextContainerIndex);
+	for(int i = 0; i < 2; i++)
+	{
+		TextRender()->DeleteTextContainer(m_aPlayerSpeedTextContainers[i]);
+		TextRender()->DeleteTextContainer(m_aPlayerPositionContainers[i]);
+	}
 }
 
 void CHud::OnWindowResize()
@@ -203,9 +216,9 @@ void CHud::RenderScoreHud()
 					Graphics()->DeleteQuadContainer(m_aScoreInfo[t].m_RoundRectQuadContainerIndex);
 
 					if(t == 0)
-						Graphics()->SetColor(1.0f, 0.0f, 0.0f, 0.25f);
+						Graphics()->SetColor(0.975f, 0.17f, 0.17f, 0.3f);
 					else
-						Graphics()->SetColor(0.0f, 0.0f, 1.0f, 0.25f);
+						Graphics()->SetColor(0.17f, 0.46f, 0.975f, 0.3f);
 					m_aScoreInfo[t].m_RoundRectQuadContainerIndex = Graphics()->CreateRectQuadContainer(m_Width - ScoreWidthMax - ImageSize - 2 * Split, StartY + t * 20, ScoreWidthMax + ImageSize + 2 * Split, ScoreSingleBoxHeight, 5.0f, IGraphics::CORNER_L);
 				}
 				Graphics()->TextureClear();
@@ -1245,6 +1258,28 @@ inline float CHud::GetMovementInformationBoxHeight()
 	return BoxHeight;
 }
 
+void CHud::UpdateMovementInformationTextContainer(STextContainerIndex &TextContainer, float FontSize, float Value, char *pPrevValue, size_t Size)
+{
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "%.2f", Value);
+
+	if(!TextContainer.Valid() || str_comp(pPrevValue, aBuf) != 0)
+	{
+		CTextCursor Cursor;
+		TextRender()->SetCursor(&Cursor, 0, 0, FontSize, TEXTFLAG_RENDER);
+		TextRender()->RecreateTextContainer(TextContainer, &Cursor, aBuf);
+		str_copy(pPrevValue, aBuf, Size);
+	}
+}
+
+void CHud::RenderMovementInformationTextContainer(STextContainerIndex &TextContainer, float X, float Y)
+{
+	if(TextContainer.Valid())
+	{
+		TextRender()->RenderTextContainer(TextContainer, TextRender()->DefaultTextColor(), TextRender()->DefaultTextOutlineColor(), X - TextRender()->GetBoundingBoxTextContainer(TextContainer).m_W, Y);
+	}
+}
+
 void CHud::RenderMovementInformation(const int ClientId)
 {
 	// Draw the infomations depending on settings: Position, speed and target angle
@@ -1303,28 +1338,9 @@ void CHud::RenderMovementInformation(const int ClientId)
 	}
 	float DisplayAngle = Angle * 180.0f / pi;
 
-	char aBuf[128];
-	float w;
-
 	float y = StartY + LineSpacer * 2;
 	float xl = StartX + 2;
 	float xr = m_Width - 2;
-	int DigitsIndex;
-
-	static float s_TextWidth0 = TextRender()->TextWidth(Fontsize, "0.00", -1, -1.0f);
-	static float s_TextWidth00 = TextRender()->TextWidth(Fontsize, "00.00", -1, -1.0f);
-	static float s_TextWidth000 = TextRender()->TextWidth(Fontsize, "000.00", -1, -1.0f);
-	static float s_TextWidth0000 = TextRender()->TextWidth(Fontsize, "0000.00", -1, -1.0f);
-	static float s_TextWidth00000 = TextRender()->TextWidth(Fontsize, "00000.00", -1, -1.0f);
-	static float s_TextWidth000000 = TextRender()->TextWidth(Fontsize, "000000.00", -1, -1.0f);
-	static float s_aTextWidth[6] = {s_TextWidth0, s_TextWidth00, s_TextWidth000, s_TextWidth0000, s_TextWidth00000, s_TextWidth000000};
-	static float s_TextWidthMinus0 = TextRender()->TextWidth(Fontsize, "-0.00", -1, -1.0f);
-	static float s_TextWidthMinus00 = TextRender()->TextWidth(Fontsize, "-00.00", -1, -1.0f);
-	static float s_TextWidthMinus000 = TextRender()->TextWidth(Fontsize, "-000.00", -1, -1.0f);
-	static float s_TextWidthMinus0000 = TextRender()->TextWidth(Fontsize, "-0000.00", -1, -1.0f);
-	static float s_TextWidthMinus00000 = TextRender()->TextWidth(Fontsize, "-00000.00", -1, -1.0f);
-	static float s_TextWidthMinus000000 = TextRender()->TextWidth(Fontsize, "-000000.00", -1, -1.0f);
-	static float s_aTextWidthMinus[6] = {s_TextWidthMinus0, s_TextWidthMinus00, s_TextWidthMinus000, s_TextWidthMinus0000, s_TextWidthMinus00000, s_TextWidthMinus000000};
 
 	if(g_Config.m_ClShowhudPlayerPosition)
 	{
@@ -1332,17 +1348,13 @@ void CHud::RenderMovementInformation(const int ClientId)
 		y += MOVEMENT_INFORMATION_LINE_HEIGHT;
 
 		TextRender()->Text(xl, y, Fontsize, "X:", -1.0f);
-		str_format(aBuf, sizeof(aBuf), "%.2f", Pos.x);
-		DigitsIndex = GetDigitsIndex(Pos.x, 5);
-		w = (Pos.x < 0) ? s_aTextWidthMinus[DigitsIndex] : s_aTextWidth[DigitsIndex];
-		TextRender()->Text(xr - w, y, Fontsize, aBuf, -1.0f);
+		UpdateMovementInformationTextContainer(m_aPlayerPositionContainers[0], Fontsize, Pos.x, m_aaPlayerPositionText[0], sizeof(m_aaPlayerPositionText[0]));
+		RenderMovementInformationTextContainer(m_aPlayerPositionContainers[0], xr, y);
 		y += MOVEMENT_INFORMATION_LINE_HEIGHT;
 
 		TextRender()->Text(xl, y, Fontsize, "Y:", -1.0f);
-		str_format(aBuf, sizeof(aBuf), "%.2f", Pos.y);
-		DigitsIndex = GetDigitsIndex(Pos.y, 5);
-		w = (Pos.y < 0) ? s_aTextWidthMinus[DigitsIndex] : s_aTextWidth[DigitsIndex];
-		TextRender()->Text(xr - w, y, Fontsize, aBuf, -1.0f);
+		UpdateMovementInformationTextContainer(m_aPlayerPositionContainers[1], Fontsize, Pos.y, m_aaPlayerPositionText[1], sizeof(m_aaPlayerPositionText[1]));
+		RenderMovementInformationTextContainer(m_aPlayerPositionContainers[1], xr, y);
 		y += MOVEMENT_INFORMATION_LINE_HEIGHT;
 	}
 
@@ -1352,17 +1364,13 @@ void CHud::RenderMovementInformation(const int ClientId)
 		y += MOVEMENT_INFORMATION_LINE_HEIGHT;
 
 		TextRender()->Text(xl, y, Fontsize, "X:", -1.0f);
-		str_format(aBuf, sizeof(aBuf), "%.2f", DisplaySpeedX);
-		DigitsIndex = GetDigitsIndex(DisplaySpeedX, 5);
-		w = (DisplaySpeedX < 0) ? s_aTextWidthMinus[DigitsIndex] : s_aTextWidth[DigitsIndex];
-		TextRender()->Text(xr - w, y, Fontsize, aBuf, -1.0f);
+		UpdateMovementInformationTextContainer(m_aPlayerSpeedTextContainers[0], Fontsize, DisplaySpeedX, m_aaPlayerSpeedText[0], sizeof(m_aaPlayerSpeedText[0]));
+		RenderMovementInformationTextContainer(m_aPlayerSpeedTextContainers[0], xr, y);
 		y += MOVEMENT_INFORMATION_LINE_HEIGHT;
 
 		TextRender()->Text(xl, y, Fontsize, "Y:", -1.0f);
-		str_format(aBuf, sizeof(aBuf), "%.2f", DisplaySpeedY);
-		DigitsIndex = GetDigitsIndex(DisplaySpeedY, 5);
-		w = (DisplaySpeedY < 0) ? s_aTextWidthMinus[DigitsIndex] : s_aTextWidth[DigitsIndex];
-		TextRender()->Text(xr - w, y, Fontsize, aBuf, -1.0f);
+		UpdateMovementInformationTextContainer(m_aPlayerSpeedTextContainers[1], Fontsize, DisplaySpeedY, m_aaPlayerSpeedText[1], sizeof(m_aaPlayerSpeedText[1]));
+		RenderMovementInformationTextContainer(m_aPlayerSpeedTextContainers[1], xr, y);
 		y += MOVEMENT_INFORMATION_LINE_HEIGHT;
 	}
 
@@ -1370,10 +1378,9 @@ void CHud::RenderMovementInformation(const int ClientId)
 	{
 		TextRender()->Text(xl, y, Fontsize, Localize("Angle:"), -1.0f);
 		y += MOVEMENT_INFORMATION_LINE_HEIGHT;
-		str_format(aBuf, sizeof(aBuf), "%.2f", DisplayAngle);
-		DigitsIndex = GetDigitsIndex(DisplayAngle, 5);
-		w = (DisplayAngle < 0) ? s_aTextWidthMinus[DigitsIndex] : s_aTextWidth[DigitsIndex];
-		TextRender()->Text(xr - w, y, Fontsize, aBuf, -1.0f);
+
+		UpdateMovementInformationTextContainer(m_PlayerAngleTextContainerIndex, Fontsize, DisplayAngle, m_aPlayerAngleText, sizeof(m_aPlayerAngleText));
+		RenderMovementInformationTextContainer(m_PlayerAngleTextContainerIndex, xr, y);
 	}
 }
 
@@ -1384,7 +1391,18 @@ void CHud::RenderSpectatorHud()
 
 	// draw the text
 	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "%s: %s", Localize("Spectate"), GameClient()->m_MultiViewActivated ? Localize("Multi-View") : m_pClient->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW ? m_pClient->m_aClients[m_pClient->m_Snap.m_SpecInfo.m_SpectatorId].m_aName : Localize("Free-View"));
+	if(GameClient()->m_MultiViewActivated)
+	{
+		str_copy(aBuf, Localize("Multi-View"));
+	}
+	else if(m_pClient->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW)
+	{
+		str_format(aBuf, sizeof(aBuf), Localize("Following %s", "Spectating"), m_pClient->m_aClients[m_pClient->m_Snap.m_SpecInfo.m_SpectatorId].m_aName);
+	}
+	else
+	{
+		str_copy(aBuf, Localize("Free-View"));
+	}
 	TextRender()->Text(m_Width - 174.0f, m_Height - 15.0f + (15.f - 8.f) / 2.f, 8.0f, aBuf, -1.0f);
 }
 

@@ -7,6 +7,8 @@
 #include <engine/textrender.h>
 #include <game/client/gameclient.h>
 
+#include <base/system.h>
+
 #include "chillerbotux.h"
 
 #include "warlist.h"
@@ -247,19 +249,22 @@ void CWarList::GetWarReason(const char *pName, char *pReason, int ReasonSize)
 			continue;
 
 		IOHANDLE File = Storage()->OpenFile(pFilename, IOFLAG_READ, IStorage::TYPE_ALL);
-
+		CLineReader Reader;
 		if(!File)
 			continue;
+		if(!Reader.OpenFile(File))
+		{
+			str_format(aBuf, sizeof(aBuf), "failed to open '%s'", pFilename);
+			Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+			continue;
+		}
 
-		char *pLine;
-		CLineReader Reader;
-		Reader.Init(File);
+		const char *pLine;
 		// read one line only
 		pLine = Reader.Get();
 		if(pLine)
 			str_copy(pReason, pLine, ReasonSize);
 
-		io_close(File);
 		break;
 	}
 }
@@ -445,16 +450,22 @@ int CWarList::LoadWarNames(const char *pDir)
 		return 0;
 	}
 	m_WarDirs++;
-	char *pLine;
+	const char *pLine;
 	CLineReader Reader;
 
 	str_format(aBuf, sizeof(aBuf), "loading war list file '%s'", aFilename);
 	Print(aBuf);
-	Reader.Init(File);
+
+	if(!Reader.OpenFile(File))
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", aFilename);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+		return 0;
+	}
 
 	while((pLine = Reader.Get()))
 	{
-		if(!str_skip_whitespaces(pLine)[0])
+		if(!str_skip_whitespaces_const(pLine)[0])
 			continue;
 		std::pair<std::string, std::string> Entry;
 		Entry.first = std::string(pLine);
@@ -462,7 +473,6 @@ int CWarList::LoadWarNames(const char *pDir)
 		m_vWarlist.emplace_back(Entry);
 	}
 
-	io_close(File);
 	return 0;
 }
 
@@ -483,16 +493,22 @@ int CWarList::LoadTeamNames(const char *pDir)
 		return 0;
 	}
 	m_TeamDirs++;
-	char *pLine;
+	const char *pLine;
 	CLineReader Reader;
 
 	str_format(aBuf, sizeof(aBuf), "loading team list file '%s'", aFilename);
 	Print(aBuf);
-	Reader.Init(File);
+
+	if(!Reader.OpenFile(File))
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", aFilename);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+		return 0;
+	}
 
 	while((pLine = Reader.Get()))
 	{
-		if(!str_skip_whitespaces(pLine)[0])
+		if(!str_skip_whitespaces_const(pLine)[0])
 			continue;
 		std::pair<std::string, std::string> Entry;
 		Entry.first = std::string(pLine);
@@ -500,7 +516,6 @@ int CWarList::LoadTeamNames(const char *pDir)
 		m_vTeamlist.emplace_back(Entry);
 	}
 
-	io_close(File);
 	return 0;
 }
 
@@ -521,16 +536,22 @@ int CWarList::LoadTraitorNames(const char *pDir)
 		return 0;
 	}
 	m_TraitorDirs++;
-	char *pLine;
+	const char *pLine;
 	CLineReader Reader;
 
 	str_format(aBuf, sizeof(aBuf), "loading traitor list file '%s'", aFilename);
 	Print(aBuf);
-	Reader.Init(File);
+
+	if(!Reader.OpenFile(File))
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", aFilename);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+		return 0;
+	}
 
 	while((pLine = Reader.Get()))
 	{
-		if(!str_skip_whitespaces(pLine)[0])
+		if(!str_skip_whitespaces_const(pLine)[0])
 			continue;
 		std::pair<std::string, std::string> Entry;
 		Entry.first = std::string(pLine);
@@ -538,7 +559,6 @@ int CWarList::LoadTraitorNames(const char *pDir)
 		m_vTraitorlist.emplace_back(Entry);
 	}
 
-	io_close(File);
 	return 0;
 }
 
@@ -558,16 +578,22 @@ int CWarList::LoadNeutralNames(const char *pDir)
 		// Print(aBuf);
 		return 0;
 	}
-	char *pLine;
+	const char *pLine;
 	CLineReader Reader;
 
 	str_format(aBuf, sizeof(aBuf), "loading neutral list file '%s'", aFilename);
 	Print(aBuf);
-	Reader.Init(File);
+
+	if(!Reader.OpenFile(File))
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", aFilename);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+		return 0;
+	}
 
 	while((pLine = Reader.Get()))
 	{
-		if(!str_skip_whitespaces(pLine)[0])
+		if(!str_skip_whitespaces_const(pLine)[0])
 			continue;
 		std::pair<std::string, std::string> Entry;
 		Entry.first = std::string(pLine);
@@ -575,7 +601,6 @@ int CWarList::LoadNeutralNames(const char *pDir)
 		m_vNeutrallist.emplace_back(Entry);
 	}
 
-	io_close(File);
 	return 0;
 }
 
@@ -594,21 +619,26 @@ int CWarList::LoadWarClanNames(const char *pFilename)
 		// Print(aBuf);
 		return 0;
 	}
-	char *pLine;
+	const char *pLine;
 	CLineReader Reader;
 
 	str_format(aBuf, sizeof(aBuf), "loading war clans list file '%s'", pFilename);
 	Print(aBuf);
-	Reader.Init(File);
+
+	if(!Reader.OpenFile(File))
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", pFilename);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+		return 0;
+	}
 
 	while((pLine = Reader.Get()))
 	{
-		if(!str_skip_whitespaces(pLine)[0])
+		if(!str_skip_whitespaces_const(pLine)[0])
 			continue;
 		m_vWarClanlist.emplace_back(pLine);
 	}
 
-	io_close(File);
 	return 0;
 }
 
@@ -627,21 +657,26 @@ int CWarList::LoadTeamClanNames(const char *pFilename)
 		// Print(aBuf);
 		return 0;
 	}
-	char *pLine;
+	const char *pLine;
 	CLineReader Reader;
 
 	str_format(aBuf, sizeof(aBuf), "loading team clans list file '%s'", pFilename);
 	Print(aBuf);
-	Reader.Init(File);
+
+	if(!Reader.OpenFile(File))
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", pFilename);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+		return 0;
+	}
 
 	while((pLine = Reader.Get()))
 	{
-		if(!str_skip_whitespaces(pLine)[0])
+		if(!str_skip_whitespaces_const(pLine)[0])
 			continue;
 		m_vTeamClanlist.emplace_back(pLine);
 	}
 
-	io_close(File);
 	return 0;
 }
 
@@ -660,21 +695,26 @@ int CWarList::LoadWarClanPrefixNames(const char *pFilename)
 		// Print(aBuf);
 		return 0;
 	}
-	char *pLine;
+	const char *pLine;
 	CLineReader Reader;
 
 	str_format(aBuf, sizeof(aBuf), "loading war clan prefix list file '%s'", pFilename);
 	Print(aBuf);
-	Reader.Init(File);
+
+	if(!Reader.OpenFile(File))
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", pFilename);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+		return 0;
+	}
 
 	while((pLine = Reader.Get()))
 	{
-		if(!str_skip_whitespaces(pLine)[0])
+		if(!str_skip_whitespaces_const(pLine)[0])
 			continue;
 		m_vWarClanPrefixlist.emplace_back(pLine);
 	}
 
-	io_close(File);
 	return 0;
 }
 
@@ -803,9 +843,16 @@ bool CWarList::SearchName(const char *pName, bool AllowPartialMatch, bool Silent
 		if(!File)
 			continue;
 
-		char *pLine;
+		const char *pLine;
 		CLineReader Reader;
-		Reader.Init(File);
+
+		if(!Reader.OpenFile(File))
+		{
+			str_format(aBuf, sizeof(aBuf), "failed to open '%s'", pFilename);
+			Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+			continue;
+		}
+
 		// read one line only
 		pLine = Reader.Get();
 		if(pLine)
@@ -814,7 +861,6 @@ bool CWarList::SearchName(const char *pName, bool AllowPartialMatch, bool Silent
 			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 		}
 
-		io_close(File);
 		Found = true;
 	}
 	if(!Found)
@@ -1202,9 +1248,16 @@ bool CWarList::OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, 
 		IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_READ, IStorage::TYPE_SAVE);
 		if(File)
 		{
-			char *pLine;
+			const char *pLine;
 			CLineReader Reader;
-			Reader.Init(File);
+
+			if(!Reader.OpenFile(File))
+			{
+				str_format(aBuf, sizeof(aBuf), "failed to open '%s'", aFilename);
+				Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
+				return 0;
+			}
+
 			// read one line only
 			pLine = Reader.Get();
 			if(pLine && pLine[0] != '\0' && !Force)

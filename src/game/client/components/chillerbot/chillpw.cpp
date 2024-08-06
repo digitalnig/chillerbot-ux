@@ -171,21 +171,38 @@ void CChillPw::OnInit()
 		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
 		return;
 	}
-	char *pLine;
-	CLineReader Reader;
 
-	Reader.Init(File);
+	CLineReader LineReader;
+	if(!LineReader.OpenFile(File))
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", g_Config.m_ClPasswordFile);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
+		return;
+	}
 
-	while((pLine = Reader.Get()) && Line < MAX_PASSWORDS)
+	const char *pLine;
+	while((pLine = LineReader.Get()) && Line < MAX_PASSWORDS)
 	{
 		if(pLine[0] == '#' || pLine[0] == '\0')
 			continue;
-		char *pRow1 = pLine;
-		CheckToken(pRow1, Line, pLine);
+
+		char aLine[2048];
+		str_copy(aLine, pLine);
+		char *pRow1 = aLine;
+		if(GotInvalidToken(pRow1, Line, aLine))
+		{
+			break;
+		}
 		char *pRow2 = (char *)str_find((const char *)pRow1 + 1, ",");
-		CheckToken(pRow2, Line, pLine);
+		if(GotInvalidToken(pRow2, Line, aLine))
+		{
+			break;
+		}
 		char *pRow3 = (char *)str_find((const char *)pRow2 + 1, ",");
-		CheckToken(pRow3, Line, pLine);
+		if(GotInvalidToken(pRow3, Line, aLine))
+		{
+			break;
+		}
 		str_copy(m_aaPasswords[Line], pRow3 + 1, sizeof(m_aaPasswords[Line]));
 		pRow3[0] = '\0';
 		m_aDummy[Line] = atoi(pRow2 + 1);
@@ -200,8 +217,6 @@ void CChillPw::OnInit()
 	m_NumLoadedPasswords = Line;
 	str_format(aBuf, sizeof(aBuf), "loaded %d passwords from '%s'", m_NumLoadedPasswords, g_Config.m_ClPasswordFile);
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
-
-	io_close(File);
 }
 
 void CChillPw::SavePassword(const char *pServer, const char *pPassword)

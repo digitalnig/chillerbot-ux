@@ -172,7 +172,7 @@ void CGameTeams::OnCharacterStart(int ClientId)
 			}
 		}
 
-		if(g_Config.m_SvTeam < SV_TEAM_FORCED_SOLO && g_Config.m_SvMaxTeamSize != 2 && g_Config.m_SvPauseable)
+		if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO && g_Config.m_SvMaxTeamSize != 2 && g_Config.m_SvPauseable)
 		{
 			for(int i = 0; i < MAX_CLIENTS; ++i)
 			{
@@ -1026,11 +1026,20 @@ void CGameTeams::ProcessSaveTeam()
 					m_apSaveTeamResult[Team]->m_SaveId,
 					m_apSaveTeamResult[Team]->m_SavedTeam.GetString());
 			}
+
+			bool TeamValid = false;
 			if(Count(Team) > 0)
 			{
 				// keep current weak/strong order as on some maps there is no other way of switching
-				m_apSaveTeamResult[Team]->m_SavedTeam.Load(GameServer(), Team, true);
+				TeamValid = m_apSaveTeamResult[Team]->m_SavedTeam.Load(GameServer(), Team, true);
 			}
+
+			if(!TeamValid)
+			{
+				GameServer()->SendChatTeam(Team, "Your team has been killed because it contains an invalid tee state");
+				KillTeam(Team, -1, -1);
+			}
+
 			char aSaveId[UUID_MAXSTRSIZE];
 			FormatUuid(m_apSaveTeamResult[Team]->m_SaveId, aSaveId, UUID_MAXSTRSIZE);
 			dbg_msg("save", "Load successful: %s", aSaveId);
@@ -1106,6 +1115,15 @@ void CGameTeams::OnCharacterDeath(int ClientId, int Weapon)
 
 			if(Count(Team) > 1)
 			{
+				// Disband team if the team has more players than allowed.
+				if(Count(Team) > g_Config.m_SvMaxTeamSize)
+				{
+					GameServer()->SendChatTeam(Team, "This team was disbanded because there are more players than allowed in the team.");
+					SetTeamLock(Team, false);
+					KillTeam(Team, Weapon == WEAPON_SELF ? ClientId : -1, ClientId);
+					return;
+				}
+
 				KillTeam(Team, Weapon == WEAPON_SELF ? ClientId : -1, ClientId);
 
 				char aBuf[512];

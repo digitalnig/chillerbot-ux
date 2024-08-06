@@ -6,6 +6,8 @@
 #include <engine/shared/linereader.h>
 #include <game/client/gameclient.h>
 
+#include <base/system.h>
+
 #include "stresser.h"
 
 void CStresser::OnInit()
@@ -99,7 +101,7 @@ void CStresser::OnRender()
 	{
 		char aChatCmd[128];
 		char aArg[64];
-		static const char *pCharset = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"§$%&/()=?{[]}\\<>|-.,;:+#*'~'@_/";
+		const char *pCharset = " abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"§$%&/()=?{[]}\\<>|-.,;:+#*'~'@_/";
 		str_copy(aArg, "", sizeof(aArg));
 		int len = rand() % 64;
 		for(int i = 0; i < len; i++)
@@ -113,10 +115,10 @@ void CStresser::OnRender()
 	}
 	else // file messages
 	{
-		const char *pMessage = GetPentestCommand(g_Config.m_ClPenTestFile);
-		if(pMessage)
+		char aCmd[512];
+		if(GetPentestCommand(g_Config.m_ClPenTestFile, aCmd, sizeof(aCmd)))
 		{
-			m_pClient->m_Chat.SendChat(0, pMessage);
+			m_pClient->m_Chat.SendChat(0, aCmd);
 		}
 		else
 		{
@@ -137,29 +139,37 @@ const char *CStresser::GetRandomChatCommand()
 	return m_vChatCmds[rand() % m_vChatCmds.size()];
 }
 
-const char *CStresser::GetPentestCommand(char const *pFileName)
+bool CStresser::GetPentestCommand(char const *pFileName, char *pCmd, int CmdSize)
 {
 	IOHANDLE File = Storage()->OpenFile(pFileName, IOFLAG_READ, IStorage::TYPE_ALL);
 	if(!File)
-		return 0;
+		return false;
 
-	std::vector<char *> v;
-	char *pLine;
-	CLineReader *Lr = new CLineReader();
-	Lr->Init(File);
-	while((pLine = Lr->Get()))
+	std::vector<const char *> v;
+	const char *pLine;
+	CLineReader LineReader = CLineReader();
+
+	if(!LineReader.OpenFile(File))
+	{
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", pFileName);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "stresser", aBuf);
+		return false;
+	}
+
+	while((pLine = LineReader.Get()))
 		if(str_length(pLine))
 			if(pLine[0] != '#')
 				v.push_back(pLine);
-	io_close(File);
-	static const char *pCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"§$%&/()=?{[]}\\<>|-.,;:+#*'~'@_/";
-	char *pMessage = v[rand() % v.size()];
-	for(int i = 0; pMessage[i] != 0; i++)
+	const char *pCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"§$%&/()=?{[]}\\<>|-.,;:+#*'~'@_/";
+	const char *pMessage = v[rand() % v.size()];
+	str_copy(pCmd, pMessage, CmdSize);
+	for(int i = 0; pCmd[i] != 0; i++)
 	{
-		if(pMessage[i] == '?')
-			pMessage[i] = pCharset[rand() % str_length(pCharset)];
+		if(pCmd[i] == '?')
+			pCmd[i] = pCharset[rand() % str_length(pCharset)];
 	}
-	return pMessage;
+	return true;
 }
 
 void CStresser::OnMessage(int MsgType, void *pRawMsg)

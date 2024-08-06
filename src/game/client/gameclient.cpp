@@ -23,6 +23,7 @@
 #include <game/generated/client_data7.h>
 #include <game/generated/protocol.h>
 
+#include <base/log.h>
 #include <base/math.h>
 #include <base/system.h>
 #include <base/vmath.h>
@@ -240,8 +241,24 @@ void CGameClient::OnConsoleInit()
 	Console()->Chain("cl_menu_map", ConchainMenuMap, this);
 }
 
+static void GenerateTimeoutCode(char *pTimeoutCode)
+{
+	if(pTimeoutCode[0] == '\0' || str_comp(pTimeoutCode, "hGuEYnfxicsXGwFq") == 0)
+	{
+		for(unsigned int i = 0; i < 16; i++)
+		{
+			if(rand() % 2)
+				pTimeoutCode[i] = (char)((rand() % ('z' - 'a' + 1)) + 'a');
+			else
+				pTimeoutCode[i] = (char)((rand() % ('Z' - 'A' + 1)) + 'A');
+		}
+	}
+}
+
 void CGameClient::OnInit()
 {
+	const int64_t OnInitStart = time_get();
+
 	Client()->SetLoadingCallback([this](IClient::ELoadingCallbackDetail Detail) {
 		const char *pTitle;
 		if(Detail == IClient::LOADING_CALLBACK_DETAIL_DEMO || DemoPlayer()->IsPlaying())
@@ -275,8 +292,6 @@ void CGameClient::OnInit()
 	m_UI.Init(Kernel());
 	m_RenderTools.Init(Graphics(), TextRender());
 
-	int64_t Start = time_get();
-
 	if(GIT_SHORTREV_HASH)
 	{
 		str_format(m_aDDNetVersionStr, sizeof(m_aDDNetVersionStr), "%s %s (%s)", GAME_NAME, GAME_RELEASE_VERSION, GIT_SHORTREV_HASH);
@@ -304,20 +319,23 @@ void CGameClient::OnInit()
 	Client()->UpdateAndSwap();
 
 	const char *pLoadingDDNetCaption = Localize("Loading chillerbot-ux");
+	const char *pLoadingMessageComponents = Localize("Initializing components");
+	const char *pLoadingMessageComponentsSpecial = Localize("Why are you slowmo replaying to read this?");
+	char aLoadingMessage[256];
 
 	// init all components
-	int SkippedComps = 0;
-	int CompCounter = 0;
-	for(int i = m_vpAll.size() - 1; i >= 0; --i)
+	int SkippedComps = 1;
+	int CompCounter = 1;
+	const int NumComponents = ComponentCount();
+	for(int i = NumComponents - 1; i >= 0; --i)
 	{
 		m_vpAll[i]->OnInit();
 		// try to render a frame after each component, also flushes GPU uploads
 		if(m_Menus.IsInit())
 		{
-			char aBuff[256];
-			str_format(aBuff, std::size(aBuff), "%s [%d/%d]", CompCounter == 40 ? Localize("Why are you slowmo replaying to read this?") : Localize("Initializing components"), (CompCounter + 1), (int)ComponentCount());
-			m_Menus.RenderLoading(pLoadingDDNetCaption, aBuff, 1 + SkippedComps);
-			SkippedComps = 0;
+			str_format(aLoadingMessage, std::size(aLoadingMessage), "%s [%d/%d]", CompCounter == NumComponents ? pLoadingMessageComponentsSpecial : pLoadingMessageComponents, CompCounter, NumComponents);
+			m_Menus.RenderLoading(pLoadingDDNetCaption, aLoadingMessage, SkippedComps);
+			SkippedComps = 1;
 		}
 		else
 		{
@@ -332,6 +350,7 @@ void CGameClient::OnInit()
 	m_HudSkinLoaded = false;
 
 	// setup load amount, load textures
+	const char *pLoadingMessageAssets = Localize("Initializing assets");
 	for(int i = 0; i < g_pData->m_NumImages; i++)
 	{
 		if(i == IMAGE_GAME)
@@ -348,7 +367,7 @@ void CGameClient::OnInit()
 			g_pData->m_aImages[i].m_Id = IGraphics::CTextureHandle();
 		else
 			g_pData->m_aImages[i].m_Id = Graphics()->LoadTexture(g_pData->m_aImages[i].m_pFilename, IStorage::TYPE_ALL);
-		m_Menus.RenderLoading(pLoadingDDNetCaption, Localize("Initializing assets"), 1);
+		m_Menus.RenderLoading(pLoadingDDNetCaption, pLoadingMessageAssets, 1);
 	}
 
 	m_GameWorld.m_pCollision = Collision();
@@ -358,32 +377,8 @@ void CGameClient::OnInit()
 	// Set free binds to DDRace binds if it's active
 	m_Binds.SetDDRaceBinds(true);
 
-	if(g_Config.m_ClTimeoutCode[0] == '\0' || str_comp(g_Config.m_ClTimeoutCode, "hGuEYnfxicsXGwFq") == 0)
-	{
-		for(unsigned int i = 0; i < 16; i++)
-		{
-			if(rand() % 2)
-				g_Config.m_ClTimeoutCode[i] = (char)((rand() % 26) + 97);
-			else
-				g_Config.m_ClTimeoutCode[i] = (char)((rand() % 26) + 65);
-		}
-	}
-
-	if(g_Config.m_ClDummyTimeoutCode[0] == '\0' || str_comp(g_Config.m_ClDummyTimeoutCode, "hGuEYnfxicsXGwFq") == 0)
-	{
-		for(unsigned int i = 0; i < 16; i++)
-		{
-			if(rand() % 2)
-				g_Config.m_ClDummyTimeoutCode[i] = (char)((rand() % 26) + 97);
-			else
-				g_Config.m_ClDummyTimeoutCode[i] = (char)((rand() % 26) + 65);
-		}
-	}
-
-	int64_t End = time_get();
-	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "initialisation finished after %.2fms", ((End - Start) * 1000) / (float)time_freq());
-	Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "gameclient", aBuf);
+	GenerateTimeoutCode(g_Config.m_ClTimeoutCode);
+	GenerateTimeoutCode(g_Config.m_ClDummyTimeoutCode);
 
 	m_MapImages.SetTextureScale(g_Config.m_ClTextEntitiesSize);
 
@@ -403,6 +398,8 @@ void CGameClient::OnInit()
 		int Size = m_vpAll[i]->Sizeof();
 		pChecksum->m_aComponentsChecksum[i] = Size;
 	}
+
+	log_trace("gameclient", "initialization finished after %.2fms", (time_get() - OnInitStart) * 1000.0f / (float)time_freq());
 }
 
 void CGameClient::OnUpdate()
@@ -1068,7 +1065,6 @@ void CGameClient::OnShutdown()
 
 void CGameClient::OnEnterGame()
 {
-	m_Effects.ResetDamageIndicator();
 }
 
 void CGameClient::OnGameOver()
@@ -1177,61 +1173,61 @@ void CGameClient::ProcessEvents()
 	int Num = Client()->SnapNumItems(SnapType);
 	for(int Index = 0; Index < Num; Index++)
 	{
-		IClient::CSnapItem Item;
-		const void *pData = Client()->SnapGetItem(SnapType, Index, &Item);
+		const IClient::CSnapItem Item = Client()->SnapGetItem(SnapType, Index);
 
 		// We don't have enough info about us, others, to know a correct alpha value.
 		float Alpha = 1.0f;
 
 		if(Item.m_Type == NETEVENTTYPE_DAMAGEIND && !Config()->m_ClNoParticels)
 		{
-			CNetEvent_DamageInd *pEvent = (CNetEvent_DamageInd *)pData;
+			const CNetEvent_DamageInd *pEvent = (const CNetEvent_DamageInd *)Item.m_pData;
 			m_Effects.DamageIndicator(vec2(pEvent->m_X, pEvent->m_Y), direction(pEvent->m_Angle / 256.0f), Alpha);
 		}
 		else if(Item.m_Type == NETEVENTTYPE_EXPLOSION)
 		{
-			CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)pData;
+			const CNetEvent_Explosion *pEvent = (const CNetEvent_Explosion *)Item.m_pData;
 			m_Effects.Explosion(vec2(pEvent->m_X, pEvent->m_Y), Alpha);
 		}
 		else if(Item.m_Type == NETEVENTTYPE_HAMMERHIT)
 		{
-			CNetEvent_HammerHit *pEvent = (CNetEvent_HammerHit *)pData;
+			const CNetEvent_HammerHit *pEvent = (const CNetEvent_HammerHit *)Item.m_pData;
 			m_Effects.HammerHit(vec2(pEvent->m_X, pEvent->m_Y), Alpha);
 		}
 		else if(Item.m_Type == NETEVENTTYPE_FINISH)
 		{
-			CNetEvent_Finish *pEvent = (CNetEvent_Finish *)pData;
+			const CNetEvent_Finish *pEvent = (const CNetEvent_Finish *)Item.m_pData;
 			m_Effects.FinishConfetti(vec2(pEvent->m_X, pEvent->m_Y), Alpha);
 		}
 		else if(Item.m_Type == NETEVENTTYPE_SPAWN && !Config()->m_ClNoParticels)
 		{
-			CNetEvent_Spawn *pEvent = (CNetEvent_Spawn *)pData;
+			const CNetEvent_Spawn *pEvent = (const CNetEvent_Spawn *)Item.m_pData;
 			m_Effects.PlayerSpawn(vec2(pEvent->m_X, pEvent->m_Y), Alpha);
 		}
 		else if(Item.m_Type == NETEVENTTYPE_DEATH && !Config()->m_ClNoParticels)
 		{
-			CNetEvent_Death *pEvent = (CNetEvent_Death *)pData;
+			const CNetEvent_Death *pEvent = (const CNetEvent_Death *)Item.m_pData;
 			m_Effects.PlayerDeath(vec2(pEvent->m_X, pEvent->m_Y), pEvent->m_ClientId, Alpha);
 		}
 		else if(Item.m_Type == NETEVENTTYPE_SOUNDWORLD)
 		{
-			CNetEvent_SoundWorld *pEvent = (CNetEvent_SoundWorld *)pData;
+			const CNetEvent_SoundWorld *pEvent = (const CNetEvent_SoundWorld *)Item.m_pData;
 			if(!Config()->m_SndGame)
 				continue;
 
 			if(m_GameInfo.m_RaceSounds && ((pEvent->m_SoundId == SOUND_GUN_FIRE && !g_Config.m_SndGun) || (pEvent->m_SoundId == SOUND_PLAYER_PAIN_LONG && !g_Config.m_SndLongPain)))
 				continue;
 
+			int SoundId = pEvent->m_SoundId;
 			if(!g_Config.m_SndLongPain)
 				if(pEvent->m_SoundId == SOUND_PLAYER_PAIN_LONG)
-					pEvent->m_SoundId = SOUND_PICKUP_HEALTH;
+					SoundId = SOUND_PICKUP_HEALTH;
 
-			m_Sounds.PlayAt(CSounds::CHN_WORLD, pEvent->m_SoundId, 1.0f, vec2(pEvent->m_X, pEvent->m_Y));
+			m_Sounds.PlayAt(CSounds::CHN_WORLD, SoundId, 1.0f, vec2(pEvent->m_X, pEvent->m_Y));
 		}
 	}
 }
 
-static CGameInfo GetGameInfo(const CNetObj_GameInfoEx *pInfoEx, int InfoExSize, CServerInfo *pFallbackServerInfo)
+static CGameInfo GetGameInfo(const CNetObj_GameInfoEx *pInfoEx, int InfoExSize, const CServerInfo *pFallbackServerInfo)
 {
 	int Version = -1;
 	if(InfoExSize >= 12)
@@ -1446,6 +1442,9 @@ void CGameClient::OnNewSnapshot()
 	}
 #endif
 
+	CServerInfo ServerInfo;
+	Client()->GetServerInfo(&ServerInfo);
+
 	bool FoundGameInfoEx = false;
 	bool GotSwitchStateTeam = false;
 	m_aSwitchStateTeam[g_Config.m_ClDummy] = -1;
@@ -1462,12 +1461,11 @@ void CGameClient::OnNewSnapshot()
 		int Num = Client()->SnapNumItems(IClient::SNAP_CURRENT);
 		for(int i = 0; i < Num; i++)
 		{
-			IClient::CSnapItem Item;
-			const void *pData = Client()->SnapGetItem(IClient::SNAP_CURRENT, i, &Item);
+			const IClient::CSnapItem Item = Client()->SnapGetItem(IClient::SNAP_CURRENT, i);
 
 			if(Item.m_Type == NETOBJTYPE_CLIENTINFO)
 			{
-				const CNetObj_ClientInfo *pInfo = (const CNetObj_ClientInfo *)pData;
+				const CNetObj_ClientInfo *pInfo = (const CNetObj_ClientInfo *)Item.m_pData;
 				int ClientId = Item.m_Id;
 				if(ClientId < MAX_CLIENTS)
 				{
@@ -1512,7 +1510,7 @@ void CGameClient::OnNewSnapshot()
 			}
 			else if(Item.m_Type == NETOBJTYPE_PLAYERINFO)
 			{
-				const CNetObj_PlayerInfo *pInfo = (const CNetObj_PlayerInfo *)pData;
+				const CNetObj_PlayerInfo *pInfo = (const CNetObj_PlayerInfo *)Item.m_pData;
 
 				if(pInfo->m_ClientId < MAX_CLIENTS && pInfo->m_ClientId == Item.m_Id)
 				{
@@ -1546,7 +1544,7 @@ void CGameClient::OnNewSnapshot()
 			else if(Item.m_Type == NETOBJTYPE_DDNETPLAYER)
 			{
 				m_ReceivedDDNetPlayer = true;
-				const CNetObj_DDNetPlayer *pInfo = (const CNetObj_DDNetPlayer *)pData;
+				const CNetObj_DDNetPlayer *pInfo = (const CNetObj_DDNetPlayer *)Item.m_pData;
 				if(Item.m_Id < MAX_CLIENTS)
 				{
 					m_aClients[Item.m_Id].m_AuthLevel = pInfo->m_AuthLevel;
@@ -1565,7 +1563,7 @@ void CGameClient::OnNewSnapshot()
 				if(Item.m_Id < MAX_CLIENTS)
 				{
 					const void *pOld = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_CHARACTER, Item.m_Id);
-					m_Snap.m_aCharacters[Item.m_Id].m_Cur = *((const CNetObj_Character *)pData);
+					m_Snap.m_aCharacters[Item.m_Id].m_Cur = *((const CNetObj_Character *)Item.m_pData);
 					if(pOld)
 					{
 						m_Snap.m_aCharacters[Item.m_Id].m_Active = true;
@@ -1589,7 +1587,7 @@ void CGameClient::OnNewSnapshot()
 						if(EvolveCur && m_Snap.m_aCharacters[Item.m_Id].m_Cur.m_Tick)
 							Evolve(&m_Snap.m_aCharacters[Item.m_Id].m_Cur, Client()->GameTick(g_Config.m_ClDummy));
 
-						m_aClients[Item.m_Id].m_Snapped = *((const CNetObj_Character *)pData);
+						m_aClients[Item.m_Id].m_Snapped = *((const CNetObj_Character *)Item.m_pData);
 						m_aClients[Item.m_Id].m_Evolved = m_Snap.m_aCharacters[Item.m_Id].m_Cur;
 					}
 					else
@@ -1600,7 +1598,7 @@ void CGameClient::OnNewSnapshot()
 			}
 			else if(Item.m_Type == NETOBJTYPE_DDNETCHARACTER)
 			{
-				const CNetObj_DDNetCharacter *pCharacterData = (const CNetObj_DDNetCharacter *)pData;
+				const CNetObj_DDNetCharacter *pCharacterData = (const CNetObj_DDNetCharacter *)Item.m_pData;
 
 				if(Item.m_Id < MAX_CLIENTS)
 				{
@@ -1645,7 +1643,7 @@ void CGameClient::OnNewSnapshot()
 			}
 			else if(Item.m_Type == NETOBJTYPE_SPECCHAR)
 			{
-				const CNetObj_SpecChar *pSpecCharData = (const CNetObj_SpecChar *)pData;
+				const CNetObj_SpecChar *pSpecCharData = (const CNetObj_SpecChar *)Item.m_pData;
 
 				if(Item.m_Id < MAX_CLIENTS)
 				{
@@ -1657,14 +1655,14 @@ void CGameClient::OnNewSnapshot()
 			}
 			else if(Item.m_Type == NETOBJTYPE_SPECTATORINFO)
 			{
-				m_Snap.m_pSpectatorInfo = (const CNetObj_SpectatorInfo *)pData;
+				m_Snap.m_pSpectatorInfo = (const CNetObj_SpectatorInfo *)Item.m_pData;
 				m_Snap.m_pPrevSpectatorInfo = (const CNetObj_SpectatorInfo *)Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_SPECTATORINFO, Item.m_Id);
 
 				m_Snap.m_SpecInfo.m_SpectatorId = m_Snap.m_pSpectatorInfo->m_SpectatorId;
 			}
 			else if(Item.m_Type == NETOBJTYPE_GAMEINFO)
 			{
-				m_Snap.m_pGameInfoObj = (const CNetObj_GameInfo *)pData;
+				m_Snap.m_pGameInfoObj = (const CNetObj_GameInfo *)Item.m_pData;
 				bool CurrentTickGameOver = (bool)(m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_GAMEOVER);
 				if(!m_GameOver && CurrentTickGameOver)
 					OnGameOver();
@@ -1685,13 +1683,11 @@ void CGameClient::OnNewSnapshot()
 					continue;
 				}
 				FoundGameInfoEx = true;
-				CServerInfo ServerInfo;
-				Client()->GetServerInfo(&ServerInfo);
-				m_GameInfo = GetGameInfo((const CNetObj_GameInfoEx *)pData, Client()->SnapItemSize(IClient::SNAP_CURRENT, i), &ServerInfo);
+				m_GameInfo = GetGameInfo((const CNetObj_GameInfoEx *)Item.m_pData, Item.m_DataSize, &ServerInfo);
 			}
 			else if(Item.m_Type == NETOBJTYPE_GAMEDATA)
 			{
-				m_Snap.m_pGameDataObj = (const CNetObj_GameData *)pData;
+				m_Snap.m_pGameDataObj = (const CNetObj_GameData *)Item.m_pData;
 				m_Snap.m_GameDataSnapId = Item.m_Id;
 				if(m_Snap.m_pGameDataObj->m_FlagCarrierRed == FLAG_TAKEN)
 				{
@@ -1716,14 +1712,14 @@ void CGameClient::OnNewSnapshot()
 				m_LastFlagCarrierBlue = m_Snap.m_pGameDataObj->m_FlagCarrierBlue;
 			}
 			else if(Item.m_Type == NETOBJTYPE_FLAG)
-				m_Snap.m_apFlags[Item.m_Id % 2] = (const CNetObj_Flag *)pData;
+				m_Snap.m_apFlags[Item.m_Id % 2] = (const CNetObj_Flag *)Item.m_pData;
 			else if(Item.m_Type == NETOBJTYPE_SWITCHSTATE)
 			{
 				if(Item.m_DataSize < 36)
 				{
 					continue;
 				}
-				const CNetObj_SwitchState *pSwitchStateData = (const CNetObj_SwitchState *)pData;
+				const CNetObj_SwitchState *pSwitchStateData = (const CNetObj_SwitchState *)Item.m_pData;
 				int Team = clamp(Item.m_Id, (int)TEAM_FLOCK, (int)TEAM_SUPER - 1);
 
 				int HighestSwitchNumber = clamp(pSwitchStateData->m_HighestSwitchNumber, 0, 255);
@@ -1772,8 +1768,6 @@ void CGameClient::OnNewSnapshot()
 
 	if(!FoundGameInfoEx)
 	{
-		CServerInfo ServerInfo;
-		Client()->GetServerInfo(&ServerInfo);
 		m_GameInfo = GetGameInfo(0, 0, &ServerInfo);
 	}
 
@@ -1878,12 +1872,10 @@ void CGameClient::OnNewSnapshot()
 		}
 	}
 
-	CServerInfo CurrentServerInfo;
-	Client()->GetServerInfo(&CurrentServerInfo);
 	CTuningParams StandardTuning;
-	if(CurrentServerInfo.m_aGameType[0] != '0')
+	if(ServerInfo.m_aGameType[0] != '0')
 	{
-		if(str_comp(CurrentServerInfo.m_aGameType, "DM") != 0 && str_comp(CurrentServerInfo.m_aGameType, "TDM") != 0 && str_comp(CurrentServerInfo.m_aGameType, "CTF") != 0)
+		if(str_comp(ServerInfo.m_aGameType, "DM") != 0 && str_comp(ServerInfo.m_aGameType, "TDM") != 0 && str_comp(ServerInfo.m_aGameType, "CTF") != 0)
 			m_ServerMode = SERVERMODE_MOD;
 		else if(mem_comp(&StandardTuning, &m_aTuning[g_Config.m_ClDummy], 33) == 0)
 			m_ServerMode = SERVERMODE_PURE;
@@ -2779,7 +2771,7 @@ void CGameClient::UpdatePrediction()
 		}
 
 	for(const CSnapEntities &EntData : SnapEntities())
-		m_GameWorld.NetObjAdd(EntData.m_Item.m_Id, EntData.m_Item.m_Type, EntData.m_pData, EntData.m_pDataEx);
+		m_GameWorld.NetObjAdd(EntData.m_Item.m_Id, EntData.m_Item.m_Type, EntData.m_Item.m_pData, EntData.m_pDataEx);
 
 	m_GameWorld.NetObjEnd();
 }
@@ -3122,7 +3114,7 @@ void CGameClient::LoadGameSkin(const char *pPath, bool AsDir)
 		else
 			LoadGameSkin(pPath, true);
 	}
-	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_HEALTH_FULL].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_HEALTH_FULL].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRGBA(aPath, ImgInfo))
+	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_HEALTH_FULL].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_HEALTH_FULL].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRgba(aPath, ImgInfo))
 	{
 		m_GameSkin.m_SpriteHealthFull = Graphics()->LoadSpriteTexture(ImgInfo, &g_pData->m_aSprites[SPRITE_HEALTH_FULL]);
 		m_GameSkin.m_SpriteHealthEmpty = Graphics()->LoadSpriteTexture(ImgInfo, &g_pData->m_aSprites[SPRITE_HEALTH_EMPTY]);
@@ -3283,7 +3275,7 @@ void CGameClient::LoadEmoticonsSkin(const char *pPath, bool AsDir)
 		else
 			LoadEmoticonsSkin(pPath, true);
 	}
-	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_OOP].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_OOP].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRGBA(aPath, ImgInfo))
+	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_OOP].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_OOP].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRgba(aPath, ImgInfo))
 	{
 		for(int i = 0; i < 16; ++i)
 			m_EmoticonsSkin.m_aSpriteEmoticons[i] = Graphics()->LoadSpriteTexture(ImgInfo, &g_pData->m_aSprites[SPRITE_OOP + i]);
@@ -3337,7 +3329,7 @@ void CGameClient::LoadParticlesSkin(const char *pPath, bool AsDir)
 		else
 			LoadParticlesSkin(pPath, true);
 	}
-	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_PART_SLICE].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_PART_SLICE].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRGBA(aPath, ImgInfo))
+	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_PART_SLICE].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_PART_SLICE].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRgba(aPath, ImgInfo))
 	{
 		m_ParticlesSkin.m_SpriteParticleSlice = Graphics()->LoadSpriteTexture(ImgInfo, &g_pData->m_aSprites[SPRITE_PART_SLICE]);
 		m_ParticlesSkin.m_SpriteParticleBall = Graphics()->LoadSpriteTexture(ImgInfo, &g_pData->m_aSprites[SPRITE_PART_BALL]);
@@ -3426,7 +3418,7 @@ void CGameClient::LoadHudSkin(const char *pPath, bool AsDir)
 		else
 			LoadHudSkin(pPath, true);
 	}
-	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_HUD_AIRJUMP].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_HUD_AIRJUMP].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRGBA(aPath, ImgInfo))
+	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_HUD_AIRJUMP].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_HUD_AIRJUMP].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRgba(aPath, ImgInfo))
 	{
 		m_HudSkin.m_SpriteHudAirjump = Graphics()->LoadSpriteTexture(ImgInfo, &g_pData->m_aSprites[SPRITE_HUD_AIRJUMP]);
 		m_HudSkin.m_SpriteHudAirjumpEmpty = Graphics()->LoadSpriteTexture(ImgInfo, &g_pData->m_aSprites[SPRITE_HUD_AIRJUMP_EMPTY]);
@@ -3501,7 +3493,7 @@ void CGameClient::LoadExtrasSkin(const char *pPath, bool AsDir)
 		else
 			LoadExtrasSkin(pPath, true);
 	}
-	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_PART_SNOWFLAKE].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_PART_SNOWFLAKE].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRGBA(aPath, ImgInfo))
+	else if(PngLoaded && Graphics()->CheckImageDivisibility(aPath, ImgInfo, g_pData->m_aSprites[SPRITE_PART_SNOWFLAKE].m_pSet->m_Gridx, g_pData->m_aSprites[SPRITE_PART_SNOWFLAKE].m_pSet->m_Gridy, true) && Graphics()->IsImageFormatRgba(aPath, ImgInfo))
 	{
 		m_ExtrasSkin.m_SpriteParticleSnowflake = Graphics()->LoadSpriteTexture(ImgInfo, &g_pData->m_aSprites[SPRITE_PART_SNOWFLAKE]);
 		m_ExtrasSkin.m_aSpriteParticles[0] = m_ExtrasSkin.m_SpriteParticleSnowflake;
@@ -3665,12 +3657,11 @@ void CGameClient::SnapCollectEntities()
 
 	for(int Index = 0; Index < NumSnapItems; Index++)
 	{
-		IClient::CSnapItem Item;
-		const void *pData = Client()->SnapGetItem(IClient::SNAP_CURRENT, Index, &Item);
+		const IClient::CSnapItem Item = Client()->SnapGetItem(IClient::SNAP_CURRENT, Index);
 		if(Item.m_Type == NETOBJTYPE_ENTITYEX)
-			vItemEx.push_back({Item, pData, 0});
+			vItemEx.push_back({Item, nullptr});
 		else if(Item.m_Type == NETOBJTYPE_PICKUP || Item.m_Type == NETOBJTYPE_DDNETPICKUP || Item.m_Type == NETOBJTYPE_LASER || Item.m_Type == NETOBJTYPE_DDNETLASER || Item.m_Type == NETOBJTYPE_PROJECTILE || Item.m_Type == NETOBJTYPE_DDRACEPROJECTILE || Item.m_Type == NETOBJTYPE_DDNETPROJECTILE)
-			vItemData.push_back({Item, pData, 0});
+			vItemData.push_back({Item, nullptr});
 	}
 
 	// sort by id
@@ -3692,13 +3683,14 @@ void CGameClient::SnapCollectEntities()
 	size_t IndexEx = 0;
 	for(const CSnapEntities &Ent : vItemData)
 	{
-		const CNetObj_EntityEx *pDataEx = 0;
 		while(IndexEx < vItemEx.size() && vItemEx[IndexEx].m_Item.m_Id < Ent.m_Item.m_Id)
 			IndexEx++;
-		if(IndexEx < vItemEx.size() && vItemEx[IndexEx].m_Item.m_Id == Ent.m_Item.m_Id)
-			pDataEx = (const CNetObj_EntityEx *)vItemEx[IndexEx].m_pData;
 
-		m_vSnapEntities.push_back({Ent.m_Item, Ent.m_pData, pDataEx});
+		const CNetObj_EntityEx *pDataEx = nullptr;
+		if(IndexEx < vItemEx.size() && vItemEx[IndexEx].m_Item.m_Id == Ent.m_Item.m_Id)
+			pDataEx = (const CNetObj_EntityEx *)vItemEx[IndexEx].m_Item.m_pData;
+
+		m_vSnapEntities.push_back({Ent.m_Item, pDataEx});
 	}
 }
 

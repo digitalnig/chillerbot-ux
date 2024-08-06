@@ -917,7 +917,7 @@ bool CEditor::CallbackSaveSound(const char *pFileName, int StorageType, void *pU
 	return false;
 }
 
-void CEditor::DoAudioPreview(CUIRect View, const void *pPlayPauseButtonId, const void *pStopButtonId, const void *pSeekBarId, const int SampleId)
+void CEditor::DoAudioPreview(CUIRect View, const void *pPlayPauseButtonId, const void *pStopButtonId, const void *pSeekBarId, int SampleId)
 {
 	CUIRect Button, SeekBar;
 	// play/pause button
@@ -5144,11 +5144,13 @@ void CEditor::RenderFileDialog()
 			{
 				char aBuffer[IO_MAX_PATH_LENGTH];
 				str_format(aBuffer, sizeof(aBuffer), "%s/%s", m_pFileDialogPath, m_vpFilteredFileList[m_FilesSelectedIndex]->m_aFilename);
-				if(Graphics()->LoadPng(m_FilePreviewImageInfo, aBuffer, m_vpFilteredFileList[m_FilesSelectedIndex]->m_StorageType))
+				CImageInfo PreviewImageInfo;
+				if(Graphics()->LoadPng(PreviewImageInfo, aBuffer, m_vpFilteredFileList[m_FilesSelectedIndex]->m_StorageType))
 				{
 					Graphics()->UnloadTexture(&m_FilePreviewImage);
-					m_FilePreviewImage = Graphics()->LoadTextureRawMove(m_FilePreviewImageInfo, 0, aBuffer);
-					m_FilePreviewImageInfo.m_pData = nullptr;
+					m_FilePreviewImageWidth = PreviewImageInfo.m_Width;
+					m_FilePreviewImageHeight = PreviewImageInfo.m_Height;
+					m_FilePreviewImage = Graphics()->LoadTextureRawMove(PreviewImageInfo, 0, aBuffer);
 					m_FilePreviewState = PREVIEW_LOADED;
 				}
 				else
@@ -5171,11 +5173,11 @@ void CEditor::RenderFileDialog()
 			Preview.Margin(10.0f, &Preview);
 			if(m_FilePreviewState == PREVIEW_LOADED)
 			{
-				int w = m_FilePreviewImageInfo.m_Width;
-				int h = m_FilePreviewImageInfo.m_Height;
-				if(m_FilePreviewImageInfo.m_Width > Preview.w)
+				int w = m_FilePreviewImageWidth;
+				int h = m_FilePreviewImageHeight;
+				if(m_FilePreviewImageWidth > Preview.w)
 				{
-					h = m_FilePreviewImageInfo.m_Height * Preview.w / m_FilePreviewImageInfo.m_Width;
+					h = m_FilePreviewImageHeight * Preview.w / m_FilePreviewImageWidth;
 					w = Preview.w;
 				}
 				if(h > Preview.h)
@@ -5400,7 +5402,7 @@ void CEditor::RenderFileDialog()
 		{
 			char aOpenPath[IO_MAX_PATH_LENGTH];
 			Storage()->GetCompletePath(m_FilesSelectedIndex >= 0 ? m_vpFilteredFileList[m_FilesSelectedIndex]->m_StorageType : IStorage::TYPE_SAVE, m_pFileDialogPath, aOpenPath, sizeof(aOpenPath));
-			if(!open_file(aOpenPath))
+			if(!Client()->ViewFile(aOpenPath))
 			{
 				ShowFileDialogError("Failed to open the directory '%s'.", aOpenPath);
 			}
@@ -7678,11 +7680,13 @@ void CEditor::RenderMenubar(CUIRect MenuBar)
 		Ui()->DoPopupMenu(&s_PopupMenuEntitiesId, SettingsButton.x, SettingsButton.y + SettingsButton.h - 1.0f, 200.0f, 92.0f, this, PopupMenuSettings, PopupProperties);
 	}
 
-	CUIRect ChangedIndicator, Info, Close;
+	CUIRect ChangedIndicator, Info, Help, Close;
 	MenuBar.VSplitLeft(5.0f, nullptr, &MenuBar);
 	MenuBar.VSplitLeft(MenuBar.h, &ChangedIndicator, &MenuBar);
-	MenuBar.VSplitRight(20.0f, &MenuBar, &Close);
-	Close.VSplitLeft(5.0f, nullptr, &Close);
+	MenuBar.VSplitRight(15.0f, &MenuBar, &Close);
+	MenuBar.VSplitRight(5.0f, &MenuBar, nullptr);
+	MenuBar.VSplitRight(15.0f, &MenuBar, &Help);
+	MenuBar.VSplitRight(5.0f, &MenuBar, nullptr);
 	MenuBar.VSplitLeft(MenuBar.w * 0.6f, &MenuBar, &Info);
 	MenuBar.VSplitRight(5.0f, &MenuBar, nullptr);
 
@@ -7709,6 +7713,16 @@ void CEditor::RenderMenubar(CUIRect MenuBar)
 
 	str_format(aBuf, sizeof(aBuf), "X: %.1f, Y: %.1f, Z: %.1f, A: %.1f, G: %i  %s", Ui()->MouseWorldX() / 32.0f, Ui()->MouseWorldY() / 32.0f, MapView()->Zoom()->GetValue(), m_AnimateSpeed, MapView()->MapGrid()->Factor(), aTimeStr);
 	Ui()->DoLabel(&Info, aBuf, 10.0f, TEXTALIGN_MR);
+
+	static int s_HelpButton = 0;
+	if(DoButton_Editor(&s_HelpButton, "?", 0, &Help, 0, "[F1] Open the DDNet Wiki page for the Map Editor in a web browser") || (Input()->KeyPress(KEY_F1) && m_Dialog == DIALOG_NONE && CLineInput::GetActiveInput() == nullptr))
+	{
+		const char *pLink = Localize("https://wiki.ddnet.org/wiki/Mapping");
+		if(!Client()->ViewLink(pLink))
+		{
+			ShowFileDialogError("Failed to open the link '%s' in the default web browser.", pLink);
+		}
+	}
 
 	static int s_CloseButton = 0;
 	if(DoButton_Editor(&s_CloseButton, "×", 0, &Close, 0, "Exits from the editor"))
@@ -8316,15 +8330,15 @@ void CEditor::Init()
 		m_PopupEventWasActivated = false;
 	});
 	m_RenderTools.Init(m_pGraphics, m_pTextRender);
-	m_ZoomEnvelopeX.Init(this);
-	m_ZoomEnvelopeY.Init(this);
+	m_ZoomEnvelopeX.OnInit(this);
+	m_ZoomEnvelopeY.OnInit(this);
 	m_Map.m_pEditor = this;
 
 	m_vComponents.emplace_back(m_MapView);
 	m_vComponents.emplace_back(m_MapSettingsBackend);
 	m_vComponents.emplace_back(m_LayerSelector);
 	for(CEditorComponent &Component : m_vComponents)
-		Component.Init(this);
+		Component.OnInit(this);
 
 	m_CheckerTexture = Graphics()->LoadTexture("editor/checker.png", IStorage::TYPE_ALL);
 	m_BackgroundTexture = Graphics()->LoadTexture("editor/background.png", IStorage::TYPE_ALL);

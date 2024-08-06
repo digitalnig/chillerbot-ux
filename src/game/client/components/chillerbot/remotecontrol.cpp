@@ -98,12 +98,18 @@ void CRemoteControl::ExecuteWhitelisted(const char *pCommand, const char *pWhite
 		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
 		return;
 	}
-	char *pLine;
+	const char *pLine;
 	CLineReader Reader;
 
 	str_format(aBuf, sizeof(aBuf), "loading remote control whitelist file '%s'", pWhitelistFile);
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
-	Reader.Init(File);
+
+	if(!Reader.OpenFile(File))
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", pWhitelistFile);
+		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
+		return;
+	}
 
 	while((pLine = Reader.Get()))
 	{
@@ -112,14 +118,12 @@ void CRemoteControl::ExecuteWhitelisted(const char *pCommand, const char *pWhite
 			str_format(aBuf, sizeof(aBuf), "executing whitelisted command '%s'", pCommand);
 			Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
 			m_pClient->Console()->ExecuteLine(pCommand);
-			io_close(File);
 			return;
 		}
 	}
 
 	str_format(aBuf, sizeof(aBuf), "command '%s' not whitelisted", pCommand);
 	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
-	io_close(File);
 }
 
 void CRemoteControl::OnMessage(int MsgType, void *pRawMsg)

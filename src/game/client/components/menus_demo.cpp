@@ -78,6 +78,7 @@ void CMenus::HandleDemoSeeking(float PositionToSeek, float TimeToSeek)
 	if((PositionToSeek >= 0.0f && PositionToSeek <= 1.0f) || TimeToSeek != 0.0f)
 	{
 		m_pClient->m_Chat.Reset();
+		m_pClient->m_DamageInd.OnReset();
 		m_pClient->m_InfoMessages.OnReset();
 		m_pClient->m_Particles.OnReset();
 		m_pClient->m_Sounds.OnReset();
@@ -1458,10 +1459,7 @@ void CMenus::RenderDemoBrowserButtons(CUIRect ButtonsView, bool WasListboxItemAc
 		{
 			char aBuf[IO_MAX_PATH_LENGTH];
 			Storage()->GetCompletePath(m_DemolistSelectedIndex >= 0 ? m_vpFilteredDemos[m_DemolistSelectedIndex]->m_StorageType : IStorage::TYPE_SAVE, m_aCurrentDemoFolder[0] == '\0' ? "demos" : m_aCurrentDemoFolder, aBuf, sizeof(aBuf));
-			if(!open_file(aBuf))
-			{
-				dbg_msg("menus", "couldn't open file '%s'", aBuf);
-			}
+			Client()->ViewFile(aBuf);
 		}
 		GameClient()->m_Tooltips.DoToolTip(&s_DemosDirectoryButton, &DemosDirectoryButton, Localize("Open the directory that contains the demo files"));
 	}

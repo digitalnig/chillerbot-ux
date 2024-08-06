@@ -20,7 +20,7 @@ private:
 
 	void OnChatMessage(int ClientId, int Team, const char *pMsg);
 
-	const char *GetPentestCommand(const char *pFilename);
+	bool GetPentestCommand(const char *pFilename, char *pCmd, int CmdSize);
 	const char *GetRandomChatCommand();
 	void RandomMovements();
 

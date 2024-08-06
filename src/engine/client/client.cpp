@@ -279,19 +279,6 @@ bool CClient::ConnectionProblems() const
 	return m_aNetClient[g_Config.m_ClDummy].GotProblems(MaxLatencyTicks() * time_freq() / GameTickSpeed()) != 0;
 }
 
-void CClient::DirectInput(int *pInput, int Size)
-{
-	CMsgPacker Msg(NETMSG_INPUT, true);
-	Msg.AddInt(m_aAckGameTick[g_Config.m_ClDummy]);
-	Msg.AddInt(m_aPredTick[g_Config.m_ClDummy]);
-	Msg.AddInt(Size);
-
-	for(int i = 0; i < Size / 4; i++)
-		Msg.AddInt(pInput[i]);
-
-	SendMsgActive(&Msg, 0);
-}
-
 void CClient::SendInput()
 {
 	int64_t Now = time_get();
@@ -303,7 +290,7 @@ void CClient::SendInput()
 	// fetch input
 	for(int Dummy = 0; Dummy < NUM_DUMMIES; Dummy++)
 	{
-		if(!m_DummyConnected && Dummy != 0)
+		if(!DummyConnected() && Dummy != 0)
 		{
 			break;
 		}
@@ -439,7 +426,7 @@ void CClient::OnEnterGame(bool Dummy)
 
 	if(!Dummy)
 	{
-		m_LastDummyConnectTime = 0;
+		m_LastDummyConnectTime = 0.0f;
 	}
 
 	GameClient()->OnEnterGame();
@@ -664,38 +651,51 @@ bool CClient::DummyConnected() const
 
 bool CClient::DummyConnecting() const
 {
-	return !m_DummyConnected && m_LastDummyConnectTime > 0 && m_LastDummyConnectTime + GameTickSpeed() * 5 > GameTick(g_Config.m_ClDummy);
+	return m_DummyConnecting;
+}
+
+bool CClient::DummyConnectingDelayed() const
+{
+	return !DummyConnected() && !DummyConnecting() && m_LastDummyConnectTime > 0.0f && m_LastDummyConnectTime + 5.0f > GlobalTime();
 }
 
 void CClient::DummyConnect()
 {
-	if(m_LastDummyConnectTime > 0 && m_LastDummyConnectTime + GameTickSpeed() * 5 > GameTick(g_Config.m_ClDummy))
-		return;
-
 	if(m_aNetClient[CONN_MAIN].State() != NETSTATE_ONLINE)
+	{
+		log_info("client", "Not online.");
 		return;
+	}
 
-	if(m_DummyConnected || !DummyAllowed())
+	if(!DummyAllowed())
+	{
+		log_info("client", "Dummy is not allowed on this server.");
 		return;
+	}
+	if(DummyConnected() || DummyConnecting())
+	{
+		log_info("client", "Dummy is already connected/connecting.");
+		return;
+	}
+	if(DummyConnectingDelayed())
+	{
+		log_info("client", "Wait before connecting dummy again.");
+		return;
+	}
 
-	m_LastDummyConnectTime = GameTick(g_Config.m_ClDummy);
-
+	m_LastDummyConnectTime = GlobalTime();
 	m_aRconAuthed[1] = 0;
-
 	m_DummySendConnInfo = true;
 
 	g_Config.m_ClDummyCopyMoves = 0;
 	g_Config.m_ClDummyHammer = 0;
 
-	// connect to the server
+	m_DummyConnecting = true;
 	m_aNetClient[CONN_DUMMY].Connect(m_aNetClient[CONN_MAIN].ServerAddress(), 1);
 }
 
 void CClient::DummyDisconnect(const char *pReason)
 {
-	if(!m_DummyConnected)
-		return;
-
 	m_aNetClient[CONN_DUMMY].Disconnect(pReason);
 	g_Config.m_ClDummy = 0;
 
@@ -709,6 +709,7 @@ void CClient::DummyDisconnect(const char *pReason)
 	m_aapSnapshots[1][SNAP_PREV] = 0;
 	m_aReceivedSnapshots[1] = 0;
 	m_DummyConnected = false;
+	m_DummyConnecting = false;
 	GameClient()->OnDummyDisconnect();
 }
 
@@ -742,21 +743,17 @@ void CClient::LoadDebugFont()
 
 // ---
 
-void *CClient::SnapGetItem(int SnapId, int Index, CSnapItem *pItem) const
+IClient::CSnapItem CClient::SnapGetItem(int SnapId, int Index) const
 {
 	dbg_assert(SnapId >= 0 && SnapId < NUM_SNAPSHOT_TYPES, "invalid SnapId");
 	const CSnapshot *pSnapshot = m_aapSnapshots[g_Config.m_ClDummy][SnapId]->m_pAltSnap;
 	const CSnapshotItem *pSnapshotItem = pSnapshot->GetItem(Index);
-	pItem->m_DataSize = pSnapshot->GetItemSize(Index);
-	pItem->m_Type = pSnapshot->GetItemType(Index);
-	pItem->m_Id = pSnapshotItem->Id();
-	return (void *)pSnapshotItem->Data();
-}
-
-int CClient::SnapItemSize(int SnapId, int Index) const
-{
-	dbg_assert(SnapId >= 0 && SnapId < NUM_SNAPSHOT_TYPES, "invalid SnapId");
-	return m_aapSnapshots[g_Config.m_ClDummy][SnapId]->m_pAltSnap->GetItemSize(Index);
+	CSnapItem Item;
+	Item.m_Type = pSnapshot->GetItemType(Index);
+	Item.m_Id = pSnapshotItem->Id();
+	Item.m_pData = pSnapshotItem->Data();
+	Item.m_DataSize = pSnapshot->GetItemSize(Index);
+	return Item;
 }
 
 const void *CClient::SnapFindItem(int SnapId, int Type, int Id) const
@@ -1573,6 +1570,7 @@ void CClient::ProcessServerPacket(CNetChunk *pPacket, int Conn, bool Dummy)
 		else if(Conn == CONN_DUMMY && Msg == NETMSG_CON_READY)
 		{
 			m_DummyConnected = true;
+			m_DummyConnecting = false;
 			g_Config.m_ClDummy = 1;
 			Rcon("crashmeplx");
 			if(m_aRconAuthed[0])
@@ -2316,25 +2314,33 @@ void CClient::PumpNetwork()
 
 	if(State() != IClient::STATE_DEMOPLAYBACK)
 	{
-		// check for errors
-		if(State() != IClient::STATE_OFFLINE && State() < IClient::STATE_QUITTING && m_aNetClient[CONN_MAIN].State() == NETSTATE_OFFLINE)
+		// check for errors of main and dummy
+		if(State() != IClient::STATE_OFFLINE && State() < IClient::STATE_QUITTING)
 		{
-			Disconnect();
-			char aBuf[256];
-			str_format(aBuf, sizeof(aBuf), "offline error='%s'", m_aNetClient[CONN_MAIN].ErrorString());
-			m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", aBuf, gs_ClientNetworkErrPrintColor);
+			if(m_aNetClient[CONN_MAIN].State() == NETSTATE_OFFLINE)
+			{
+				// This will also disconnect the dummy, so the branch below is an `else if`
+				Disconnect();
+				char aBuf[256];
+				str_format(aBuf, sizeof(aBuf), "offline error='%s'", m_aNetClient[CONN_MAIN].ErrorString());
+				m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", aBuf, gs_ClientNetworkErrPrintColor);
+			}
+			else if((DummyConnecting() || DummyConnected()) && m_aNetClient[CONN_DUMMY].State() == NETSTATE_OFFLINE)
+			{
+				const bool WasConnecting = DummyConnecting();
+				DummyDisconnect(nullptr);
+				char aBuf[256];
+				str_format(aBuf, sizeof(aBuf), "offline dummy error='%s'", m_aNetClient[CONN_DUMMY].ErrorString());
+				m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", aBuf, gs_ClientNetworkErrPrintColor);
+				if(WasConnecting)
+				{
+					str_format(aBuf, sizeof(aBuf), "%s: %s", Localize("Could not connect dummy"), m_aNetClient[CONN_DUMMY].ErrorString());
+					GameClient()->Echo(aBuf);
+				}
+			}
 		}
 
-		if(State() != IClient::STATE_OFFLINE && State() < IClient::STATE_QUITTING && m_DummyConnected &&
-			m_aNetClient[CONN_DUMMY].State() == NETSTATE_OFFLINE)
-		{
-			DummyDisconnect(0);
-			char aBuf[256];
-			str_format(aBuf, sizeof(aBuf), "offline dummy error='%s'", m_aNetClient[CONN_DUMMY].ErrorString());
-			m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "client", aBuf, gs_ClientNetworkErrPrintColor);
-		}
-
-		//
+		// check if main was connected
 		if(State() == IClient::STATE_CONNECTING && m_aNetClient[CONN_MAIN].State() == NETSTATE_ONLINE)
 		{
 			// we switched to online
@@ -3212,7 +3218,7 @@ void CClient::Con_DummyConnect(IConsole::IResult *pResult, void *pUserData)
 void CClient::Con_DummyDisconnect(IConsole::IResult *pResult, void *pUserData)
 {
 	CClient *pSelf = (CClient *)pUserData;
-	pSelf->DummyDisconnect(0);
+	pSelf->DummyDisconnect(nullptr);
 }
 
 void CClient::Con_DummyResetInput(IConsole::IResult *pResult, void *pUserData)
@@ -3845,6 +3851,7 @@ void CClient::UpdateAndSwap()
 	Input()->Update();
 	Graphics()->Swap();
 	Graphics()->Clear(0, 0, 0);
+	m_GlobalTime = (time_get() - m_GlobalStartTime) / (float)time_freq();
 }
 
 void CClient::ServerBrowserUpdate()
@@ -4606,6 +4613,15 @@ int main(int argc, const char **argv)
 	pClient->ShellRegister();
 #endif
 
+	// Do not automatically translate touch events to mouse events and vice versa.
+	SDL_SetHint("SDL_TOUCH_MOUSE_EVENTS", "0");
+	SDL_SetHint("SDL_MOUSE_TOUCH_EVENTS", "0");
+
+	// Support longer IME composition strings (enables SDL_TEXTEDITING_EXT).
+#if SDL_VERSION_ATLEAST(2, 0, 22)
+	SDL_SetHint(SDL_HINT_IME_SUPPORT_EXTENDED_TEXT, "1");
+#endif
+
 #if defined(CONF_PLATFORM_MACOS)
 	// Hints will not be set if there is an existing override hint or environment variable that takes precedence.
 	// So this respects cli environment overrides.
@@ -4642,11 +4658,13 @@ int main(int argc, const char **argv)
 	pClient->Run();
 
 	const bool Restarting = pClient->State() == CClient::STATE_RESTARTING;
+#if !defined(CONF_PLATFORM_ANDROID)
 	char aRestartBinaryPath[IO_MAX_PATH_LENGTH];
 	if(Restarting)
 	{
 		pStorage->GetBinaryPath(PLAT_CLIENT_EXEC, aRestartBinaryPath, sizeof(aRestartBinaryPath));
 	}
+#endif
 
 	std::vector<SWarning> vQuittingWarnings = pClient->QuittingWarnings();
 
@@ -4659,7 +4677,11 @@ int main(int argc, const char **argv)
 
 	if(Restarting)
 	{
+#if defined(CONF_PLATFORM_ANDROID)
+		RestartAndroidApp();
+#else
 		shell_execute(aRestartBinaryPath, EShellExecuteWindowState::FOREGROUND);
+#endif
 	}
 
 	PerformFinalCleanup();
@@ -4823,6 +4845,51 @@ int CClient::UdpConnectivity(int NetType)
 		Connectivity = std::max(Connectivity, NewConnectivity);
 	}
 	return Connectivity;
+}
+
+bool CClient::ViewLink(const char *pLink)
+{
+#if defined(CONF_PLATFORM_ANDROID)
+	if(SDL_OpenURL(pLink) == 0)
+	{
+		return true;
+	}
+	log_error("client", "Failed to open link '%s' (%s)", pLink, SDL_GetError());
+	return false;
+#else
+	if(open_link(pLink))
+	{
+		return true;
+	}
+	log_error("client", "Failed to open link '%s'", pLink);
+	return false;
+#endif
+}
+
+bool CClient::ViewFile(const char *pFilename)
+{
+#if defined(CONF_PLATFORM_MACOS)
+	return ViewLink(pFilename);
+#else
+	// Create a file link so the path can contain forward and
+	// backward slashes. But the file link must be absolute.
+	char aWorkingDir[IO_MAX_PATH_LENGTH];
+	if(fs_is_relative_path(pFilename))
+	{
+		if(!fs_getcwd(aWorkingDir, sizeof(aWorkingDir)))
+		{
+			log_error("client", "Failed to open file '%s' (failed to get working directory)", pFilename);
+			return false;
+		}
+		str_append(aWorkingDir, "/");
+	}
+	else
+		aWorkingDir[0] = '\0';
+
+	char aFileLink[IO_MAX_PATH_LENGTH];
+	str_format(aFileLink, sizeof(aFileLink), "file://%s%s", aWorkingDir, pFilename);
+	return ViewLink(aFileLink);
+#endif
 }
 
 #if defined(CONF_FAMILY_WINDOWS)

@@ -72,13 +72,18 @@ void CMenus::RenderGame(CUIRect MainView)
 	ButtonBar.VSplitRight(5.0f, &ButtonBar, 0);
 	ButtonBar.VSplitRight(170.0f, &ButtonBar, &Button);
 
-	bool DummyConnecting = Client()->DummyConnecting();
 	static CButtonContainer s_DummyButton;
 	if(!Client()->DummyAllowed())
 	{
 		DoButton_Menu(&s_DummyButton, Localize("Connect Dummy"), 1, &Button);
+		GameClient()->m_Tooltips.DoToolTip(&s_DummyButton, &Button, Localize("Dummy is not allowed on this server."));
 	}
-	else if(DummyConnecting)
+	else if(Client()->DummyConnectingDelayed())
+	{
+		DoButton_Menu(&s_DummyButton, Localize("Connect Dummy"), 1, &Button);
+		GameClient()->m_Tooltips.DoToolTip(&s_DummyButton, &Button, Localize("Please wait…"));
+	}
+	else if(Client()->DummyConnecting())
 	{
 		DoButton_Menu(&s_DummyButton, Localize("Connecting dummy"), 1, &Button);
 	}
@@ -131,7 +136,7 @@ void CMenus::RenderGame(CUIRect MainView)
 		{
 			ButtonBar.VSplitLeft(5.0f, 0, &ButtonBar);
 			ButtonBar.VSplitLeft(120.0f, &Button, &ButtonBar);
-			if(!DummyConnecting && DoButton_Menu(&s_SpectateButton, Localize("Spectate"), 0, &Button))
+			if(!Client()->DummyConnecting() && DoButton_Menu(&s_SpectateButton, Localize("Spectate"), 0, &Button))
 			{
 				if(g_Config.m_ClDummy == 0 || Client()->DummyConnected())
 				{
@@ -148,7 +153,7 @@ void CMenus::RenderGame(CUIRect MainView)
 				ButtonBar.VSplitLeft(5.0f, 0, &ButtonBar);
 				ButtonBar.VSplitLeft(120.0f, &Button, &ButtonBar);
 				static CButtonContainer s_JoinRedButton;
-				if(!DummyConnecting && DoButton_Menu(&s_JoinRedButton, Localize("Join red"), 0, &Button))
+				if(!Client()->DummyConnecting() && DoButton_Menu(&s_JoinRedButton, Localize("Join red"), 0, &Button))
 				{
 					m_pClient->SendSwitchTeam(TEAM_RED);
 					SetActive(false);
@@ -160,7 +165,7 @@ void CMenus::RenderGame(CUIRect MainView)
 				ButtonBar.VSplitLeft(5.0f, 0, &ButtonBar);
 				ButtonBar.VSplitLeft(120.0f, &Button, &ButtonBar);
 				static CButtonContainer s_JoinBlueButton;
-				if(!DummyConnecting && DoButton_Menu(&s_JoinBlueButton, Localize("Join blue"), 0, &Button))
+				if(!Client()->DummyConnecting() && DoButton_Menu(&s_JoinBlueButton, Localize("Join blue"), 0, &Button))
 				{
 					m_pClient->SendSwitchTeam(TEAM_BLUE);
 					SetActive(false);
@@ -173,7 +178,7 @@ void CMenus::RenderGame(CUIRect MainView)
 			{
 				ButtonBar.VSplitLeft(5.0f, 0, &ButtonBar);
 				ButtonBar.VSplitLeft(120.0f, &Button, &ButtonBar);
-				if(!DummyConnecting && DoButton_Menu(&s_SpectateButton, Localize("Join game"), 0, &Button))
+				if(!Client()->DummyConnecting() && DoButton_Menu(&s_SpectateButton, Localize("Join game"), 0, &Button))
 				{
 					m_pClient->SendSwitchTeam(0);
 					SetActive(false);
@@ -271,7 +276,7 @@ void CMenus::RenderPlayers(CUIRect MainView)
 	s_ListBox.DoStart(24.0f, TotalPlayers, 1, 3, -1, &Options);
 
 	// options
-	static char s_aPlayerIds[MAX_CLIENTS][3] = {{0}};
+	static char s_aPlayerIds[MAX_CLIENTS][4] = {{0}};
 
 	for(int i = 0, Count = 0; i < MAX_CLIENTS; ++i)
 	{
@@ -306,8 +311,9 @@ void CMenus::RenderPlayers(CUIRect MainView)
 		vec2 OffsetToMid;
 		CRenderTools::GetRenderTeeOffsetToRenderedTee(pIdleState, &TeeInfo, OffsetToMid);
 		vec2 TeeRenderPos(Button.x + Button.h / 2, Button.y + Button.h / 2 + OffsetToMid.y);
-
 		RenderTools()->RenderTee(pIdleState, &TeeInfo, EMOTE_NORMAL, vec2(1.0f, 0.0f), TeeRenderPos);
+		Ui()->DoButtonLogic(&s_aPlayerIds[Index][3], 0, &Button);
+		GameClient()->m_Tooltips.DoToolTip(&s_aPlayerIds[Index][3], &Button, CurrentClient.m_aSkinName);
 
 		Player.HSplitTop(1.5f, nullptr, &Player);
 		Player.VSplitMid(&Player, &Button);
@@ -419,7 +425,15 @@ void CMenus::RenderServerInfo(CUIRect MainView)
 		if(DoButton_Menu(&s_CopyButton, Localize("Copy info"), 0, &Button))
 		{
 			char aInfo[256];
-			CurrentServerInfo.InfoToString(aInfo, sizeof(aInfo));
+			str_format(
+				aInfo,
+				sizeof(aInfo),
+				"%s\n"
+				"Address: ddnet://%s\n"
+				"My IGN: %s\n",
+				CurrentServerInfo.m_aName,
+				CurrentServerInfo.m_aAddress,
+				Client()->PlayerName());
 			Input()->SetClipboardText(aInfo);
 		}
 	}
@@ -1158,10 +1172,7 @@ void CMenus::RenderGhost(CUIRect MainView)
 		char aBuf[IO_MAX_PATH_LENGTH];
 		Storage()->GetCompletePath(IStorage::TYPE_SAVE, "ghosts", aBuf, sizeof(aBuf));
 		Storage()->CreateFolder("ghosts", IStorage::TYPE_SAVE);
-		if(!open_file(aBuf))
-		{
-			dbg_msg("menus", "couldn't open file '%s'", aBuf);
-		}
+		Client()->ViewFile(aBuf);
 	}
 
 	Status.VSplitLeft(5.0f, &Button, &Status);

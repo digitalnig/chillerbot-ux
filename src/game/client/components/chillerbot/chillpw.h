@@ -29,14 +29,14 @@ private:
 	bool AuthChatAccount(int Dummy, int Offset);
 	void SavePassword(const char *pServer, const char *pPassword);
 
-	void CheckToken(const char *p, int Line, const char *pLine)
+	bool GotInvalidToken(const char *p, int Line, const char *pLine)
 	{
 		if(p)
-			return;
+			return false;
 		char aBuf[2048];
 		str_format(aBuf, sizeof(aBuf), "%s:%d '%s' invalid token", g_Config.m_ClPasswordFile, Line, pLine);
 		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "chillerbot", aBuf);
-		exit(1);
+		return true;
 	}
 
 	int m_aDummy[MAX_PASSWORDS];
