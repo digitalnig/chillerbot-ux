@@ -268,23 +268,23 @@ void CChillerBotUX::RenderSpeedHud()
 	const float LineHeight = 12.0f;
 	const float Fontsize = 15.0f;
 
-	static int LastVelX = 0;
-	static int LastVelXChange = 0;
+	static int s_LastVelX = 0;
+	static int s_LastVelXChange = 0;
 	int CurVelX = abs(m_pClient->m_Snap.m_pLocalCharacter->m_VelX);
-	if(LastVelX < CurVelX)
-		LastVelXChange = 1;
-	else if(LastVelX > CurVelX)
-		LastVelXChange = -1;
-	LastVelX = CurVelX;
+	if(s_LastVelX < CurVelX)
+		s_LastVelXChange = 1;
+	else if(s_LastVelX > CurVelX)
+		s_LastVelXChange = -1;
+	s_LastVelX = CurVelX;
 
-	static int LastVelY = 0;
-	static int LastVelYChange = 0;
+	static int s_LastVelY = 0;
+	static int s_LastVelYChange = 0;
 	int CurVelY = abs(m_pClient->m_Snap.m_pLocalCharacter->m_VelY);
-	if(LastVelY < CurVelY)
-		LastVelYChange = 1;
-	else if(LastVelY > CurVelY)
-		LastVelYChange = -1;
-	LastVelY = CurVelY;
+	if(s_LastVelY < CurVelY)
+		s_LastVelYChange = 1;
+	else if(s_LastVelY > CurVelY)
+		s_LastVelYChange = -1;
+	s_LastVelY = CurVelY;
 
 	float x = Width - 100.0f, y = 50.0f;
 	for(int i = 0; i < Num; ++i)
@@ -293,9 +293,9 @@ void CChillerBotUX::RenderSpeedHud()
 	x = Width - 10.0f;
 	char aBuf[128];
 
-	if(LastVelXChange == 1)
+	if(s_LastVelXChange == 1)
 		TextRender()->TextColor(0.0f, 1.0f, 0.0f, 1.0f);
-	else if(LastVelXChange == -1)
+	else if(s_LastVelXChange == -1)
 		TextRender()->TextColor(1.0f, 0.0f, 0.0f, 1.0f);
 
 	str_format(aBuf, sizeof(aBuf), "%.0f", m_pClient->m_Snap.m_pLocalCharacter->m_VelX / 32.f);
@@ -303,9 +303,9 @@ void CChillerBotUX::RenderSpeedHud()
 	TextRender()->Text(x - w, y, Fontsize, aBuf, -1.0f);
 	y += LineHeight;
 
-	if(LastVelYChange == 1)
+	if(s_LastVelYChange == 1)
 		TextRender()->TextColor(0.0f, 1.0f, 0.0f, 1.0f);
-	else if(LastVelYChange == -1)
+	else if(s_LastVelYChange == -1)
 		TextRender()->TextColor(1.0f, 0.0f, 0.0f, 1.0f);
 
 	str_format(aBuf, sizeof(aBuf), "%.0f", m_pClient->m_Snap.m_pLocalCharacter->m_VelY / 32.f);
@@ -1068,11 +1068,11 @@ void CChillerBotUX::TraceSpikes()
 	int ToX = minimum(Collision()->GetWidth(), CurrentX + g_Config.m_ClSpikeTracer);
 	int FromY = maximum(0, CurrentY - g_Config.m_ClSpikeTracer);
 	int ToY = minimum(Collision()->GetHeight(), CurrentY + g_Config.m_ClSpikeTracer);
-	static float m_ScreenX0;
-	static float m_ScreenX1;
-	static float m_ScreenY0;
-	static float m_ScreenY1;
-	Graphics()->GetScreen(&m_ScreenX0, &m_ScreenY0, &m_ScreenX1, &m_ScreenY1);
+	float ScreenX0;
+	float ScreenX1;
+	float ScreenY0;
+	float ScreenY1;
+	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
 	RenderTools()->MapScreenToGroup(m_pClient->m_Camera.m_Center.x, m_pClient->m_Camera.m_Center.y, Layers()->GameGroup(), m_pClient->m_Camera.m_Zoom);
 	for(int x = FromX; x < ToX; x++)
 	{
@@ -1100,7 +1100,7 @@ void CChillerBotUX::TraceSpikes()
 			}
 		}
 	}
-	Graphics()->MapScreen(m_ScreenX0, m_ScreenY0, m_ScreenX1, m_ScreenY1);
+	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
 
 void CChillerBotUX::OnMessage(int MsgType, void *pRawMsg)

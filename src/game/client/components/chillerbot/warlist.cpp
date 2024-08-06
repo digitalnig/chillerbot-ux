@@ -1255,7 +1255,7 @@ bool CWarList::OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, 
 			{
 				str_format(aBuf, sizeof(aBuf), "failed to open '%s'", aFilename);
 				Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
-				return 0;
+				return true;
 			}
 
 			// read one line only

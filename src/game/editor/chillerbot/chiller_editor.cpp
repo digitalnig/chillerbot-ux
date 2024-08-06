@@ -1,7 +1,7 @@
 #include "engine/shared/config.h"
 #include <game/editor/editor.h>
 
-void CEditor::BrushDrawChiller(std::shared_ptr<CLayerTiles> pLayer, std::shared_ptr<CLayerTiles> pBrush, float wx, float wy)
+void CEditor::BrushDrawChiller(const std::shared_ptr<CLayerTiles> &pLayer, const std::shared_ptr<CLayerTiles> &pBrush, float wx, float wy)
 {
 	if(!g_Config.m_ClMineTeeEditor)
 		return;

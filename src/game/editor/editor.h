@@ -264,7 +264,7 @@ class CEditor : public IEditor
 {
 	// chillerbot-ux START
 public:
-	void BrushDrawChiller(std::shared_ptr<CLayerTiles> pLayer, std::shared_ptr<CLayerTiles> pBrush, float wx, float wy);
+	void BrushDrawChiller(const std::shared_ptr<CLayerTiles> &pLayer, const std::shared_ptr<CLayerTiles> &pBrush, float wx, float wy);
 
 private:
 	// chillerbot-ux END
