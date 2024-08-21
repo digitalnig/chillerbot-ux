@@ -3,18 +3,24 @@
 
 #include <base/vmath.h>
 
+class CGameClient;
+
 class CRaceHelper
 {
+	const CGameClient *m_pGameClient;
+
+	int m_aFlagIndex[2] = {-1, -1};
+
 public:
-	static int ms_aFlagIndex[2];
+	void Init(const CGameClient *pGameClient);
 
 	// these functions return the time in milliseconds, time -1 is invalid
 	static int TimeFromSecondsStr(const char *pStr); // x.xxx
 	static int TimeFromStr(const char *pStr); // x minute(s) x.xxx second(s)
 	static int TimeFromFinishMessage(const char *pStr, char *pNameBuf, int NameBufSize); // xxx finished in: x minute(s) x.xxx second(s)
 
-	static bool IsStart(class CGameClient *pClient, vec2 Prev, vec2 Pos);
-	static bool IsFinish(class CGameClient *pClient, vec2 Pos1, vec2 Pos2);
+	bool IsStart(vec2 Prev, vec2 Pos) const;
+	bool IsFinish(vec2 Pos1, vec2 Pos2) const;
 	/*
 		IsNearFinish
 
@@ -37,7 +43,7 @@ public:
 		|                 |
 		+-----------------+
 	*/
-	static bool IsNearFinish(class CGameClient *pClient, vec2 Pos, int RadiusInTiles = 4);
+	bool IsNearFinish(vec2 Pos, int RadiusInTiles = 4) const;
 	/*
 		IsNearStart
 
@@ -60,7 +66,7 @@ public:
 		|                 |
 		+-----------------+
 	*/
-	static bool IsNearStart(class CGameClient *pClient, vec2 Pos, int RadiusInTiles = 4);
+	bool IsNearStart(vec2 Pos, int RadiusInTiles = 4) const;
 	/*
 		IsClusterRangeFinish
 
@@ -84,7 +90,7 @@ public:
 		|  | |  | |  | |  |
 		+--+ +--+ +--+ +--+
 	*/
-	static bool IsClusterRangeFinish(class CGameClient *pClient, vec2 Pos, int RadiusInTiles = 10);
+	bool IsClusterRangeFinish(vec2 Pos, int RadiusInTiles = 10) const;
 	/*
 		IsClusterRangeStart
 
@@ -108,7 +114,7 @@ public:
 		|  | |  | |  | |  |
 		+--+ +--+ +--+ +--+
 	*/
-	static bool IsClusterRangeStart(class CGameClient *pClient, vec2 Pos, int RadiusInTiles = 10);
+	bool IsClusterRangeStart(vec2 Pos, int RadiusInTiles = 10) const;
 };
 
 #endif // GAME_CLIENT_RACE_H

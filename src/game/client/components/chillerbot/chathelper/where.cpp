@@ -53,12 +53,12 @@ bool CReplyToPing::Where()
 			// since it does not matter in this case
 			if(DistX > 50 * 32 && DistY > 50 * 32)
 			{
-				if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && CRaceHelper::IsClusterRangeFinish(ChatHelper()->GameClient(), ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
+				if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && ChatHelper()->GameClient()->RaceHelper()->IsClusterRangeFinish(ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
 				{
 					str_format(m_pResponse, m_SizeOfResponse, "%s I am at the finish line", m_pMessageAuthor);
 					return true;
 				}
-				else if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && CRaceHelper::IsClusterRangeStart(ChatHelper()->GameClient(), ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
+				else if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && ChatHelper()->GameClient()->RaceHelper()->IsClusterRangeStart(ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
 				{
 					str_format(m_pResponse, m_SizeOfResponse, "%s I am at start", m_pMessageAuthor);
 					return true;
@@ -143,9 +143,9 @@ bool CReplyToPing::Where()
 				}
 			}
 		}
-		if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && CRaceHelper::IsNearFinish(ChatHelper()->GameClient(), ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
+		if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && ChatHelper()->GameClient()->RaceHelper()->IsNearFinish(ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
 			str_format(m_pResponse, m_SizeOfResponse, "%s I am at the finish line", m_pMessageAuthor);
-		else if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && CRaceHelper::IsNearStart(ChatHelper()->GameClient(), ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
+		else if(ChatHelper()->GameClient()->m_Snap.m_pLocalCharacter && ChatHelper()->GameClient()->RaceHelper()->IsNearStart(ChatHelper()->GameClient()->m_PredictedChar.m_Pos, 32))
 			str_format(m_pResponse, m_SizeOfResponse, "%s I am at start", m_pMessageAuthor);
 		else
 			str_format(m_pResponse, m_SizeOfResponse, "%s no idea. Where are you?", m_pMessageAuthor);

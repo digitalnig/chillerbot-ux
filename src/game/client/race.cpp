@@ -1,12 +1,39 @@
 #include <cctype>
-#include <list>
+#include <vector>
 
 #include <game/client/gameclient.h>
+#include <game/collision.h>
 #include <game/mapitems.h>
 
 #include "race.h"
 
-int CRaceHelper::ms_aFlagIndex[2] = {-1, -1};
+void CRaceHelper::Init(const CGameClient *pGameClient)
+{
+	m_pGameClient = pGameClient;
+
+	m_aFlagIndex[TEAM_RED] = -1;
+	m_aFlagIndex[TEAM_BLUE] = -1;
+
+	const CTile *pGameTiles = m_pGameClient->Collision()->GameLayer();
+	const int MapSize = m_pGameClient->Collision()->GetWidth() * m_pGameClient->Collision()->GetHeight();
+	for(int Index = 0; Index < MapSize; Index++)
+	{
+		const int EntityIndex = pGameTiles[Index].m_Index - ENTITY_OFFSET;
+		if(EntityIndex == ENTITY_FLAGSTAND_RED)
+		{
+			m_aFlagIndex[TEAM_RED] = Index;
+			if(m_aFlagIndex[TEAM_BLUE] != -1)
+				break; // Found both flags
+		}
+		else if(EntityIndex == ENTITY_FLAGSTAND_BLUE)
+		{
+			m_aFlagIndex[TEAM_BLUE] = Index;
+			if(m_aFlagIndex[TEAM_RED] != -1)
+				break; // Found both flags
+		}
+		Index += pGameTiles[Index].m_Skip;
+	}
+}
 
 int CRaceHelper::TimeFromSecondsStr(const char *pStr)
 {
@@ -66,39 +93,41 @@ int CRaceHelper::TimeFromFinishMessage(const char *pStr, char *pNameBuf, int Nam
 	return TimeFromStr(pFinished + str_length(s_pFinishedStr));
 }
 
-bool CRaceHelper::IsStart(CGameClient *pClient, vec2 Prev, vec2 Pos)
+bool CRaceHelper::IsStart(vec2 Prev, vec2 Pos) const
 {
-	CCollision *pCollision = pClient->Collision();
-	if(pClient->m_GameInfo.m_FlagStartsRace)
+	if(m_pGameClient->m_GameInfo.m_FlagStartsRace)
 	{
-		int EnemyTeam = pClient->m_aClients[pClient->m_Snap.m_LocalClientId].m_Team ^ 1;
-		return ms_aFlagIndex[EnemyTeam] != -1 && distance(Pos, pCollision->GetPos(ms_aFlagIndex[EnemyTeam])) < 32;
+		int EnemyTeam = m_pGameClient->m_aClients[m_pGameClient->m_Snap.m_LocalClientId].m_Team ^ 1;
+		return m_aFlagIndex[EnemyTeam] != -1 && distance(Pos, m_pGameClient->Collision()->GetPos(m_aFlagIndex[EnemyTeam])) < 32;
 	}
 	else
 	{
-		std::vector<int> vIndices = pCollision->GetMapIndices(Prev, Pos);
+		std::vector<int> vIndices = m_pGameClient->Collision()->GetMapIndices(Prev, Pos);
 		if(!vIndices.empty())
-			for(int &Indice : vIndices)
+		{
+			for(const int Index : vIndices)
 			{
-				if(pCollision->GetTileIndex(Indice) == TILE_START)
+				if(m_pGameClient->Collision()->GetTileIndex(Index) == TILE_START)
 					return true;
-				if(pCollision->GetFTileIndex(Indice) == TILE_START)
+				if(m_pGameClient->Collision()->GetFTileIndex(Index) == TILE_START)
 					return true;
 			}
+		}
 		else
 		{
-			if(pCollision->GetTileIndex(pCollision->GetPureMapIndex(Pos)) == TILE_START)
+			const int Index = m_pGameClient->Collision()->GetPureMapIndex(Pos);
+			if(m_pGameClient->Collision()->GetTileIndex(Index) == TILE_START)
 				return true;
-			if(pCollision->GetFTileIndex(pCollision->GetPureMapIndex(Pos)) == TILE_START)
+			if(m_pGameClient->Collision()->GetFTileIndex(Index) == TILE_START)
 				return true;
 		}
 	}
 	return false;
 }
 
-bool CRaceHelper::IsFinish(CGameClient *pClient, vec2 Pos1, vec2 Pos2)
+bool CRaceHelper::IsFinish(vec2 Pos1, vec2 Pos2) const
 {
-	CCollision *pCollision = pClient->Collision();
+	const CCollision *pCollision = m_pGameClient->Collision();
 	std::vector<int> vIndices = pCollision->GetMapIndices(Pos2, Pos1);
 	if(!vIndices.empty())
 		for(int &Indice : vIndices)
@@ -118,9 +147,9 @@ bool CRaceHelper::IsFinish(CGameClient *pClient, vec2 Pos1, vec2 Pos2)
 	return false;
 }
 
-bool CRaceHelper::IsNearStart(CGameClient *pClient, vec2 Pos, int RadiusInTiles)
+bool CRaceHelper::IsNearStart(vec2 Pos, int RadiusInTiles) const
 {
-	CCollision *pCollision = pClient->Collision();
+	const CCollision *pCollision = m_pGameClient->Collision();
 	float d = RadiusInTiles * 32.0f;
 	vec2 TL = Pos;
 	vec2 TR = Pos;
@@ -138,20 +167,20 @@ bool CRaceHelper::IsNearStart(CGameClient *pClient, vec2 Pos, int RadiusInTiles)
 	// bottom right
 	BR.x = clamp(BR.x + d, 0.0f, (float)(pCollision->GetWidth() * 32));
 	BR.y = clamp(BR.y + d, 0.0f, (float)(pCollision->GetHeight() * 32));
-	if(IsStart(pClient, TL, TR))
+	if(IsStart(TL, TR))
 		return true;
-	if(IsStart(pClient, BL, BR))
+	if(IsStart(BL, BR))
 		return true;
-	if(IsStart(pClient, TL, BL))
+	if(IsStart(TL, BL))
 		return true;
-	if(IsStart(pClient, TR, BR))
+	if(IsStart(TR, BR))
 		return true;
 	return false;
 }
 
-bool CRaceHelper::IsNearFinish(CGameClient *pClient, vec2 Pos, int RadiusInTiles)
+bool CRaceHelper::IsNearFinish(vec2 Pos, int RadiusInTiles) const
 {
-	CCollision *pCollision = pClient->Collision();
+	const CCollision *pCollision = m_pGameClient->Collision();
 	float d = RadiusInTiles * 32.0f;
 	vec2 TL = Pos;
 	vec2 TR = Pos;
@@ -169,31 +198,31 @@ bool CRaceHelper::IsNearFinish(CGameClient *pClient, vec2 Pos, int RadiusInTiles
 	// bottom right
 	BR.x = clamp(BR.x + d, 0.0f, (float)(pCollision->GetWidth() * 32));
 	BR.y = clamp(BR.y + d, 0.0f, (float)(pCollision->GetHeight() * 32));
-	if(IsFinish(pClient, TL, TR))
+	if(IsFinish(TL, TR))
 		return true;
-	if(IsFinish(pClient, BL, BR))
+	if(IsFinish(BL, BR))
 		return true;
-	if(IsFinish(pClient, TL, BL))
+	if(IsFinish(TL, BL))
 		return true;
-	if(IsFinish(pClient, TR, BR))
+	if(IsFinish(TR, BR))
 		return true;
 	return false;
 }
 
-bool CRaceHelper::IsClusterRangeFinish(class CGameClient *pClient, vec2 Pos, int RadiusInTiles)
+bool CRaceHelper::IsClusterRangeFinish(vec2 Pos, int RadiusInTiles) const
 {
 	for(int x = -RadiusInTiles * 32; x < RadiusInTiles * 32; x += 4 * 32)
 		for(int y = -RadiusInTiles * 32; y < RadiusInTiles * 32; y += 4 * 32)
-			if(IsNearFinish(pClient, vec2(Pos.x + x, Pos.y + y)))
+			if(IsNearFinish(vec2(Pos.x + x, Pos.y + y)))
 				return true;
 	return false;
 }
 
-bool CRaceHelper::IsClusterRangeStart(class CGameClient *pClient, vec2 Pos, int RadiusInTiles)
+bool CRaceHelper::IsClusterRangeStart(vec2 Pos, int RadiusInTiles) const
 {
 	for(int x = -RadiusInTiles * 32; x < RadiusInTiles * 32; x += 4 * 32)
 		for(int y = -RadiusInTiles * 32; y < RadiusInTiles * 32; y += 4 * 32)
-			if(IsNearStart(pClient, vec2(Pos.x + x, Pos.y + y)))
+			if(IsNearStart(vec2(Pos.x + x, Pos.y + y)))
 				return true;
 	return false;
 }

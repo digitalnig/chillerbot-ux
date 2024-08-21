@@ -1403,6 +1403,7 @@ set(EXPECTED_DATA
   editor/audio_source.png
   editor/automap/basic_freeze.rules
   editor/automap/ddmax_freeze.rules
+  editor/automap/ddnet_grass.rules
   editor/automap/ddnet_tiles.rules
   editor/automap/ddnet_walls.rules
   editor/automap/desert_main.rules
@@ -1411,7 +1412,6 @@ set(EXPECTED_DATA
   editor/automap/generic_unhookable.rules
   editor/automap/generic_unhookable_0.7.rules
   editor/automap/grass_main.rules
-  editor/automap/grass_main_0.7.rules
   editor/automap/jungle_main.rules
   editor/automap/jungle_midground.rules
   editor/automap/round_tiles.rules
@@ -1502,6 +1502,7 @@ set(EXPECTED_DATA
   mapres/bg_cloud2.png
   mapres/bg_cloud3.png
   mapres/ddmax_freeze.png
+  mapres/ddnet_grass.png
   mapres/ddnet_start.png
   mapres/ddnet_tiles.json
   mapres/ddnet_tiles.png
@@ -2158,6 +2159,7 @@ set_src(ENGINE_SHARED GLOB_RECURSE src/engine/shared
   teehistorian_ex.cpp
   teehistorian_ex.h
   teehistorian_ex_chunks.h
+  translation_context.cpp
   translation_context.h
   uuid_manager.cpp
   uuid_manager.h

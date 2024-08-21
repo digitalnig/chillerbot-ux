@@ -56,7 +56,7 @@ public:
 
 	static char *ms_apSkinVariables[NUM_DUMMIES][protocol7::NUM_SKINPARTS];
 	static int *ms_apUCCVariables[NUM_DUMMIES][protocol7::NUM_SKINPARTS]; // use custom color
-	static int *ms_apColorVariables[NUM_DUMMIES][protocol7::NUM_SKINPARTS];
+	static unsigned int *ms_apColorVariables[NUM_DUMMIES][protocol7::NUM_SKINPARTS];
 	IGraphics::CTextureHandle m_XmasHatTexture;
 	IGraphics::CTextureHandle m_BotTexture;
 
@@ -64,7 +64,7 @@ public:
 	void OnInit() override;
 
 	void AddSkin(const char *pSkinName, int Dummy);
-	void RemoveSkin(const CSkin *pSkin);
+	bool RemoveSkin(const CSkin *pSkin);
 
 	int Num();
 	int NumSkinPart(int Part);
@@ -92,6 +92,9 @@ private:
 
 	static int SkinPartScan(const char *pName, int IsDir, int DirType, void *pUser);
 	static int SkinScan(const char *pName, int IsDir, int DirType, void *pUser);
+
+	void LoadXmasHat();
+	void LoadBotDecoration();
 };
 
 #endif
