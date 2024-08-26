@@ -2409,6 +2409,8 @@ if(CLIENT)
     components/chillerbot/vibebot.h
     components/chillerbot/warlist.cpp
     components/chillerbot/warlist.h
+    components/chillerbot/warlist_commands_advanced.cpp
+    components/chillerbot/warlist_commands_simple.cpp
     components/console.cpp
     components/console.h
     components/controls.cpp

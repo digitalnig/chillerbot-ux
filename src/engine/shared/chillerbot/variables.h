@@ -64,6 +64,7 @@ MACRO_CONFIG_STR(ClSavedDummySkin, saved_dummy_skin, 24, "default", CFGFLAG_CLIE
 
 // warlist
 MACRO_CONFIG_INT(ClWarList, cl_war_list, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Display nameplate color based on chillerbot/warlist directory")
+MACRO_CONFIG_INT(ClWarListAdvanced, cl_war_list_advanced, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Activates more complex warlist mode")
 MACRO_CONFIG_INT(ClNameplatesWarReason, cl_nameplates_war_reason, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show war reason in name plates")
 MACRO_CONFIG_INT(ClWarListAutoReload, cl_war_list_auto_reload, 10, 0, 600, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Reload warlist every x seconds 0=off")
 

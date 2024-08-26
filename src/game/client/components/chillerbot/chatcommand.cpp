@@ -8,8 +8,8 @@
 
 #include <game/client/components/chat.h>
 
-#include "chatcommand.h"
 #include "base/system.h"
+#include "chatcommand.h"
 
 void CChatCommand::OnServerMsg(const char *pMsg)
 {
@@ -51,7 +51,7 @@ bool CChatCommand::OnChatCmd(char Prefix, int ClientId, int Team, const char *pC
 bool CChatCommand::ParseChatCmd(char Prefix, int ClientId, int Team, const char *pCmdWithArgs)
 {
 	char aRawArgLine[512];
-	aRawArgLine[0] = '\0';
+	str_copy(aRawArgLine, pCmdWithArgs);
 	const int MaxArgLen = 256;
 	char aCmd[MaxArgLen];
 	int i;
@@ -61,9 +61,12 @@ bool CChatCommand::ParseChatCmd(char Prefix, int ClientId, int Team, const char 
 			break;
 		aCmd[i] = pCmdWithArgs[i];
 	}
-	const char *pArgStart = str_skip_whitespaces(aCmd + i);
-	if(pArgStart)
-		str_copy(aRawArgLine, pArgStart);
+
+	int Skip = i;
+	while(pCmdWithArgs[Skip] && str_isspace(pCmdWithArgs[Skip]))
+		Skip++;
+	str_copy(aRawArgLine, pCmdWithArgs + Skip);
+
 	aCmd[i] = '\0';
 	int ROffset = m_pClient->m_ChatHelper.ChatCommandGetROffset(aCmd);
 
