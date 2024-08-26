@@ -214,11 +214,11 @@ void CChillerBotUX::ChangeTileNotifyTick()
 		return;
 	if(!GameClient()->m_Snap.m_pLocalCharacter)
 		return;
-	static int LastTile = -1;
+
 	float X = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIds[g_Config.m_ClDummy]].m_Cur.m_X;
 	float Y = m_pClient->m_Snap.m_aCharacters[m_pClient->m_aLocalIds[g_Config.m_ClDummy]].m_Cur.m_Y;
 	int CurrentTile = Collision()->GetTileIndex(Collision()->GetPureMapIndex(X, Y));
-	if(LastTile != CurrentTile && m_LastNotification + time_freq() * 10 < time_get())
+	if(m_LastTile != CurrentTile && m_LastNotification + time_freq() * 10 < time_get())
 	{
 		IEngineGraphics *pGraphics = ((IEngineGraphics *)Kernel()->RequestInterface<IEngineGraphics>());
 		if(pGraphics && !pGraphics->WindowActive() && Graphics())
@@ -228,7 +228,7 @@ void CChillerBotUX::ChangeTileNotifyTick()
 		}
 		m_LastNotification = time_get();
 	}
-	LastTile = CurrentTile;
+	m_LastTile = CurrentTile;
 }
 
 void CChillerBotUX::RenderWeaponHud()
@@ -659,6 +659,7 @@ void CChillerBotUX::OnInit()
 	if(!g_Config.m_ClChillerbotId[0])
 		secure_random_password(g_Config.m_ClChillerbotId, sizeof(g_Config.m_ClChillerbotId), 16);
 	m_NextSkinSteal = 0;
+	m_LastTile = -1;
 }
 
 void CChillerBotUX::OnShutdown()
