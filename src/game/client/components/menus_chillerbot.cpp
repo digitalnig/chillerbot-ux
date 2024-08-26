@@ -35,7 +35,6 @@
 using namespace FontIcons;
 using namespace std::chrono_literals;
 
-
 void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 {
 	CUIRect Button, Label;
@@ -153,4 +152,3 @@ void CMenus::RenderSettingsChillerbot(CUIRect MainView)
 		Ui()->DoLabel(&Label, aBuf, 14.0f, -1);
 	}
 }
-
