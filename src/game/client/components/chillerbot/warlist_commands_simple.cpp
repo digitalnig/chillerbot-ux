@@ -45,6 +45,7 @@ void CWarList::RemoveSimpleWar(const char *pName)
 	}
 	str_format(aBuf, sizeof(aBuf), "Removed '%s' from the war list", pName);
 	m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+	ReloadList();
 }
 
 void CWarList::AddSimpleTeam(const char *pName)
@@ -83,6 +84,7 @@ void CWarList::RemoveSimpleTeam(const char *pName)
 	}
 	str_format(aBuf, sizeof(aBuf), "Removed '%s' from the team list", pName);
 	m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+	ReloadList();
 }
 
 bool CWarList::OnChatCmdSimple(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs, const char *pRawArgLine)
