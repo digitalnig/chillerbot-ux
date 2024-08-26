@@ -32,13 +32,22 @@ void CWarList::ReloadList()
 	m_vNeutrallist.clear();
 	m_vWarClanlist.clear();
 	m_vTeamClanlist.clear();
-	LoadWarList();
-	LoadTeamList();
-	LoadTraitorList();
-	LoadNeutralList();
-	LoadWarClanList();
-	LoadTeamClanList();
-	LoadWarClanPrefixList();
+
+	if(g_Config.m_ClWarListAdvanced)
+	{
+		LoadWarList();
+		LoadTeamList();
+		LoadTraitorList();
+		LoadNeutralList();
+		LoadWarClanList();
+		LoadTeamClanList();
+		LoadWarClanPrefixList();
+	}
+	else // simple warlist
+	{
+		LoadWarNames("chillerbot/warlist/war");
+	}
+
 	for(auto &WarPlayer : m_aWarPlayers)
 		WarPlayer.m_aName[0] = '\0';
 	char aBuf[128];
