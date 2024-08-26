@@ -79,6 +79,14 @@ class CWarList : public CComponent
 	void LoadWarClanList();
 	void LoadTeamClanList();
 	void LoadWarClanPrefixList();
+	/*
+		RemoveWarNameFromVector
+
+		only removes from the m_vWarlist vector
+		does not update anything else
+	*/
+	bool RemoveWarNameFromVector(const char *pDir, const char *pName);
+	bool WriteWarNames(const char *pDir);
 	int LoadWarNames(const char *pDir);
 	int LoadTeamNames(const char *pDir);
 	int LoadTraitorNames(const char *pDir);

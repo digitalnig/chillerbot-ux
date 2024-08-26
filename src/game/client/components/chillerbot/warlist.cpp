@@ -9,6 +9,8 @@
 
 #include <base/system.h>
 
+#include <engine/storage.h>
+
 #include "chillerbotux.h"
 
 #include "warlist.h"
@@ -45,7 +47,7 @@ void CWarList::ReloadList()
 	}
 	else // simple warlist
 	{
-		LoadWarNames("chillerbot/warlist/war");
+		LoadWarNames("chillerbot/warlist/war/war");
 	}
 
 	for(auto &WarPlayer : m_aWarPlayers)
@@ -442,10 +444,62 @@ void CWarList::SetNameplateColor(int ClientId, ColorRGBA *pColor)
 		*pColor = ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+bool CWarList::RemoveWarNameFromVector(const char *pDir, const char *pName)
+{
+	int Hits = 0;
+	m_vWarlist.erase(
+		std::remove_if(m_vWarlist.begin(), m_vWarlist.end(),
+			[pName, pDir, &Hits](const std::pair<std::string, std::string> &Entry) {
+				// keep the same name in other directories
+				if(str_comp(pDir, Entry.second.c_str()))
+					return false;
+
+				if(!str_comp(pName, Entry.first.c_str()))
+				{
+					Hits++;
+					return true;
+				}
+				return false;
+			}),
+		m_vWarlist.end());
+	return Hits > 0;
+}
+
+bool CWarList::WriteWarNames(const char *pDir)
+{
+	if(!Storage())
+		return false;
+
+	char aFilename[IO_MAX_PATH_LENGTH];
+	str_format(aFilename, sizeof(aFilename), "%s/names.txt", pDir);
+	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	if(!File)
+	{
+		return false;
+	}
+
+	for(auto &Entry : m_vWarlist)
+	{
+		// only write names from that directory
+		if(str_comp(Entry.second.c_str(), pDir))
+			continue;
+
+		io_write(File, Entry.first.c_str(), str_length(Entry.first.c_str()));
+		io_write(File, "\n", 1);
+	}
+
+	io_close(File);
+	return true;
+}
+
 int CWarList::LoadWarNames(const char *pDir)
 {
 	if(!Storage())
+	{
+		// str_format(aBuf, sizeof(aBuf), "failed to open '%s' storage is nullptr", pDir);
+		// Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "warlist", aBuf);
 		return 1;
+	}
 
 	char aFilename[IO_MAX_PATH_LENGTH];
 	str_format(aFilename, sizeof(aFilename), "%s/names.txt", pDir);

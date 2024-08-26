@@ -32,6 +32,17 @@ void CWarList::AddSimpleWar(const char *pName)
 
 void CWarList::RemoveSimpleWar(const char *pName)
 {
+	if(!RemoveWarNameFromVector("chillerbot/warlist/war/war", pName))
+	{
+		char aBuf[512];
+		str_format(aBuf, sizeof(aBuf), "Name '%s' not found in the war list", pName);
+		m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		return;
+	}
+	if(!WriteWarNames("chillerbot/warlist/war/war"))
+	{
+		m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to write war names");
+	}
 }
 
 bool CWarList::OnChatCmdSimple(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs, const char *pRawArgLine)
@@ -44,13 +55,14 @@ bool CWarList::OnChatCmdSimple(char Prefix, int ClientId, int Team, const char *
 	else if(!str_comp(pCmd, "help"))
 	{
 		m_pClient->m_Chat.AddLine(-2, 0, "=== chillerbot-ux warlist ===");
-		m_pClient->m_Chat.AddLine(-2, 0, "!addwar <folder> <name>");
-		m_pClient->m_Chat.AddLine(-2, 0, "!addteam <folder> <name>");
-		m_pClient->m_Chat.AddLine(-2, 0, "!peace <folder>");
-		m_pClient->m_Chat.AddLine(-2, 0, "!war <folder>");
-		m_pClient->m_Chat.AddLine(-2, 0, "!team <folder>");
-		m_pClient->m_Chat.AddLine(-2, 0, "!unfriend <folder>");
-		m_pClient->m_Chat.AddLine(-2, 0, "!search <name>");
+		m_pClient->m_Chat.AddLine(-2, 0, "!addwar <name>");
+		m_pClient->m_Chat.AddLine(-2, 0, "!war <name>");
+		m_pClient->m_Chat.AddLine(-2, 0, "!peace <name>");
+		m_pClient->m_Chat.AddLine(-2, 0, "!delwar <name>");
+		// m_pClient->m_Chat.AddLine(-2, 0, "!addteam <name>");
+		// m_pClient->m_Chat.AddLine(-2, 0, "!team <name>");
+		// m_pClient->m_Chat.AddLine(-2, 0, "!unfriend <name>");
+		// m_pClient->m_Chat.AddLine(-2, 0, "!search <name>");
 	}
 	else if(!str_comp(pCmd, "create"))
 	{
@@ -72,9 +84,14 @@ bool CWarList::OnChatCmdSimple(char Prefix, int ClientId, int Team, const char *
 		m_pClient->m_Chat.AddLine(-2, 0, "Error: addtraitor only works in advanced warlist mode");
 		return true;
 	}
-	else if(!str_comp(pCmd, "peace")) // "peace <folder>"
+	else if(!str_comp(pCmd, "peace")) // "peace <name>"
 	{
-		m_pClient->m_Chat.AddLine(-2, 0, "Error: peace only works in advanced warlist mode");
+		RemoveSimpleWar(pRawArgLine);
+		return true;
+	}
+	else if(!str_comp(pCmd, "delwar")) // "delwar <name>"
+	{
+		RemoveSimpleWar(pRawArgLine);
 		return true;
 	}
 	else if(!str_comp(pCmd, "unfriend")) // "unfriend <folder>"
