@@ -444,6 +444,27 @@ void CWarList::SetNameplateColor(int ClientId, ColorRGBA *pColor)
 		*pColor = ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
+bool CWarList::RemoveTeamNameFromVector(const char *pDir, const char *pName)
+{
+	int Hits = 0;
+	m_vTeamlist.erase(
+		std::remove_if(m_vTeamlist.begin(), m_vTeamlist.end(),
+			[pName, pDir, &Hits](const std::pair<std::string, std::string> &Entry) {
+				// keep the same name in other directories
+				if(str_comp(pDir, Entry.second.c_str()))
+					return false;
+
+				if(!str_comp(pName, Entry.first.c_str()))
+				{
+					Hits++;
+					return true;
+				}
+				return false;
+			}),
+		m_vTeamlist.end());
+	return Hits > 0;
+}
+
 bool CWarList::RemoveWarNameFromVector(const char *pDir, const char *pName)
 {
 	int Hits = 0;
@@ -491,6 +512,34 @@ bool CWarList::WriteWarNames(const char *pDir)
 	io_close(File);
 	return true;
 }
+
+bool CWarList::WriteTeamNames(const char *pDir)
+{
+	if(!Storage())
+		return false;
+
+	char aFilename[IO_MAX_PATH_LENGTH];
+	str_format(aFilename, sizeof(aFilename), "%s/names.txt", pDir);
+	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_WRITE, IStorage::TYPE_SAVE);
+	if(!File)
+	{
+		return false;
+	}
+
+	for(auto &Entry : m_vTeamlist)
+	{
+		// only write names from that directory
+		if(str_comp(Entry.second.c_str(), pDir))
+			continue;
+
+		io_write(File, Entry.first.c_str(), str_length(Entry.first.c_str()));
+		io_write(File, "\n", 1);
+	}
+
+	io_close(File);
+	return true;
+}
+
 
 int CWarList::LoadWarNames(const char *pDir)
 {
@@ -848,6 +897,29 @@ bool CWarList::AddWar(const char *pFolder, const char *pName)
 	char aBuf[512];
 	char aFilename[1024];
 	str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/war/%s/names.txt", pFolder);
+	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_APPEND, IStorage::TYPE_SAVE);
+	if(!File)
+	{
+		str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
+		m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		return false;
+	}
+
+	io_write(File, pName, str_length(pName));
+	io_write_newline(File);
+	io_close(File);
+
+	str_format(aBuf, sizeof(aBuf), "Added '%s' to the folder %s", pName, pFolder);
+	ReloadList();
+	m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+	return true;
+}
+
+bool CWarList::AddTeam(const char *pFolder, const char *pName)
+{
+	char aBuf[512];
+	char aFilename[1024];
+	str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/team/%s/names.txt", pFolder);
 	IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_APPEND, IStorage::TYPE_SAVE);
 	if(!File)
 	{

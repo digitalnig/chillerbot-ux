@@ -86,7 +86,15 @@ class CWarList : public CComponent
 		does not update anything else
 	*/
 	bool RemoveWarNameFromVector(const char *pDir, const char *pName);
+	/*
+		RemoveTeamNameFromVector
+
+		only removes from the m_vTeamlist vector
+		does not update anything else
+	*/
+	bool RemoveTeamNameFromVector(const char *pDir, const char *pName);
 	bool WriteWarNames(const char *pDir);
+	bool WriteTeamNames(const char *pDir);
 	int LoadWarNames(const char *pDir);
 	int LoadTeamNames(const char *pDir);
 	int LoadTraitorNames(const char *pDir);
@@ -110,6 +118,15 @@ class CWarList : public CComponent
 		Returns true on success
 	*/
 	bool AddWar(const char *pFolder, const char *pName);
+
+	/*
+		AddTeam
+
+		Add username to warlist file
+		Returns true on success
+	*/
+	bool AddTeam(const char *pFolder, const char *pName);
+
 	/*
 		SearchName
 
@@ -134,6 +151,9 @@ public:
 
 	void AddSimpleWar(const char *pName);
 	void RemoveSimpleWar(const char *pName);
+
+	void AddSimpleTeam(const char *pName);
+	void RemoveSimpleTeam(const char *pName);
 
 	void GetWarReason(const char *pName, char *pReason, int ReasonSize);
 	void GetWarClansStr(char *pBuf, int Size);

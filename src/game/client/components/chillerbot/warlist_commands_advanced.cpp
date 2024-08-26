@@ -145,23 +145,7 @@ bool CWarList::OnChatCmdAdvanced(char Prefix, int ClientId, int Team, const char
 		char aName[512];
 		str_copy(aFolder, ppArgs[0], sizeof(aFolder));
 		str_copy(aName, ppArgs[1], sizeof(aName));
-		char aFilename[1024];
-		str_format(aFilename, sizeof(aFilename), "chillerbot/warlist/team/%s/names.txt", aFolder);
-		IOHANDLE File = Storage()->OpenFile(aFilename, IOFLAG_APPEND, IStorage::TYPE_SAVE);
-		if(!File)
-		{
-			str_format(aBuf, sizeof(aBuf), "failed to open war list file '%s'", aFilename);
-			m_pClient->m_Chat.AddLine(-2, 0, aBuf);
-			return true;
-		}
-
-		io_write(File, aName, str_length(aName));
-		io_write_newline(File);
-		io_close(File);
-
-		str_format(aBuf, sizeof(aBuf), "Added '%s' to the folder %s", aName, aFolder);
-		ReloadList();
-		m_pClient->m_Chat.AddLine(-2, 0, aBuf);
+		AddTeam(aFolder, aName);
 	}
 	else if(!str_comp(pCmd, "addtraitor")) // "addtraitor <folder> <name can contain spaces>"
 	{
