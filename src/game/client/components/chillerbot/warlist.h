@@ -124,6 +124,9 @@ public:
 	bool OnChatCmdSimple(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs, const char *pRawArgLine);
 	bool OnChatCmdAdvanced(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs, const char *pRawArgLine);
 
+	void AddSimpleWar(const char *pName);
+	void RemoveSimpleWar(const char *pName);
+
 	void GetWarReason(const char *pName, char *pReason, int ReasonSize);
 	void GetWarClansStr(char *pBuf, int Size);
 

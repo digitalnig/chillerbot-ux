@@ -9,6 +9,31 @@
 
 #include "warlist.h"
 
+void CWarList::AddSimpleWar(const char *pName)
+{
+	if(!pName || pName[0] == '\0')
+	{
+		m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <name>");
+		return;
+	}
+	if(!Storage()->CreateFolder("chillerbot/warlist/war", IStorage::TYPE_SAVE))
+	{
+		m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to create war folder");
+		return;
+	}
+	if(!Storage()->CreateFolder("chillerbot/warlist/war/war", IStorage::TYPE_SAVE))
+	{
+		m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to create war/war folder");
+		return;
+	}
+
+	AddWar("war", pName);
+}
+
+void CWarList::RemoveSimpleWar(const char *pName)
+{
+}
+
 bool CWarList::OnChatCmdSimple(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs, const char *pRawArgLine)
 {
 	if(!str_comp(pCmd, "search")) // "search <name can contain spaces>"
@@ -25,35 +50,17 @@ bool CWarList::OnChatCmdSimple(char Prefix, int ClientId, int Team, const char *
 		m_pClient->m_Chat.AddLine(-2, 0, "!war <folder>");
 		m_pClient->m_Chat.AddLine(-2, 0, "!team <folder>");
 		m_pClient->m_Chat.AddLine(-2, 0, "!unfriend <folder>");
-		m_pClient->m_Chat.AddLine(-2, 0, "!addreason <folder> [--force] <reason>");
 		m_pClient->m_Chat.AddLine(-2, 0, "!search <name>");
-		m_pClient->m_Chat.AddLine(-2, 0, "!create <war|team|neutral|traitor> <folder> [name]");
 	}
-	else if(!str_comp(pCmd, "create")) // "create <war|team|neutral|traitor> <folder> [name]"
+	else if(!str_comp(pCmd, "create"))
 	{
 		m_pClient->m_Chat.AddLine(-2, 0, "Error: create only works in advanced warlist mode");
 		return true;
 	}
-	else if(!str_comp(pCmd, "addwar")) // "addwar <folder> <name can contain spaces>"
+	else if(!str_comp(pCmd, "addwar")) // "addwar <name>"
 	{
-		if(NumArgs < 1)
-		{
-			m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <name>");
-			return true;
-		}
-
-		if(!Storage()->CreateFolder("chillerbot/warlist/war", IStorage::TYPE_SAVE))
-		{
-			m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to create war folder");
-			return true;
-		}
-		if(!Storage()->CreateFolder("chillerbot/warlist/war/war", IStorage::TYPE_SAVE))
-		{
-			m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to create war/war folder");
-			return true;
-		}
-
-		AddWar("war", pRawArgLine);
+		AddSimpleWar(pRawArgLine);
+		return true;
 	}
 	else if(!str_comp(pCmd, "addteam")) // "addteam <folder> <name can contain spaces>"
 	{
@@ -80,9 +87,9 @@ bool CWarList::OnChatCmdSimple(char Prefix, int ClientId, int Team, const char *
 		m_pClient->m_Chat.AddLine(-2, 0, "Error: team only works in advanced warlist mode");
 		return true;
 	}
-	else if(!str_comp(pCmd, "war")) // "war <folder>"
+	else if(!str_comp(pCmd, "war")) // "war <name>"
 	{
-		m_pClient->m_Chat.AddLine(-2, 0, "Error: war only works in advanced warlist mode");
+		AddSimpleWar(pRawArgLine);
 		return true;
 	}
 	else if(!str_comp(pCmd, "addreason")) // "addreason <folder> <reason can contain spaces>"
