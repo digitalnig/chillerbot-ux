@@ -21,7 +21,7 @@ class CChatCommand : public CComponent
 
 		only return true if a valid command was matched
 	*/
-	bool OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs);
+	bool OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs, const char *pRawArgLine);
 
 	/*
 		Function: OnNoChatCommandMatches

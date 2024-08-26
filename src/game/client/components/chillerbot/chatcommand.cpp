@@ -9,6 +9,7 @@
 #include <game/client/components/chat.h>
 
 #include "chatcommand.h"
+#include "base/system.h"
 
 void CChatCommand::OnServerMsg(const char *pMsg)
 {
@@ -34,12 +35,12 @@ void CChatCommand::OnNoChatCommandMatches(int ClientId, int Team, const char *pM
 	// zx components
 }
 
-bool CChatCommand::OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs)
+bool CChatCommand::OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs, const char *pRawArgLine)
 {
 	bool match = false;
 	// ux components
 
-	if(m_pClient->m_WarList.OnChatCmd(Prefix, ClientId, Team, pCmd, NumArgs, ppArgs))
+	if(m_pClient->m_WarList.OnChatCmd(Prefix, ClientId, Team, pCmd, NumArgs, ppArgs, pRawArgLine))
 		match = true;
 
 	// zx components
@@ -49,6 +50,8 @@ bool CChatCommand::OnChatCmd(char Prefix, int ClientId, int Team, const char *pC
 
 bool CChatCommand::ParseChatCmd(char Prefix, int ClientId, int Team, const char *pCmdWithArgs)
 {
+	char aRawArgLine[512];
+	aRawArgLine[0] = '\0';
 	const int MaxArgLen = 256;
 	char aCmd[MaxArgLen];
 	int i;
@@ -58,6 +61,9 @@ bool CChatCommand::ParseChatCmd(char Prefix, int ClientId, int Team, const char 
 			break;
 		aCmd[i] = pCmdWithArgs[i];
 	}
+	const char *pArgStart = str_skip_whitespaces(aCmd + i);
+	if(pArgStart)
+		str_copy(aRawArgLine, pArgStart);
 	aCmd[i] = '\0';
 	int ROffset = m_pClient->m_ChatHelper.ChatCommandGetROffset(aCmd);
 
@@ -130,7 +136,7 @@ bool CChatCommand::ParseChatCmd(char Prefix, int ClientId, int Team, const char 
 	// char aBuf[512];
 	// str_format(aBuf, sizeof(aBuf), "got cmd '%s' with %d args: %s", aCmd, NumArgs, aArgsStr);
 	// Say(aBuf);
-	bool match = OnChatCmd(Prefix, ClientId, Team, aCmd, NumArgs, (const char **)ppArgs);
+	bool match = OnChatCmd(Prefix, ClientId, Team, aCmd, NumArgs, (const char **)ppArgs, aRawArgLine);
 	for(int x = 0; x < 8; ++x)
 		delete[] ppArgs[x];
 	delete[] ppArgs;

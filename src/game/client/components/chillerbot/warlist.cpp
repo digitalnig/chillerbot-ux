@@ -875,7 +875,7 @@ bool CWarList::SearchName(const char *pName, bool AllowPartialMatch, bool Silent
 	return true;
 }
 
-bool CWarList::OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs)
+bool CWarList::OnChatCmd(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs, const char *pRawArgLine)
 {
 	if(!g_Config.m_ClWarList)
 		return false;
