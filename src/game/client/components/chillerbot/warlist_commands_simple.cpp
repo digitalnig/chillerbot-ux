@@ -32,9 +32,9 @@ void CWarList::AddSimpleWar(const char *pName)
 
 void CWarList::RemoveSimpleWar(const char *pName)
 {
+	char aBuf[512];
 	if(!RemoveWarNameFromVector("chillerbot/warlist/war/war", pName))
 	{
-		char aBuf[512];
 		str_format(aBuf, sizeof(aBuf), "Name '%s' not found in the war list", pName);
 		m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 		return;
@@ -43,6 +43,8 @@ void CWarList::RemoveSimpleWar(const char *pName)
 	{
 		m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to write war names");
 	}
+	str_format(aBuf, sizeof(aBuf), "Removed '%s' from the war list", pName);
+	m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 }
 
 void CWarList::AddSimpleTeam(const char *pName)
@@ -52,33 +54,35 @@ void CWarList::AddSimpleTeam(const char *pName)
 		m_pClient->m_Chat.AddLine(-2, 0, "Error: missing argument <name>");
 		return;
 	}
-	if(!Storage()->CreateFolder("chillerbot/warlist/war", IStorage::TYPE_SAVE))
+	if(!Storage()->CreateFolder("chillerbot/warlist/team", IStorage::TYPE_SAVE))
 	{
-		m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to create war folder");
+		m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to create team folder");
 		return;
 	}
-	if(!Storage()->CreateFolder("chillerbot/warlist/war/war", IStorage::TYPE_SAVE))
+	if(!Storage()->CreateFolder("chillerbot/warlist/team/team", IStorage::TYPE_SAVE))
 	{
-		m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to create war/war folder");
+		m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to create team/team folder");
 		return;
 	}
 
-	AddTeam("war", pName);
+	AddTeam("team", pName);
 }
 
 void CWarList::RemoveSimpleTeam(const char *pName)
 {
-	if(!RemoveTeamNameFromVector("chillerbot/warlist/war/war", pName))
+	char aBuf[512];
+	if(!RemoveTeamNameFromVector("chillerbot/warlist/team/team", pName))
 	{
-		char aBuf[512];
 		str_format(aBuf, sizeof(aBuf), "Name '%s' not found in the war list", pName);
 		m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 		return;
 	}
-	if(!WriteTeamNames("chillerbot/warlist/war/war"))
+	if(!WriteTeamNames("chillerbot/warlist/team/team"))
 	{
 		m_pClient->m_Chat.AddLine(-2, 0, "Error: failed to write war names");
 	}
+	str_format(aBuf, sizeof(aBuf), "Removed '%s' from the team list", pName);
+	m_pClient->m_Chat.AddLine(-2, 0, aBuf);
 }
 
 bool CWarList::OnChatCmdSimple(char Prefix, int ClientId, int Team, const char *pCmd, int NumArgs, const char **ppArgs, const char *pRawArgLine)

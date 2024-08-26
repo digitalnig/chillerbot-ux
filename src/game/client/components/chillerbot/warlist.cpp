@@ -48,6 +48,7 @@ void CWarList::ReloadList()
 	else // simple warlist
 	{
 		LoadWarNames("chillerbot/warlist/war/war");
+		LoadTeamNames("chillerbot/warlist/team/team");
 	}
 
 	for(auto &WarPlayer : m_aWarPlayers)
@@ -539,7 +540,6 @@ bool CWarList::WriteTeamNames(const char *pDir)
 	io_close(File);
 	return true;
 }
-
 
 int CWarList::LoadWarNames(const char *pDir)
 {
